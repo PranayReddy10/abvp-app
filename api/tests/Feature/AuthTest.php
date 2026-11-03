@@ -50,6 +50,7 @@ class AuthTest extends TestCase
     {
         $this->postJson('/api/v1/auth/send-otp', ['mobile' => '12345'])
             ->assertStatus(422)
+            ->assertJsonPath('success', false)
             ->assertJsonPath('error.code', 'INVALID_MOBILE');
     }
 

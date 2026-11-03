@@ -18,6 +18,7 @@ export default function Approvals() {
   const [q, setQ] = useState('')
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<number | null>(null)
+  const [flash, setFlash] = useState<string | null>(null)
   const list = useFetch<ApplicationRow[]>(`/admin/applications${qs({ status, q: search })}`)
 
   useEffect(() => {
@@ -41,32 +42,32 @@ export default function Approvals() {
         ))}
       </div>
       <ErrorBox error={list.error} />
+      {flash && <div className="notice" role="status">{flash}</div>}
       <div className="queue">
         <div className="card qlist">
           {list.data?.length === 0 && <Empty>No applications here.</Empty>}
           {list.data?.map((a) => (
-            <button key={a.id} className={`qi ${a.id === selected ? 'on' : ''}`} onClick={() => setSelected(a.id)}>
+            <button key={a.id} className={`qi ${a.id === selected ? 'on' : ''}`} onClick={() => { setSelected(a.id); setFlash(null) }}>
               <Avatar name={a.applicant.name} />
               <span><b>{a.applicant.name}</b><small>{a.org_unit.name} · {a.waiting_days ?? 0} days</small></span>
               <Pill status={a.status} />
             </button>
           ))}
         </div>
-        {selected ? <Review id={selected} onDecided={list.reload} /> : <div className="card"><Empty>Select an application to review it.</Empty></div>}
+        {selected ? <Review id={selected} onDecided={(msg) => { setFlash(msg); list.reload(); window.dispatchEvent(new Event('abvp:queue-changed')) }} /> : <div className="card"><Empty>Select an application to review it.</Empty></div>}
       </div>
     </main>
   )
 }
 
-function Review({ id, onDecided }: { id: number; onDecided: () => void }) {
+function Review({ id, onDecided }: { id: number; onDecided: (message: string) => void }) {
   const { can } = useAuth()
   const { data: a, error, reload } = useFetch<ApplicationDetail>(`/admin/applications/${id}`)
   const [note, setNote] = useState('')
   const [busy, setBusy] = useState(false)
   const [actionError, setActionError] = useState<unknown>(null)
-  const [done, setDone] = useState<string | null>(null)
 
-  useEffect(() => { setNote(''); setActionError(null); setDone(null) }, [id])
+  useEffect(() => { setNote(''); setActionError(null) }, [id])
 
   async function decide(action: 'approve' | 'return' | 'reject') {
     if (action !== 'approve' && note.trim().length < 5) {
@@ -76,9 +77,11 @@ function Review({ id, onDecided }: { id: number; onDecided: () => void }) {
     setBusy(true); setActionError(null)
     try {
       const r = await api.post<ApplicationDetail>(`/admin/applications/${id}/${action}`, { note: note.trim() || undefined })
-      setDone(action === 'approve' ? `Approved. Member ID ${r.data.profile?.member_id}.` : action === 'return' ? 'Returned to the applicant for correction.' : 'Rejected. The applicant can see your note.')
+      const name = r.data.applicant.name
+      onDecided(action === 'approve'
+        ? `${name} approved. Member ID ${r.data.profile?.member_id}.`
+        : action === 'return' ? `${name}'s application was returned for correction.` : `${name}'s application was rejected. They can see your note.`)
       await reload()
-      onDecided()
     } catch (e) { setActionError(e) } finally { setBusy(false) }
   }
 
@@ -112,7 +115,6 @@ function Review({ id, onDecided }: { id: number; onDecided: () => void }) {
       </div>
       {a.status === 'submitted' && can('members.review') && (
         <div className="ft">
-          {done && <div className="notice">{done}</div>}
           <ErrorBox error={actionError} />
           <textarea className="input" placeholder="Note to the applicant (required to return or reject)" value={note} onChange={(e) => setNote(e.target.value)} aria-label="Note to applicant" />
           <div className="chips">
@@ -122,7 +124,6 @@ function Review({ id, onDecided }: { id: number; onDecided: () => void }) {
           </div>
         </div>
       )}
-      {done && a.status !== 'submitted' && <div className="ft"><div className="notice">{done}</div></div>}
     </section>
   )
 }

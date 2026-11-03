@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../auth'
 import { useFetch } from '../useFetch'
@@ -6,7 +7,13 @@ import { Avatar } from './ui'
 
 export default function Layout() {
   const { me, can, signOut } = useAuth()
-  const { data: dash } = useFetch<Dashboard>('/admin/dashboard')
+  const { data: dash, reload } = useFetch<Dashboard>('/admin/dashboard')
+
+  // Keep the Approvals badge current after a decision.
+  useEffect(() => {
+    window.addEventListener('abvp:queue-changed', reload)
+    return () => window.removeEventListener('abvp:queue-changed', reload)
+  }, [reload])
   const top = me?.roles[0]
 
   return (

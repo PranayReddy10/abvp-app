@@ -59,6 +59,7 @@ class ProfileController extends Controller
         $profile ??= new MemberProfile(['user_id' => $user->id]);
         $profile->user_id = $user->id;
         $profile->fill(collect($data)->except('vibhag_ids')->all())->save();
+        $user->setRelation('profile', $profile);
 
         if (array_key_exists('vibhag_ids', $data)) {
             $user->vibhags()->sync(collect($data['vibhag_ids'] ?? [])->mapWithKeys(fn ($id) => [$id => ['joined_at' => now()]]));

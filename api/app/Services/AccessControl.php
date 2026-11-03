@@ -26,7 +26,8 @@ class AccessControl
     /** Assignments that grant the permission, anywhere. */
     public function grants(User $user, string $permission): Collection
     {
-        $allowed = config("abvp.permissions.$permission", []);
+        // Permission names contain dots, so read the array directly rather than via dot notation.
+        $allowed = config('abvp.permissions')[$permission] ?? [];
 
         return $this->rolesOf($user)->filter(fn (RoleAssignment $r) => in_array($r->role, $allowed, true));
     }

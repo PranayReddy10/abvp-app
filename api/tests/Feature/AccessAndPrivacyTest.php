@@ -116,6 +116,20 @@ class AccessAndPrivacyTest extends TestCase
         $this->assertStringStartsWith(OrgUnit::where('name', 'Hyderabad')->value('path'), OrgUnit::where('name', 'Nizam College')->value('path'));
     }
 
+    public function test_role_starting_today_is_active_and_ended_role_is_not(): void
+    {
+        $admin = $this->member('+919800000001', 'D1');
+        $hyd = OrgUnit::where('name', 'Hyderabad')->value('id');
+        RoleAssignment::create(['user_id' => $admin->id, 'role' => 'district_admin', 'org_unit_id' => $hyd, 'starts_on' => now()->toDateString()]);
+        Sanctum::actingAs($admin);
+        $this->getJson('/api/v1/admin/dashboard')->assertOk();
+
+        $other = $this->member('+919800000002', 'D2');
+        RoleAssignment::create(['user_id' => $other->id, 'role' => 'district_admin', 'org_unit_id' => $hyd, 'ends_on' => now()->subDay()->toDateString()]);
+        Sanctum::actingAs($other);
+        $this->getJson('/api/v1/admin/dashboard')->assertStatus(403);
+    }
+
     public function test_members_without_roles_cannot_use_admin_endpoints(): void
     {
         Sanctum::actingAs($this->member('+919800000001', 'M1'));

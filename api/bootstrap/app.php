@@ -48,10 +48,10 @@ return Application::configure(basePath: dirname(__DIR__))
                 default => [500, 'SERVER_ERROR', config('app.debug') ? $e->getMessage() : 'Something went wrong on our side.', null],
             };
 
-            return response()->json(array_filter([
+            return response()->json([
                 'success' => false,
                 'error' => array_filter(['code' => $code, 'message' => $message, 'fields' => $fields]),
                 'meta' => ['request_id' => $request->attributes->get('request_id')],
-            ]), $status);
+            ], $status);
         });
     })->create();

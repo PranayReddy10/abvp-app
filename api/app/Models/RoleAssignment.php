@@ -20,8 +20,8 @@ class RoleAssignment extends Model
         $today = now()->toDateString();
 
         return $query
-            ->where(fn ($q) => $q->whereNull('starts_on')->orWhere('starts_on', '<=', $today))
-            ->where(fn ($q) => $q->whereNull('ends_on')->orWhere('ends_on', '>=', $today));
+            ->where(fn ($q) => $q->whereNull('starts_on')->orWhereDate('starts_on', '<=', $today))
+            ->where(fn ($q) => $q->whereNull('ends_on')->orWhereDate('ends_on', '>=', $today));
     }
 
     public function user(): BelongsTo
