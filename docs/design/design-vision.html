@@ -50,7 +50,7 @@ section{padding-block:56px;border-top:1px solid var(--line)}
 @media (max-width:820px){.hero{grid-template-columns:1fr}}
 
 /* Thoughts */
-.thoughts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.thoughts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
 .thought{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;display:grid;gap:8px;align-content:start}
 .thought h3{font-size:1.05rem}
 .thought p{color:var(--muted);font-size:.95rem}
@@ -113,7 +113,8 @@ figure{margin:0}
 .muted{color:var(--muted)}
 .small{font-size:10.5px}
 .idcard{background:var(--ink);color:var(--bg);border-radius:16px;padding:13px;display:grid;gap:8px;position:relative;overflow:hidden}
-.idcard::after{content:"";position:absolute;right:-30px;top:-30px;width:110px;height:110px;border-radius:50%;border:14px solid var(--saffron);opacity:.9}
+.idcard>*{position:relative;z-index:1}
+.idcard::after{content:"";position:absolute;right:-44px;top:-44px;z-index:0;width:110px;height:110px;border-radius:50%;border:14px solid var(--saffron);opacity:.9}
 .idcard .lbl{font-size:9px;letter-spacing:.12em;text-transform:uppercase;opacity:.7}
 .idcard .nm{font-family:var(--f-display);font-size:16px;font-weight:700}
 .idcard .row{display:flex;gap:14px}
@@ -289,8 +290,75 @@ tr:last-child td{border-bottom:0}
 .ph .n{font-family:var(--f-mono);font-size:.75rem;color:var(--saffron-ink);font-weight:600}
 .ph ul{margin:0;padding-left:18px;color:var(--muted);font-size:.9rem;display:grid;gap:3px}
 .ph.now{border-color:var(--saffron);box-shadow:inset 0 3px 0 var(--saffron)}
-@media (max-width:900px){.road{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media (max-width:560px){.road{grid-template-columns:1fr}}
+@media (max-width:900px){.road{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media (max-width:560px){.road{grid-template-columns:1fr!important}}
+/* Feature map */
+.fmap{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.farea{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;display:grid;gap:12px;align-content:start}
+.farea h3{display:flex;align-items:center;gap:8px}
+.farea h3 svg{width:18px;height:18px;color:var(--saffron)}
+.feat{display:grid;gap:2px;padding-top:10px;border-top:1px solid var(--line)}
+.feat b{font-weight:600;display:flex;justify-content:space-between;gap:8px;align-items:center}
+.feat span{color:var(--muted);font-size:.88rem;line-height:1.45}
+.ph-tag{font-family:var(--f-mono);font-size:.66rem;font-weight:600;color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:0 5px;white-space:nowrap}
+.ph-tag.p1{color:var(--saffron-ink);border-color:var(--saffron)}
+@media (max-width:960px){.fmap{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:620px){.fmap{grid-template-columns:1fr}}
+.prof-top{margin:-6px -14px 0;height:66px;background:var(--ink);position:relative}
+.prof-top::after{content:"";position:absolute;right:18px;top:-24px;width:80px;height:80px;border-radius:50%;border:12px solid var(--saffron)}
+.bigav{width:62px;height:62px;border-radius:50%;background:var(--saffron-soft);color:var(--saffron-ink);display:grid;place-items:center;font-weight:700;font-size:20px;border:3px solid var(--bg);margin-top:-40px;position:relative;z-index:1}
+.tl{display:grid;gap:6px}
+.tl div{display:grid;grid-template-columns:62px minmax(0,1fr);gap:8px;font-size:11.5px}
+.tl span{color:var(--muted);font-family:var(--f-mono);font-size:10px}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:3px;font-size:11px;font-weight:600;text-align:center}
+.seg span{padding:5px 0;border-radius:7px;color:var(--muted)}
+.seg .on{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.linkok{display:flex;align-items:center;gap:8px;background:var(--surface);border:1.5px solid var(--ok);border-radius:10px;padding:8px 10px}
+.linkok svg{width:15px;height:15px;color:var(--ok);flex:none}
+.linkok .mono{font-size:10.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
+.prov{display:flex;gap:5px;flex-wrap:wrap}
+.prov span{font-size:9.5px;font-weight:600;padding:2px 7px;border-radius:5px;background:var(--surface-2);border:1px solid var(--line);color:var(--muted)}
+.prov span.on{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.toggle{display:flex;justify-content:space-between;align-items:center;font-size:11.5px}
+.toggle i{width:30px;height:17px;border-radius:9px;background:var(--saffron);position:relative}
+.toggle i::after{content:"";position:absolute;right:2px;top:2px;width:13px;height:13px;border-radius:50%;background:var(--surface)}
+.toggle i.off{background:var(--line)}
+.toggle i.off::after{right:auto;left:2px}
+.rsvp{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.rsvp span{text-align:center;padding:7px 0;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-weight:600;font-size:11px}
+.rsvp span.on{border-color:var(--ok);background:var(--ok-soft);color:var(--ok)}
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
+.week div{border-radius:10px;padding:5px 0;font-size:10px;color:var(--muted);display:grid;gap:1px}
+.week b{font-size:13px;color:var(--ink);font-family:var(--f-display)}
+.week .on{background:var(--ink);color:var(--bg)}
+.week .on b{color:var(--bg)}
+.week i{width:4px;height:4px;border-radius:50%;background:var(--saffron);justify-self:center}
+.citem{display:grid;grid-template-columns:44px 3px minmax(0,1fr);gap:9px;align-items:stretch;font-size:11.5px}
+.citem .tm{font-family:var(--f-mono);font-size:10px;color:var(--muted);padding-top:2px}
+.citem .ln{border-radius:2px}
+.citem b{display:block;font-size:12px}
+.vhead{margin:-6px -14px 0;padding:12px 14px;background:var(--saffron-soft);display:grid;gap:4px}
+.vhead h4{font-size:17px;font-weight:800}
+.subtabs{display:flex;gap:14px;font-size:11.5px;font-weight:600;color:var(--muted);border-bottom:1px solid var(--line);margin:0 -14px;padding:0 14px}
+.subtabs span{padding:7px 0}
+.subtabs .on{color:var(--ink);box-shadow:inset 0 -2px 0 var(--saffron)}
+.post{display:grid;gap:5px}
+.post .who{display:flex;gap:7px;align-items:center;font-size:11px}
+.post .who .avatar{width:22px;height:22px;font-size:9px}
+.ph-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.ph-grid i{aspect-ratio:1;border-radius:7px;background:repeating-linear-gradient(135deg,var(--surface-2) 0 6px,var(--line) 6px 7px);display:grid;place-items:center;color:var(--muted)}
+.ph-grid i svg{width:16px;height:16px}
+.drow{display:grid;grid-template-columns:32px minmax(0,1fr) auto;gap:9px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line)}
+.drow:last-child{border-bottom:0}
+.drow .avatar{width:32px;height:32px}
+.drow b{font-size:12px;display:block}
+.drow small{font-size:10.5px;color:var(--muted)}
+.circ{display:grid;gap:4px;padding:10px 12px;border-radius:12px;background:var(--surface);border:1px solid var(--line)}
+.circ.unread{box-shadow:inset 3px 0 0 var(--saffron)}
+.poll{display:grid;gap:5px}
+.poll div{position:relative;border:1px solid var(--line);border-radius:8px;padding:6px 9px;font-size:11px;display:flex;justify-content:space-between;overflow:hidden}
+.poll div i{position:absolute;inset:0 auto 0 0;background:var(--saffron-soft);z-index:0}
+.poll div span{position:relative;z-index:1}
 footer{padding-block:30px 50px;border-top:1px solid var(--line);color:var(--muted);font-size:.85rem}
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
 </style>
@@ -307,7 +375,13 @@ footer{padding-block:30px 50px;border-top:1px solid var(--line);color:var(--mute
   <symbol id="i-phone" viewBox="0 0 24 24" fill="currentColor"><path d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.6 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.6 3.6a1 1 0 0 1-.25 1z"/></symbol>
   <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
   <symbol id="i-torch" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c2 3 3.5 4.5 3.5 7A3.5 3.5 0 0 1 12 12.5 3.5 3.5 0 0 1 8.5 9C8.5 7 10 5.5 12 2z"/><path d="M9 14h6l-1.5 8h-3z"/></symbol>
-  <symbol id="i-people" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c1-3.5 3.8-5 6.5-5s5.5 1.5 6.5 5M16 4.5a3.5 3.5 0 0 1 0 7M18 15c2 .6 3.2 2.2 3.6 5"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></symbol>
+  <symbol id="i-video" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="2.5" y="6" width="13" height="12" rx="2"/><path d="m15.5 10.5 6-3.5v10l-6-3.5z"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></symbol>
+  <symbol id="i-mega" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 10v4h4l7 5V5L7 10z"/><path d="M18 9a4 4 0 0 1 0 6"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 4.5A1.5 1.5 0 0 1 5.5 3H20v15H5.5A1.5 1.5 0 0 0 4 19.5z"/><path d="M4 19.5A1.5 1.5 0 0 0 5.5 21H20"/></symbol>
+  <symbol id="i-camera" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 8h4l2-3h6l2 3h4v12H3z"/><circle cx="12" cy="13" r="3.5"/></symbol>
+  <symbol id="i-people"viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c1-3.5 3.8-5 6.5-5s5.5 1.5 6.5 5M16 4.5a3.5 3.5 0 0 1 0 7M18 15c2 .6 3.2 2.2 3.6 5"/></symbol>
 </svg>
 
 <div class="wrap">
@@ -319,9 +393,9 @@ footer{padding-block:30px 50px;border-top:1px solid var(--line);color:var(--mute
     <p class="hi">एक सदस्य · एक पहचान · हर कार्यक्रम</p>
   </div>
   <div style="display:grid;gap:16px">
-    <p class="thesis">On event day, every karyakarta should open the app and know in five seconds: where to go, what to do, and whom to report to. Every screen is judged against that.</p>
-    <ul class="journey" aria-label="Core journey">
-      <li><b>1</b>Join</li><li><b>2</b>Verify</li><li><b>3</b>Approve</li><li><b>4</b>Discover</li><li><b>5</b>Register</li><li><b>6</b>Duty</li><li><b>7</b>Check in</li>
+    <p class="thesis">The everyday home of every karyakarta: their profile and dayitva, their Vibhags, their next baithak, and the circulars meant for them. On event day, it tells them in five seconds where to go, what to do, and whom to report to.</p>
+    <ul class="journey" aria-label="What the app covers">
+      <li>Profiles</li><li>70 Vibhags</li><li>Meetings and calls</li><li>Circulars</li><li>Activity reports</li><li>Sadasyata drive</li><li>Events</li><li>Duties</li><li>Learning</li>
     </ul>
   </div>
 </header>
@@ -338,7 +412,52 @@ footer{padding-block:30px 50px;border-top:1px solid var(--line);color:var(--mute
     <article class="thought"><span class="tag add">Add</span><h3>Bilingual from day one</h3><p>English plus Hindi at launch, with Telugu and other state languages added as plain translation files. Switching language is on the sign-in screen, not hidden in settings. Fonts chosen here render Devanagari and Latin from one family.</p></article>
     <article class="thought"><span class="tag add">Add</span><h3>Pass that works with no signal</h3><p>Large venues lose network. The QR pass is cached on the phone as a signed, time-limited token, and scanners queue check-ins offline and sync when back. Members never see a spinner at the gate.</p></article>
     <article class="thought"><span class="tag add">Add</span><h3>Scope switcher in the admin</h3><p>A person can be District Admin of Hyderabad and Event Coordinator of one conference. The admin top bar always shows the active scope ("Telangana › Hyderabad") and every number on screen follows it. This prevents most "why can I see this?" confusion.</p></article>
-    <article class="thought"><span class="tag cut">Defer</span><h3>Logistics to phase 2</h3><p>Food, accommodation, transport and live location are a second product. Launch with the thin slice: apply → approve → event → register → pass → duty → check-in. Pilot it in one state, then add logistics module by module.</p></article>
+    <article class="thought"><span class="tag add">Add</span><h3>Daily use before event use</h3><p>Big events happen a few times a year; baithaks, circulars and Vibhag work happen every week. If the app is only for events, people uninstall it between them. Profiles, Vibhags, meetings and circulars ship first so the app is already on every phone when the first event opens.</p></article>
+    <article class="thought"><span class="tag add">Add</span><h3>Meetings by link, not by video hosting</h3><p>Anyone with the right role schedules a baithak and pastes a Google Meet, Zoom, Teams, Jitsi or YouTube Live link. The app handles invites, RSVP, reminders, attendance and minutes. Video itself stays with Google or Zoom, which keeps Hostinger cost near zero.</p></article>
+    <article class="thought"><span class="tag cut">Defer</span><h3>Heavy logistics later</h3><p>Food, accommodation, transport and live location are a second product. Pilot the everyday features and the event slice in one state first, then add logistics module by module.</p></article>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <p class="eyebrow">Feature map</p>
+    <h2>The whole organisation in one app</h2>
+    <p class="lede">Everything a karyakarta, an office bearer or a Vibhag coordinator does through the year, grouped by what people are trying to get done. The tag shows which phase I would build it in.</p>
+  </div>
+  <div class="fmap">
+    <div class="farea"><h3><svg><use href="#i-user"/></svg>People and profiles</h3>
+      <div class="feat"><b>Rich profile <span class="ph-tag p1">P1</span></b><span>Photo, bio, institution, course and year, languages, skills (design, speaking, writing, first aid), social links.</span></div>
+      <div class="feat"><b>Dayitva history <span class="ph-tag p1">P1</span></b><span>Every responsibility held, with level, place and years: Ikai Mantri 2023, Zilla Sanyojak 2025. Added by the admin who assigns it, so it can be trusted.</span></div>
+      <div class="feat"><b>Directory <span class="ph-tag">P2</span></b><span>Find office bearers by role, place or Vibhag. Phone numbers stay hidden; the member taps "Request contact" or "Schedule a call".</span></div>
+      <div class="feat"><b>Privacy controls <span class="ph-tag p1">P1</span></b><span>Each person chooses who sees phone, email, college and birthday: nobody, my unit, my Vibhags, or office bearers.</span></div>
+    </div>
+    <div class="farea"><h3><svg><use href="#i-grid"/></svg>Organisation</h3>
+      <div class="feat"><b>Vibhag spaces <span class="ph-tag p1">P2</span></b><span>Each of the ~70 Vibhags gets its own space: coordinators, members, updates, meetings, events and resources. Members join one or many.</span></div>
+      <div class="feat"><b>Unit and college pages <span class="ph-tag">P2</span></b><span>Every ikai and college has its committee, member count, upcoming work and recent activity.</span></div>
+      <div class="feat"><b>Circulars with read receipts <span class="ph-tag p1">P2</span></b><span>National, kshetra, state or district sends a circular to a chosen audience. The sender sees who has read it and can remind the rest.</span></div>
+      <div class="feat"><b>Sadasyata drive <span class="ph-tag">P3</span></b><span>Each member gets a personal join link and QR. Units see targets and progress during the membership campaign.</span></div>
+    </div>
+    <div class="farea"><h3><svg><use href="#i-video"/></svg>Meetings and calls</h3>
+      <div class="feat"><b>Schedule a baithak <span class="ph-tag p1">P2</span></b><span>Online with any link, in person with a venue, or both. Invite a Vibhag, a unit, a role (all Zilla Sanyojaks in Telangana) or individuals.</span></div>
+      <div class="feat"><b>One-to-one calls <span class="ph-tag">P2</span></b><span>From a profile, "Schedule a call" proposes a time and a link. The other person accepts or suggests another time.</span></div>
+      <div class="feat"><b>RSVP, reminders, attendance <span class="ph-tag p1">P2</span></b><span>Going / Maybe / Can't. Reminder a day before and 15 minutes before. Tapping "Join" marks attendance. Add to Google Calendar.</span></div>
+      <div class="feat"><b>Minutes and action items <span class="ph-tag">P3</span></b><span>The organiser records karyavrutt and decisions; action items get an owner and a due date and show on that person's Home.</span></div>
+    </div>
+    <div class="farea"><h3><svg><use href="#i-camera"/></svg>Field work</h3>
+      <div class="feat"><b>Activity reports <span class="ph-tag p1">P2</span></b><span>After any programme, the unit reports type, date, attendance and photos in under a minute. This feeds every dashboard upward.</span></div>
+      <div class="feat"><b>Campaigns and andolan <span class="ph-tag">P3</span></b><span>A campaign page with goal, dates, materials and a live count of programmes reported against it.</span></div>
+      <div class="feat"><b>Polls and surveys <span class="ph-tag">P3</span></b><span>Quick polls inside a Vibhag or unit; structured surveys for campus issues, with results only for the organiser.</span></div>
+    </div>
+    <div class="farea"><h3><svg><use href="#i-cal"/></svg>Events</h3>
+      <div class="feat"><b>Events, registration, pass <span class="ph-tag">P3</span></b><span>Everything in the first design: eligibility, waitlist, offline pass, gate scanning, guests.</span></div>
+      <div class="feat"><b>Duties and command centre <span class="ph-tag">P4</span></b><span>Teams, duties with reporting person, live arrivals and exceptions.</span></div>
+      <div class="feat"><b>Logistics <span class="ph-tag">P5</span></b><span>Stay, food, transport, consent-based live location.</span></div>
+    </div>
+    <div class="farea"><h3><svg><use href="#i-book"/></svg>Learning and resources</h3>
+      <div class="feat"><b>Resource library <span class="ph-tag">P2</span></b><span>Pamphlets, posters, geet with audio, speeches, training notes. Filtered by Vibhag and language, downloadable for offline use.</span></div>
+      <div class="feat"><b>Abhyas varg tracking <span class="ph-tag">P3</span></b><span>Training camps attended, shown on the profile, with a certificate the member can download.</span></div>
+      <div class="feat"><b>Help and feedback <span class="ph-tag">P2</span></b><span>Ask the right office for help, report a profile error, or send a suggestion.</span></div>
+    </div>
   </div>
 </section>
 
@@ -392,8 +511,8 @@ footer{padding-block:30px 50px;border-top:1px solid var(--line);color:var(--mute
 <section>
   <div class="sec-head">
     <p class="eyebrow">Mobile app · Flutter · Android and iOS</p>
-    <h2>Seven screens that carry the whole journey</h2>
-    <p class="lede">Bottom navigation has five places: Home, Events, Pass, Duties, Me. Pass sits in the middle and raised, because at the gate it is the only thing that matters. Scroll sideways to see all screens.</p>
+    <h2>Joining and event screens</h2>
+    <p class="lede">Bottom navigation has five places: Home, Calendar, Pass, Vibhags, Me. Calendar holds events, meetings and duties together. Pass sits in the middle and raised, because at the gate it is the only thing that matters. Scroll sideways to see all screens.</p>
   </div>
   <div class="film" tabindex="0" aria-label="Mobile screen concepts">
     <div class="film-inner">
@@ -451,9 +570,7 @@ footer{padding-block:30px 50px;border-top:1px solid var(--line);color:var(--mute
             <div class="row2"><b>Upcoming</b><span class="small" style="color:var(--saffron-ink);font-weight:600">See all</span></div>
             <div class="card ev"><div class="date"><b>22</b><span>Nov</span></div><div><h5>Campus Sampark Abhiyan</h5><div class="small muted">Osmania University</div></div></div>
           </div>
-          <div class="tabbar">
-            <div class="on"><svg><use href="#i-home"/></svg>Home</div><div><svg><use href="#i-cal"/></svg>Events</div><div class="pass"><i><svg><use href="#i-qr"/></svg></i><span>Pass</span></div><div><svg><use href="#i-task"/></svg>Duties</div><div><svg><use href="#i-user"/></svg>Me</div>
-          </div>
+          <div class="tabbar"><div class="on"><svg><use href="#i-home"/></svg>Home</div><div><svg><use href="#i-cal"/></svg>Calendar</div><div class="pass"><i><svg><use href="#i-qr"/></svg></i><span>Pass</span></div><div><svg><use href="#i-grid"/></svg>Vibhags</div><div><svg><use href="#i-user"/></svg>Me</div></div>
         </div></div>
         <figcaption><b>3 · Home in event-day mode</b><span>Today's duty first, identity second, everything else below. On normal days the saffron card shows announcements instead.</span></figcaption>
       </figure>
@@ -470,9 +587,7 @@ footer{padding-block:30px 50px;border-top:1px solid var(--line);color:var(--mute
             <div class="card ev"><div class="date"><b>29</b><span>Nov</span></div><div style="display:grid;gap:4px"><h5>Think India Policy Dialogue</h5><div class="small muted">Hyderabad · 180 seats</div><span class="pill p-bad" style="justify-self:start">Full · join waitlist</span></div></div>
             <div class="card ev" style="opacity:.75"><div class="date"><b>06</b><span>Dec</span></div><div style="display:grid;gap:4px"><h5>Karimnagar Zilla Abhyas Varg</h5><div class="small muted">For Karimnagar district</div><span class="pill p-mute" style="justify-self:start">Not eligible</span></div></div>
           </div>
-          <div class="tabbar">
-            <div><svg><use href="#i-home"/></svg>Home</div><div class="on"><svg><use href="#i-cal"/></svg>Events</div><div class="pass"><i><svg><use href="#i-qr"/></svg></i><span>Pass</span></div><div><svg><use href="#i-task"/></svg>Duties</div><div><svg><use href="#i-user"/></svg>Me</div>
-          </div>
+          <div class="tabbar"><div><svg><use href="#i-home"/></svg>Home</div><div class="on"><svg><use href="#i-cal"/></svg>Calendar</div><div class="pass"><i><svg><use href="#i-qr"/></svg></i><span>Pass</span></div><div><svg><use href="#i-grid"/></svg>Vibhags</div><div><svg><use href="#i-user"/></svg>Me</div></div>
         </div></div>
         <figcaption><b>4 · Events</b><span>Every published event is visible. The pill tells the member, before tapping, whether they can register.</span></figcaption>
       </figure>
@@ -503,9 +618,7 @@ footer{padding-block:30px 50px;border-top:1px solid var(--line);color:var(--mute
             <div class="check" style="justify-content:center"><svg><use href="#i-ok"/></svg><span>Checked in at 7:52 AM</span></div>
             <p class="small muted" style="text-align:center">Screen brightness is raised while this is open. The code changes daily and cannot be reused from a screenshot.</p>
           </div>
-          <div class="tabbar">
-            <div><svg><use href="#i-home"/></svg>Home</div><div><svg><use href="#i-cal"/></svg>Events</div><div class="pass"><i><svg><use href="#i-qr"/></svg></i><span>Pass</span></div><div><svg><use href="#i-task"/></svg>Duties</div><div><svg><use href="#i-user"/></svg>Me</div>
-          </div>
+          <div class="tabbar"><div><svg><use href="#i-home"/></svg>Home</div><div><svg><use href="#i-cal"/></svg>Calendar</div><div class="pass"><i><svg><use href="#i-qr"/></svg></i><span>Pass</span></div><div><svg><use href="#i-grid"/></svg>Vibhags</div><div><svg><use href="#i-user"/></svg>Me</div></div>
         </div></div>
         <figcaption><b>6 · Pass</b><span>One code, cached on the phone, no personal data inside it. Guests get the same screen with a "Guest" label.</span></figcaption>
       </figure>
@@ -528,9 +641,7 @@ footer{padding-block:30px 50px;border-top:1px solid var(--line);color:var(--mute
               <span class="small muted">13 Dec · 4:00 PM · Main stage</span>
             </div>
           </div>
-          <div class="tabbar">
-            <div><svg><use href="#i-home"/></svg>Home</div><div><svg><use href="#i-cal"/></svg>Events</div><div class="pass"><i><svg><use href="#i-qr"/></svg></i><span>Pass</span></div><div class="on"><svg><use href="#i-task"/></svg>Duties</div><div><svg><use href="#i-user"/></svg>Me</div>
-          </div>
+          <div class="tabbar"><div><svg><use href="#i-home"/></svg>Home</div><div class="on"><svg><use href="#i-cal"/></svg>Calendar</div><div class="pass"><i><svg><use href="#i-qr"/></svg></i><span>Pass</span></div><div><svg><use href="#i-grid"/></svg>Vibhags</div><div><svg><use href="#i-user"/></svg>Me</div></div>
         </div></div>
         <figcaption><b>7 · Duties</b><span>When, where, whom to report to, in that order. Acknowledge in one tap; "Can't make it" asks for a reason and alerts the coordinator.</span></figcaption>
       </figure>
@@ -542,11 +653,11 @@ footer{padding-block:30px 50px;border-top:1px solid var(--line);color:var(--mute
     <div class="panel">
       <h3>App navigation</h3>
       <div class="navlist">
-        <div><b>Home</b><span>Today card, member ID, upcoming events, announcements</span></div>
-        <div><b>Events</b><span>Browse, filter, register, my registrations, waitlist</span></div>
+        <div><b>Home</b><span>Today card, next meeting, unread circulars, action items, member ID</span></div>
+        <div><b>Calendar</b><span>Events, meetings, calls and duties in one list; register, RSVP, acknowledge</span></div>
         <div><b>Pass</b><span>Event QR (or member QR when no event is active)</span></div>
-        <div><b>Duties</b><span>Assigned duties, acknowledge, report done or problem</span></div>
-        <div><b>Me</b><span>Profile, documents, Vibhags, language, notifications, help</span></div>
+        <div><b>Vibhags</b><span>My Vibhags and unit, updates, resources, directory, join more</span></div>
+        <div><b>Me</b><span>Profile, dayitva history, privacy, documents, activity reports, language, help</span></div>
       </div>
     </div>
     <div class="panel">
@@ -563,6 +674,161 @@ footer{padding-block:30px 50px;border-top:1px solid var(--line);color:var(--mute
 
 <section>
   <div class="sec-head">
+    <p class="eyebrow">Mobile app · everyday organisation</p>
+    <h2>Profiles, Vibhags and meetings</h2>
+    <p class="lede">The screens people will open every week. Scheduling a call or baithak takes one form: paste any meeting link, choose who is invited, and the app handles invites, reminders and attendance.</p>
+  </div>
+  <div class="film" tabindex="0" aria-label="Everyday organisation screen concepts">
+    <div class="film-inner">
+
+      <figure class="shot">
+        <div class="phone"><div class="screen">
+          <div class="sbar" style="background:var(--ink);color:var(--bg)"><span>9:41</span><span>▮▮▮</span></div>
+          <div class="scr" style="gap:9px">
+            <div class="prof-top"></div>
+            <div class="row2" style="align-items:flex-end"><div class="bigav">KM</div><span class="pill p-ok">Verified member</span></div>
+            <div><h4 style="font-size:17px;font-weight:800">Kiran Mudiraj</h4><div class="small muted">Zilla Sanyojak, Hyderabad · since 2025</div><div class="small muted">M.A. Political Science, Osmania University</div></div>
+            <div class="chips" style="flex-wrap:wrap"><span class="chip">SFD</span><span class="chip">Think India</span><span class="chip">Rashtriya Kala Manch</span></div>
+            <div class="card tl"><b style="font-size:11.5px">Dayitva</b>
+              <div><span>2025 –</span><b>Zilla Sanyojak, Hyderabad</b></div>
+              <div><span>2023–25</span><b>Ikai Mantri, Osmania Univ.</b></div>
+              <div><span>2022</span><b>Prathmik Abhyas Varg ✓</b></div>
+            </div>
+            <div class="small muted">Speaks Telugu, Hindi, English · Public speaking, Poster design</div>
+            <div class="sticky"><div class="btnrow"><div class="btn pri"><svg width="14" height="14"><use href="#i-video"/></svg>Schedule a call</div><div class="btn sec">Request contact</div></div><p class="small muted" style="text-align:center">Phone hidden by Kiran's privacy settings</p></div>
+          </div>
+        </div></div>
+        <figcaption><b>8 · Profile</b><span>Who someone is in the organisation: role, Vibhags, dayitva history, skills. Contact goes through a request, never a public number.</span></figcaption>
+      </figure>
+
+      <figure class="shot">
+        <div class="phone"><div class="screen">
+          <div class="sbar"><span>9:41</span><span>▮▮▮</span></div>
+          <div class="scr">
+            <div class="apphead"><h4>Schedule a call</h4><span class="small muted">Cancel</span></div>
+            <div class="field"><label>Title</label><div>SFD Zilla Baithak – November</div></div>
+            <div class="seg"><span class="on">Online</span><span>In person</span><span>Both</span></div>
+            <div class="field"><label>Meeting link</label><div class="linkok"><svg><use href="#i-ok"/></svg><span class="mono">meet.google.com/kqv-ndbx-tre</span></div></div>
+            <div class="prov"><span class="on">Google Meet</span><span>Zoom</span><span>Teams</span><span>Jitsi</span><span>YouTube Live</span><span>Any link</span></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><div class="field"><label>Date</label><div>Thu, 6 Nov</div></div><div class="field"><label>Time</label><div>7:00–8:00 PM</div></div></div>
+            <div class="field"><label>Invite</label><div style="display:flex;gap:5px;flex-wrap:wrap"><span class="chip on">SFD · Hyderabad (64)</span><span class="chip">+ People or role</span></div></div>
+            <div class="toggle"><span>Remind 1 day and 15 min before</span><i></i></div>
+            <div class="toggle"><span>Mark attendance when people tap Join</span><i></i></div>
+            <div class="sticky"><div class="btn pri">Schedule and invite 64</div></div>
+          </div>
+        </div></div>
+        <figcaption><b>9 · Schedule a meeting</b><span>Paste any link; known providers are recognised and shown with their name. The link is visible only to invitees.</span></figcaption>
+      </figure>
+
+      <figure class="shot">
+        <div class="phone"><div class="screen">
+          <div class="sbar"><span>6:52</span><span>▮▮▮</span></div>
+          <div class="scr">
+            <div class="row2"><span class="pill p-sf">Starts in 8 min</span><span class="small muted">SFD · Hyderabad</span></div>
+            <h4 style="font-size:18px;font-weight:800">SFD Zilla Baithak – November</h4>
+            <div class="kv"><svg><use href="#i-clock"/></svg><div><b>Today · 7:00–8:00 PM</b><div class="small muted">Called by Kiran Mudiraj</div></div></div>
+            <div class="btn pri"><svg width="15" height="15"><use href="#i-video"/></svg>Join on Google Meet</div>
+            <div class="rsvp"><span class="on">Going</span><span>Maybe</span><span>Can't</span></div>
+            <div class="card" style="gap:4px"><b style="font-size:11.5px">Agenda</b><span class="small">1. Lake clean-up drive review</span><span class="small">2. Tree plantation plan, December</span><span class="small">3. Volunteers for Pranth Adhiveshan</span></div>
+            <div class="row2 small"><span><b>41 going</b> · 9 maybe · 14 no reply</span><span style="color:var(--saffron-ink);font-weight:600">Remind</span></div>
+            <div class="sticky"><div class="btn sec">Add to Google Calendar</div></div>
+          </div>
+        </div></div>
+        <figcaption><b>10 · Meeting</b><span>Join is the main button only near start time. After the meeting this screen shows minutes and action items instead.</span></figcaption>
+      </figure>
+
+      <figure class="shot">
+        <div class="phone"><div class="screen">
+          <div class="sbar"><span>9:41</span><span>▮▮▮</span></div>
+          <div class="scr">
+            <div class="apphead"><h4>November</h4><span class="small" style="color:var(--saffron-ink);font-weight:700">+ New</span></div>
+            <div class="week"><div>M<b>3</b></div><div>T<b>4</b><i></i></div><div>W<b>5</b></div><div class="on">T<b>6</b><i></i></div><div>F<b>7</b></div><div>S<b>8</b><i></i></div><div>S<b>9</b></div></div>
+            <div class="seg"><span class="on">All</span><span>Meetings</span><span>Events</span><span>Duties</span></div>
+            <div class="citem"><span class="tm">10:00</span><i class="ln" style="background:var(--info)"></i><div><b>Call with Srinivas R.</b><span class="muted">One-to-one · Zoom</span></div></div>
+            <div class="citem"><span class="tm">4:00</span><i class="ln" style="background:var(--warn)"></i><div><b>Submit activity report</b><span class="muted">Action item · due today</span></div></div>
+            <div class="citem"><span class="tm">7:00</span><i class="ln" style="background:var(--saffron)"></i><div><b>SFD Zilla Baithak</b><span class="muted">Google Meet · Going</span></div></div>
+            <div class="small muted" style="font-weight:600;margin-top:4px">SAT 8 NOV</div>
+            <div class="citem"><span class="tm">9:00</span><i class="ln" style="background:var(--ok)"></i><div><b>Ikai Baithak, Osmania</b><span class="muted">In person · Arts College, Room 12</span></div></div>
+            <div class="citem"><span class="tm">All day</span><i class="ln" style="background:var(--ink)"></i><div><b>Sadasyata Abhiyan begins</b><span class="muted">Campaign · Telangana</span></div></div>
+          </div>
+          <div class="tabbar"><div><svg><use href="#i-home"/></svg>Home</div><div class="on"><svg><use href="#i-cal"/></svg>Calendar</div><div class="pass"><i><svg><use href="#i-qr"/></svg></i><span>Pass</span></div><div><svg><use href="#i-grid"/></svg>Vibhags</div><div><svg><use href="#i-user"/></svg>Me</div></div>
+        </div></div>
+        <figcaption><b>11 · Calendar</b><span>One timeline for meetings, calls, events, duties and action items, each with its own colour stripe.</span></figcaption>
+      </figure>
+
+      <figure class="shot">
+        <div class="phone"><div class="screen">
+          <div class="sbar"><span>9:41</span><span>▮▮▮</span></div>
+          <div class="scr">
+            <div class="vhead"><span class="small muted" style="font-weight:600">VIBHAG · TELANGANA</span><h4>SFD – Students for Development</h4><div class="row2 small"><span class="muted">1,240 members · 31 units</span><span class="pill p-ok">Joined</span></div></div>
+            <div class="subtabs"><span class="on">Updates</span><span>Meetings</span><span>Resources</span><span>People</span></div>
+            <div class="card post"><div class="who"><div class="avatar">KM</div><b>Kiran Mudiraj</b><span class="muted">· 2 h</span></div><span>Lake clean-up at Saroornagar done. 86 students joined from 4 colleges. Thank you all.</span><div class="ph-grid"><i></i><i></i><i></i></div></div>
+            <div class="card post"><div class="who"><div class="avatar" style="background:var(--info-soft);color:var(--info)">SC</div><b>State coordinator</b><span class="muted">· 1 d</span></div><span><b>Circular:</b> Tree plantation drive, 1–15 December. Every unit to plan one programme.</span><span class="small" style="color:var(--saffron-ink);font-weight:600">Read circular · 412 have read</span></div>
+          </div>
+          <div class="tabbar"><div><svg><use href="#i-home"/></svg>Home</div><div><svg><use href="#i-cal"/></svg>Calendar</div><div class="pass"><i><svg><use href="#i-qr"/></svg></i><span>Pass</span></div><div class="on"><svg><use href="#i-grid"/></svg>Vibhags</div><div><svg><use href="#i-user"/></svg>Me</div></div>
+        </div></div>
+        <figcaption><b>12 · Vibhag space</b><span>Each Vibhag has its own updates, meetings, resources and people. Only coordinators post; members react and comment.</span></figcaption>
+      </figure>
+
+      <figure class="shot">
+        <div class="phone"><div class="screen">
+          <div class="sbar"><span>9:41</span><span>▮▮▮</span></div>
+          <div class="scr">
+            <div class="apphead"><h4>Directory</h4></div>
+            <div class="search"><svg><use href="#i-search"/></svg>Name, role, college</div>
+            <div class="chips"><span class="chip on">Office bearers</span><span class="chip">Hyderabad</span><span class="chip">SFD</span></div>
+            <div>
+              <div class="drow"><div class="avatar">PR</div><div><b>Pranay Reddy</b><small>Zilla Pramukh · Hyderabad</small></div><span class="callbtn" style="background:var(--saffron-soft);color:var(--saffron-ink)"><svg><use href="#i-video"/></svg></span></div>
+              <div class="drow"><div class="avatar">KM</div><div><b>Kiran Mudiraj</b><small>Zilla Sanyojak · SFD</small></div><span class="callbtn" style="background:var(--saffron-soft);color:var(--saffron-ink)"><svg><use href="#i-video"/></svg></span></div>
+              <div class="drow"><div class="avatar">SR</div><div><b>Srinivas R.</b><small>Nagar Mantri · Secunderabad</small></div><span class="callbtn" style="background:var(--saffron-soft);color:var(--saffron-ink)"><svg><use href="#i-video"/></svg></span></div>
+              <div class="drow"><div class="avatar">AP</div><div><b>Aishwarya P.</b><small>Ikai Adhyaksh · Osmania Univ.</small></div><span class="callbtn" style="background:var(--saffron-soft);color:var(--saffron-ink)"><svg><use href="#i-video"/></svg></span></div>
+              <div class="drow"><div class="avatar">MS</div><div><b>M. Sandeep</b><small>Sanyojak · Rashtriya Kala Manch</small></div><span class="callbtn" style="background:var(--saffron-soft);color:var(--saffron-ink)"><svg><use href="#i-video"/></svg></span></div>
+            </div>
+            <p class="small muted">Tap the camera to propose a call time. Numbers are never listed.</p>
+          </div>
+          <div class="tabbar"><div><svg><use href="#i-home"/></svg>Home</div><div><svg><use href="#i-cal"/></svg>Calendar</div><div class="pass"><i><svg><use href="#i-qr"/></svg></i><span>Pass</span></div><div class="on"><svg><use href="#i-grid"/></svg>Vibhags</div><div><svg><use href="#i-user"/></svg>Me</div></div>
+        </div></div>
+        <figcaption><b>13 · Directory</b><span>Find the right person by role and place. Reaching them is always a call request, which they can accept or reschedule.</span></figcaption>
+      </figure>
+
+      <figure class="shot">
+        <div class="phone"><div class="screen">
+          <div class="sbar"><span>9:41</span><span>▮▮▮</span></div>
+          <div class="scr">
+            <div class="apphead"><h4>Report activity</h4><span class="small muted">Draft saved</span></div>
+            <div class="field"><label>Programme</label><div>Lake clean-up drive</div></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><div class="field"><label>Vibhag</label><div>SFD</div></div><div class="field"><label>Date</label><div>2 Nov 2026</div></div></div>
+            <div class="field"><label>Place</label><div>Saroornagar Lake, Hyderabad</div></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><div class="field"><label>Students</label><div class="mono">86</div></div><div class="field"><label>Colleges</label><div class="mono">4</div></div></div>
+            <div class="field"><label>Photos (up to 6)</label><div class="ph-grid" style="background:none;border:0;padding:0"><i></i><i></i><i><svg><use href="#i-camera"/></svg></i></div></div>
+            <div class="field"><label>Campaign</label><div>Swachh Parisar 2026</div></div>
+            <div class="sticky"><div class="btn pri">Submit report</div><p class="small muted" style="text-align:center">Visible to district, state and SFD coordinators</p></div>
+          </div>
+        </div></div>
+        <figcaption><b>14 · Activity report</b><span>Under a minute to fill on a phone. These reports power every dashboard above the unit.</span></figcaption>
+      </figure>
+
+      <figure class="shot">
+        <div class="phone"><div class="screen">
+          <div class="sbar"><span>9:41</span><span>▮▮▮</span></div>
+          <div class="scr">
+            <div class="apphead"><h4>Circulars</h4><span class="pill p-sf">2 unread</span></div>
+            <div class="circ unread"><div class="row2 small"><b style="color:var(--saffron-ink)">Telangana Pranth</b><span class="muted">Today</span></div><b>Sadasyata Abhiyan 2026–27 guidelines</b><span class="small muted">PDF · 3 pages · हिंदी / English</span></div>
+            <div class="circ unread"><div class="row2 small"><b style="color:var(--saffron-ink)">Kendriya Karyalaya</b><span class="muted">1 Nov</span></div><b>Rashtriya Adhiveshan: delegate quota per state</b><span class="small muted">PDF · 2 pages</span></div>
+            <div class="circ"><div class="row2 small"><b class="muted">Hyderabad Zilla</b><span class="muted">28 Oct</span></div><b>Campus Sampark schedule</b><span class="small muted">Read</span></div>
+            <div class="card poll"><b style="font-size:11.5px">Poll · SFD Hyderabad</b><span class="small muted">Best Saturday for tree plantation?</span><div><i style="width:62%"></i><span>6 Dec</span><span>62%</span></div><div><i style="width:38%"></i><span>13 Dec</span><span>38%</span></div></div>
+          </div>
+          <div class="tabbar"><div class="on"><svg><use href="#i-home"/></svg>Home</div><div><svg><use href="#i-cal"/></svg>Calendar</div><div class="pass"><i><svg><use href="#i-qr"/></svg></i><span>Pass</span></div><div><svg><use href="#i-grid"/></svg>Vibhags</div><div><svg><use href="#i-user"/></svg>Me</div></div>
+        </div></div>
+        <figcaption><b>15 · Circulars and polls</b><span>Official circulars arrive from each level with a read receipt. Polls are quick and stay inside the Vibhag or unit.</span></figcaption>
+      </figure>
+
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
     <p class="eyebrow">Web admin · React, built as static files</p>
     <h2>An admin panel that only shows your scope</h2>
     <p class="lede">A fixed left sidebar, a scope switcher at the top, and content below. The panel is designed for a district office laptop at 1366 px. Switch between three key screens.</p>
@@ -570,6 +836,8 @@ footer{padding-block:30px 50px;border-top:1px solid var(--line);color:var(--mute
   <div class="tabs" role="tablist" aria-label="Admin screens">
     <button role="tab" id="t-dash" aria-controls="v-dash" aria-selected="true">Dashboard</button>
     <button role="tab" id="t-appr" aria-controls="v-appr" aria-selected="false">Membership approvals</button>
+    <button role="tab" id="t-vib" aria-controls="v-vib" aria-selected="false">Vibhags</button>
+    <button role="tab" id="t-mtg" aria-controls="v-mtg" aria-selected="false">Meetings and circulars</button>
     <button role="tab" id="t-cc" aria-controls="v-cc" aria-selected="false">Event command centre</button>
   </div>
 
@@ -583,13 +851,18 @@ footer{padding-block:30px 50px;border-top:1px solid var(--line);color:var(--mute
         <h6>Membership</h6>
         <a href="#" data-nav="appr" onclick="return false">Approvals <em>312</em></a>
         <a href="#" onclick="return false">Members</a>
+        <h6>Organisation work</h6>
+        <a href="#" data-nav="vib" onclick="return false">Vibhags</a>
+        <a href="#" data-nav="mtg" onclick="return false">Meetings</a>
+        <a href="#" onclick="return false">Circulars</a>
+        <a href="#" onclick="return false">Activity reports</a>
         <h6>Events</h6>
         <a href="#" onclick="return false">All events</a>
         <a href="#" data-nav="cc" onclick="return false">Command centre</a>
         <a href="#" onclick="return false">Duties and teams</a>
         <a href="#" onclick="return false">Attendance</a>
-        <h6>Organisation</h6>
-        <a href="#" onclick="return false">Units and Vibhags</a>
+        <h6>Setup</h6>
+        <a href="#" onclick="return false">Units and colleges</a>
         <a href="#" onclick="return false">Admins and roles</a>
         <h6>Insights</h6>
         <a href="#" onclick="return false">Reports</a>
@@ -670,6 +943,71 @@ footer{padding-block:30px 50px;border-top:1px solid var(--line);color:var(--mute
                 <div class="hist"><b style="color:var(--ink)">History</b><span>25 Oct 18:22 · Submitted by applicant</span><span>26 Oct 09:10 · Routed to Hyderabad district queue</span></div>
               </div>
               <div class="ft"><div class="btn okb">Approve</div><div class="btn sec">Return for correction</div><div class="btn ghost">Reject</div><div class="reason">Note to applicant (required to return or reject)</div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Vibhags -->
+        <div class="content" id="v-vib" role="tabpanel" aria-labelledby="t-vib" hidden>
+          <div class="row2"><h3>Vibhags in Hyderabad</h3><div style="display:flex;gap:8px;align-items:center"><span class="muted" style="font-size:12px">23 of 70 active here</span><div class="btn pri" style="padding:6px 12px;font-size:12px">Assign coordinator</div></div></div>
+          <div class="grid2" style="grid-template-columns:minmax(0,1.7fr) minmax(0,1fr)">
+            <div class="box">
+              <table>
+                <thead><tr><th>Vibhag</th><th>Coordinator</th><th>Members</th><th>Meetings · 30 d</th><th>Reports · 30 d</th><th>Health</th></tr></thead>
+                <tbody>
+                  <tr><td><b>SFD</b></td><td>Kiran Mudiraj</td><td>412</td><td>4</td><td>11</td><td><span class="pill p-ok">Active</span></td></tr>
+                  <tr><td><b>Think India</b></td><td>Harsha V.</td><td>268</td><td>2</td><td>5</td><td><span class="pill p-ok">Active</span></td></tr>
+                  <tr><td><b>Rashtriya Kala Manch</b></td><td>M. Sandeep</td><td>190</td><td>1</td><td>3</td><td><span class="pill p-ok">Active</span></td></tr>
+                  <tr><td><b>Medivision</b></td><td>Dr. Nikhita</td><td>133</td><td>1</td><td>1</td><td><span class="pill p-warn">Quiet</span></td></tr>
+                  <tr><td><b>Mission Sahasi</b></td><td>Aishwarya P.</td><td>221</td><td>3</td><td>6</td><td><span class="pill p-ok">Active</span></td></tr>
+                  <tr><td><b>Khelo Bharat</b></td><td style="color:var(--bad);font-weight:600">Not assigned</td><td>96</td><td>0</td><td>0</td><td><span class="pill p-bad">No lead</span></td></tr>
+                  <tr><td><b>Agrivision</b></td><td>Raju B.</td><td>58</td><td>0</td><td>1</td><td><span class="pill p-warn">Quiet</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="box">
+              <h4>SFD · Hyderabad</h4>
+              <div class="bars">
+                <div class="bar" style="grid-template-columns:120px minmax(0,1fr) 40px"><span>Join requests</span><div class="t"><i class="w" style="width:30%"></i></div><b>18</b></div>
+                <div class="bar" style="grid-template-columns:120px minmax(0,1fr) 40px"><span>Circular read</span><div class="t"><i style="width:74%"></i></div><b>74%</b></div>
+                <div class="bar" style="grid-template-columns:120px minmax(0,1fr) 40px"><span>Units reporting</span><div class="t"><i style="width:58%"></i></div><b>18/31</b></div>
+              </div>
+              <h4>Coordinators by level</h4>
+              <div class="hist" style="border:0;padding:0"><span><b style="color:var(--ink)">National</b> · set by Kendriya Karyalaya</span><span><b style="color:var(--ink)">Telangana</b> · Prashanth K.</span><span><b style="color:var(--ink)">Hyderabad</b> · Kiran Mudiraj, Harini S. (co)</span></div>
+              <p class="muted" style="font-size:11.5px">Vibhags are a list you edit, not code. Add, rename or pause any of the 70 from Setup.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Meetings and circulars -->
+        <div class="content" id="v-mtg" role="tabpanel" aria-labelledby="t-mtg" hidden>
+          <div class="row2"><h3>Meetings and circulars</h3><div style="display:flex;gap:8px"><div class="btn sec" style="padding:6px 12px;font-size:12px">New circular</div><div class="btn pri" style="padding:6px 12px;font-size:12px">Schedule meeting</div></div></div>
+          <div class="grid2">
+            <div class="box">
+              <h4>This week</h4>
+              <table>
+                <thead><tr><th>Meeting</th><th>When</th><th>Where</th><th>RSVP</th><th>Attended</th></tr></thead>
+                <tbody>
+                  <tr><td><b>Zilla Karyakarini</b><div class="muted" style="font-size:11px">Office bearers · 24 invited</div></td><td>Tue 4, 6 PM</td><td><span class="pill p-info">Google Meet</span></td><td>21 yes</td><td>19 · minutes ✓</td></tr>
+                  <tr><td><b>SFD Zilla Baithak</b><div class="muted" style="font-size:11px">SFD Hyderabad · 64 invited</div></td><td>Thu 6, 7 PM</td><td><span class="pill p-info">Google Meet</span></td><td>41 yes</td><td>–</td></tr>
+                  <tr><td><b>Ikai Baithak, Osmania</b><div class="muted" style="font-size:11px">Unit · 38 invited</div></td><td>Sat 8, 9 AM</td><td><span class="pill p-mute">Arts College</span></td><td>30 yes</td><td>–</td></tr>
+                  <tr><td><b>Think India reading circle</b><div class="muted" style="font-size:11px">Think India · 52 invited</div></td><td>Sun 9, 11 AM</td><td><span class="pill p-info">Zoom</span></td><td>22 yes</td><td>–</td></tr>
+                </tbody>
+              </table>
+              <h4>Open action items from minutes</h4>
+              <div class="alertrow"><i style="background:var(--warn)"></i><div><b>Book venue for tree plantation</b><div class="muted">Kiran M. · due 10 Nov · from Zilla Karyakarini</div></div></div>
+              <div class="alertrow"><i style="background:var(--bad)"></i><div><b>Send unit-wise sadasyata targets</b><div class="muted">Srinivas R. · overdue 2 days</div></div></div>
+            </div>
+            <div class="box">
+              <h4>Circulars · read rate</h4>
+              <div class="bars">
+                <div class="bar" style="grid-template-columns:150px minmax(0,1fr) 40px"><span>Sadasyata guidelines</span><div class="t"><i style="width:48%"></i></div><b>48%</b></div>
+                <div class="bar" style="grid-template-columns:150px minmax(0,1fr) 40px"><span>Adhiveshan quota</span><div class="t"><i style="width:81%"></i></div><b>81%</b></div>
+                <div class="bar" style="grid-template-columns:150px minmax(0,1fr) 40px"><span>Campus Sampark</span><div class="t"><i style="width:93%"></i></div><b>93%</b></div>
+              </div>
+              <div class="btn sec" style="padding:6px 12px;font-size:12px;justify-self:start">Remind 1,980 who haven't read</div>
+              <h4>Who can schedule</h4>
+              <div class="hist" style="border:0;padding:0"><span>Any member: one-to-one calls</span><span>Vibhag coordinators: their Vibhag at their level</span><span>Unit and district office bearers: their unit or district</span><span>State and above: any audience in their scope</span></div>
             </div>
           </div>
         </div>
@@ -760,6 +1098,7 @@ footer{padding-block:30px 50px;border-top:1px solid var(--line);color:var(--mute
     <div><b>No WebSockets or always-on processes</b><span>Command centre polls every 15–20 s and shows "Updated 12 s ago" so nobody expects instant updates.</span></div>
     <div><b>CPU and memory caps, traffic spikes</b><span>Pass check-ins go through one small endpoint; scanners batch offline check-ins. Event lists are cached as JSON for 60 s.</span></div>
     <div><b>Limited disk and slow uploads</b><span>Photos are resized on the phone to under 300 KB before upload, and stored on Spaces, not Hostinger.</span></div>
+    <div><b>No video or call hosting</b><span>Meetings store only a link; Google Meet, Zoom or Jitsi carry the video. The API makes a small calendar file for "Add to Google Calendar". Reminders go out from the same cron job.</span></div>
     <div><b>Cron runs at most every minute</b><span>Notifications say "within a few minutes"; OTP SMS is sent directly in the request, not queued.</span></div>
     <div><b>When to move off</b><span>Before the first multi-state event with more than about 5,000 people on one day, move the API to a Hostinger VPS. The code does not change.</span></div>
   </div>
@@ -768,13 +1107,14 @@ footer{padding-block:30px 50px;border-top:1px solid var(--line);color:var(--mute
 <section>
   <div class="sec-head">
     <p class="eyebrow">Delivery</p>
-    <h2>Ship the thin slice first</h2>
+    <h2>Everyday features first, then events</h2>
   </div>
-  <div class="road">
-    <div class="ph now"><span class="n">Phase 1 · pilot</span><h3>Members</h3><ul><li>OTP sign-in, apply, status</li><li>District approval queue</li><li>Member ID and QR</li><li>Admin shell with scopes</li></ul></div>
-    <div class="ph"><span class="n">Phase 2</span><h3>Events</h3><ul><li>Create, publish, eligibility</li><li>Register, waitlist</li><li>Event pass and gate scanning</li><li>Guests</li></ul></div>
-    <div class="ph"><span class="n">Phase 3</span><h3>Operations</h3><ul><li>Teams and duties</li><li>Command centre</li><li>Announcements and help requests</li><li>Reports</li></ul></div>
-    <div class="ph"><span class="n">Phase 4</span><h3>Logistics</h3><ul><li>Travel and arrivals</li><li>Stay, food, transport</li><li>Consent-based live location</li><li>Move to VPS if needed</li></ul></div>
+  <div class="road" style="grid-template-columns:repeat(5,minmax(0,1fr))">
+    <div class="ph now"><span class="n">Phase 1 · pilot</span><h3>Members</h3><ul><li>OTP sign-in, apply, status</li><li>District approval queue</li><li>Profile, dayitva, privacy</li><li>Member ID and QR</li><li>Admin with scopes</li></ul></div>
+    <div class="ph"><span class="n">Phase 2</span><h3>Organisation</h3><ul><li>Vibhag spaces</li><li>Meetings and calls by link</li><li>Circulars, read receipts</li><li>Activity reports</li><li>Directory, library</li></ul></div>
+    <div class="ph"><span class="n">Phase 3</span><h3>Events</h3><ul><li>Publish, eligibility</li><li>Register, waitlist</li><li>Pass and gate scanning</li><li>Guests, minutes, polls</li><li>Sadasyata drive</li></ul></div>
+    <div class="ph"><span class="n">Phase 4</span><h3>Operations</h3><ul><li>Teams and duties</li><li>Command centre</li><li>Help requests</li><li>Campaigns, reports</li></ul></div>
+    <div class="ph"><span class="n">Phase 5</span><h3>Logistics</h3><ul><li>Stay, food, transport</li><li>Live location (opt-in)</li><li>Move to VPS if needed</li></ul></div>
   </div>
 </section>
 
@@ -786,7 +1126,7 @@ footer{padding-block:30px 50px;border-top:1px solid var(--line);color:var(--mute
 <script>
 // Tabs for admin views
 (function(){
-  var urls={dash:"admin.abvpconnect.in/dashboard",appr:"admin.abvpconnect.in/membership/approvals",cc:"admin.abvpconnect.in/events/pranth-adhiveshan-2026/live"};
+  var urls={dash:"admin.abvpconnect.in/dashboard",appr:"admin.abvpconnect.in/membership/approvals",vib:"admin.abvpconnect.in/vibhags",mtg:"admin.abvpconnect.in/meetings",cc:"admin.abvpconnect.in/events/pranth-adhiveshan-2026/live"};
   var tabs=document.querySelectorAll('[role="tab"]');
   function show(key){
     tabs.forEach(function(t){var k=t.id.slice(2);var on=k===key;t.setAttribute('aria-selected',on);document.getElementById('v-'+k).hidden=!on;});
