@@ -1,0 +1,809 @@
+<title>ABVP Connect Design Vision</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Devanagari:wght@500;600;700;800&family=Mukta:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: long scroll document; phone frames in a scrolling filmstrip; admin panel in a browser frame with tabs. Saffron is the single accent, ink-indigo neutrals carry everything else. */
+:root{
+  --bg:#F3F4F7; --surface:#FFFFFF; --surface-2:#F7F8FA; --ink:#171A2E; --muted:#5D6178; --line:#E1E3EB;
+  --saffron:#E3620C; --saffron-ink:#B84C04; --saffron-soft:#FFEFE2; --on-saffron:#FFFFFF;
+  --ok:#1C7F55; --ok-soft:#E3F4EC; --warn:#9A6408; --warn-soft:#FBF1DC; --bad:#B8322A; --bad-soft:#FBE7E5; --info:#2E55C9; --info-soft:#E6ECFB;
+  --frame:#1B1E33; --shadow:0 1px 2px rgba(23,26,46,.06),0 8px 24px rgba(23,26,46,.08);
+  --f-display:"Anek Devanagari","Mukta",system-ui,sans-serif; --f-body:"Mukta",system-ui,-apple-system,"Segoe UI",sans-serif; --f-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0E1020; --surface:#171A2D; --surface-2:#1D2136; --ink:#ECEDF4; --muted:#A0A4BB; --line:#2B2F48;
+  --saffron:#FF8434; --saffron-ink:#FFA15E; --saffron-soft:#3A2215; --on-saffron:#1A0E05;
+  --ok:#43C48C; --ok-soft:#14301F; --warn:#E3AE4F; --warn-soft:#33270E; --bad:#F2766B; --bad-soft:#3A1916; --info:#86A2FF; --info-soft:#1B2547;
+  --frame:#05060D; --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E1020; --surface:#171A2D; --surface-2:#1D2136; --ink:#ECEDF4; --muted:#A0A4BB; --line:#2B2F48;
+  --saffron:#FF8434; --saffron-ink:#FFA15E; --saffron-soft:#3A2215; --on-saffron:#1A0E05;
+  --ok:#43C48C; --ok-soft:#14301F; --warn:#E3AE4F; --warn-soft:#33270E; --bad:#F2766B; --bad-soft:#3A1916; --info:#86A2FF; --info-soft:#1B2547;
+  --frame:#05060D; --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35); color-scheme:dark}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.55;margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0}
+h1,h2,h3,h4{font-family:var(--f-display);line-height:1.15;margin:0;text-wrap:balance;letter-spacing:-.01em}
+h2{font-size:clamp(1.6rem,3vw,2.1rem);font-weight:700}
+h3{font-size:1.15rem;font-weight:700}
+p{margin:0}
+.eyebrow{font-size:.75rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--saffron-ink)}
+.lede{color:var(--muted);max-width:65ch;font-size:1.05rem}
+section{padding-block:56px;border-top:1px solid var(--line)}
+.sec-head{display:grid;gap:10px;margin-bottom:28px}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.tnum{font-variant-numeric:tabular-nums}
+
+/* Hero */
+.hero{padding-block:56px 40px;display:grid;gap:28px;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);align-items:end}
+.hero h1{font-size:clamp(2.4rem,6vw,4.2rem);font-weight:800;letter-spacing:-.025em}
+.hero h1 span{color:var(--saffron)}
+.hero .hi{font-family:var(--f-display);font-size:1.2rem;color:var(--muted);font-weight:500}
+.thesis{border-left:3px solid var(--saffron);padding:4px 0 4px 18px;font-size:1.12rem;max-width:52ch}
+.journey{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.journey li{list-style:none;font-size:.82rem;font-weight:600;padding:5px 10px;border-radius:999px;background:var(--surface);border:1px solid var(--line);color:var(--muted)}
+.journey li b{color:var(--saffron-ink);font-family:var(--f-mono);font-weight:600;margin-right:4px}
+.journey{padding:0;margin:0}
+@media (max-width:820px){.hero{grid-template-columns:1fr}}
+
+/* Thoughts */
+.thoughts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.thought{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;display:grid;gap:8px;align-content:start}
+.thought h3{font-size:1.05rem}
+.thought p{color:var(--muted);font-size:.95rem}
+.tag{justify-self:start;font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:6px;background:var(--saffron-soft);color:var(--saffron-ink)}
+.tag.add{background:var(--info-soft);color:var(--info)}
+.tag.cut{background:var(--warn-soft);color:var(--warn)}
+@media (max-width:960px){.thoughts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:620px){.thoughts{grid-template-columns:1fr}}
+
+/* Design system */
+.ds{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px;display:grid;gap:16px;align-content:start}
+.swatches{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.sw{display:grid;gap:6px;font-size:.8rem}
+.sw i{display:block;height:54px;border-radius:10px;border:1px solid var(--line)}
+.sw b{font-weight:600}
+.sw span{color:var(--muted);font-size:.74rem;line-height:1.3}
+.typespec{display:grid;gap:12px}
+.typespec div{display:flex;justify-content:space-between;gap:12px;align-items:baseline;border-bottom:1px dashed var(--line);padding-bottom:10px}
+.typespec small{color:var(--muted);font-size:.75rem;white-space:nowrap}
+.pills{display:flex;flex-wrap:wrap;gap:8px}
+.statusgrid{display:grid;gap:10px}
+.statusgrid .row{display:grid;grid-template-columns:110px minmax(0,1fr);gap:10px;align-items:center}
+.statusgrid .row>span{font-size:.8rem;color:var(--muted);font-weight:600}
+@media (max-width:860px){.ds{grid-template-columns:1fr}.swatches{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:.72rem;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap;line-height:1.5}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.p-ok{background:var(--ok-soft);color:var(--ok)}
+.p-warn{background:var(--warn-soft);color:var(--warn)}
+.p-bad{background:var(--bad-soft);color:var(--bad)}
+.p-info{background:var(--info-soft);color:var(--info)}
+.p-sf{background:var(--saffron-soft);color:var(--saffron-ink)}
+.p-mute{background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
+
+/* Phones */
+.film{overflow-x:auto;padding:6px 2px 22px;scroll-snap-type:x mandatory}
+.film-inner{display:flex;gap:26px;width:max-content}
+.shot{display:grid;gap:12px;scroll-snap-align:start;width:276px}
+.shot figcaption{display:grid;gap:3px}
+.shot figcaption b{font-family:var(--f-display);font-size:1rem}
+.shot figcaption span{font-size:.85rem;color:var(--muted);line-height:1.4}
+figure{margin:0}
+.phone{width:276px;height:568px;border-radius:38px;background:var(--frame);padding:9px;box-shadow:var(--shadow)}
+.screen{width:100%;height:100%;border-radius:30px;background:var(--bg);overflow:hidden;display:flex;flex-direction:column;position:relative;font-size:12.5px;line-height:1.4}
+.sbar{display:flex;justify-content:space-between;padding:10px 20px 4px;font-size:10.5px;font-weight:600;color:var(--ink)}
+.sbar span:last-child{letter-spacing:2px}
+.scr{flex:1;overflow:hidden;padding:6px 14px 10px;display:flex;flex-direction:column;gap:10px}
+.tabbar{display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--line);background:var(--surface);padding:7px 6px 12px;font-size:9.5px;text-align:center;color:var(--muted)}
+.tabbar div{display:grid;justify-items:center;gap:2px}
+.tabbar svg{width:18px;height:18px}
+.tabbar .on{color:var(--saffron)}
+.tabbar .pass{position:relative;top:-14px}
+.tabbar .pass i{width:40px;height:40px;border-radius:14px;background:var(--saffron);color:var(--on-saffron);display:grid;place-items:center;box-shadow:0 4px 12px rgba(227,98,12,.35)}
+.tabbar .pass span{margin-top:-2px}
+.apphead{display:flex;justify-content:space-between;align-items:center}
+.apphead h4{font-size:17px;font-weight:700}
+.avatar{width:30px;height:30px;border-radius:50%;background:var(--saffron-soft);color:var(--saffron-ink);display:grid;place-items:center;font-weight:700;font-size:11px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:11px 12px;display:grid;gap:6px}
+.muted{color:var(--muted)}
+.small{font-size:10.5px}
+.idcard{background:var(--ink);color:var(--bg);border-radius:16px;padding:13px;display:grid;gap:8px;position:relative;overflow:hidden}
+.idcard::after{content:"";position:absolute;right:-30px;top:-30px;width:110px;height:110px;border-radius:50%;border:14px solid var(--saffron);opacity:.9}
+.idcard .lbl{font-size:9px;letter-spacing:.12em;text-transform:uppercase;opacity:.7}
+.idcard .nm{font-family:var(--f-display);font-size:16px;font-weight:700}
+.idcard .row{display:flex;gap:14px}
+.today{background:var(--saffron);color:var(--on-saffron);border-radius:14px;padding:11px 12px;display:grid;gap:3px}
+.today b{font-family:var(--f-display);font-size:14px}
+.today .small{opacity:.9}
+.row2{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.ev{display:grid;grid-template-columns:42px minmax(0,1fr);gap:10px;align-items:start}
+.date{border-radius:10px;background:var(--surface-2);border:1px solid var(--line);text-align:center;padding:4px 0;line-height:1.1}
+.date b{display:block;font-family:var(--f-display);font-size:16px}
+.date span{font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:.06em}
+.ev h5{margin:0;font-size:12.5px;font-weight:700;font-family:var(--f-body)}
+.chips{display:flex;gap:6px;overflow:hidden}
+.chip{font-size:10.5px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:var(--surface);white-space:nowrap;font-weight:500}
+.chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.search{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 10px;color:var(--muted)}
+.search svg{width:14px;height:14px}
+.btn{display:flex;justify-content:center;align-items:center;gap:6px;border-radius:12px;padding:10px;font-weight:700;font-size:12.5px;border:1px solid transparent}
+.btn.pri{background:var(--saffron);color:var(--on-saffron)}
+.btn.sec{background:var(--surface);border-color:var(--line);color:var(--ink)}
+.btn.ghost{color:var(--bad);border-color:var(--line);background:var(--surface)}
+.cover{height:118px;margin:-6px -14px 0;background:
+  radial-gradient(circle at 80% 30%,var(--saffron) 0 22%,transparent 23%),
+  linear-gradient(135deg,var(--ink),var(--ink));position:relative;display:flex;align-items:flex-end;padding:12px 14px;color:var(--bg)}
+.cover b{font-family:var(--f-display);font-size:17px;line-height:1.15;max-width:75%}
+.kv{display:grid;grid-template-columns:18px minmax(0,1fr);gap:8px;align-items:start}
+.kv svg{width:15px;height:15px;color:var(--saffron);margin-top:1px}
+.check{display:flex;gap:8px;align-items:flex-start;background:var(--ok-soft);color:var(--ok);border-radius:12px;padding:9px 10px;font-weight:600;font-size:11.5px}
+.check svg{width:15px;height:15px;flex:none;margin-top:1px}
+.sticky{margin-top:auto;display:grid;gap:4px}
+.qrbox{background:#fff;border-radius:18px;padding:14px;display:grid;justify-items:center;gap:8px;border:1px solid var(--line)}
+.qrbox canvas{width:172px;height:172px;image-rendering:pixelated}
+.qrbox .mono{color:#171A2E;font-size:11px}
+.otp{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.otp span{height:40px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);display:grid;place-items:center;font-family:var(--f-mono);font-size:16px;font-weight:600}
+.otp span.f{border-color:var(--saffron)}
+.field{display:grid;gap:4px}
+.field label{font-size:10.5px;font-weight:600;color:var(--muted)}
+.field div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 10px;font-weight:500}
+.logo{width:46px;height:46px;border-radius:14px;background:var(--saffron);display:grid;place-items:center;color:var(--on-saffron)}
+.logo svg{width:24px;height:24px}
+.steps{display:grid;gap:0}
+.step{display:grid;grid-template-columns:22px minmax(0,1fr);gap:10px;position:relative;padding-bottom:12px}
+.step::before{content:"";position:absolute;left:10px;top:20px;bottom:0;width:2px;background:var(--line)}
+.step:last-child::before{display:none}
+.dot{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:var(--ok);color:var(--surface);font-size:11px;font-weight:700}
+.dot.cur{background:var(--warn)}
+.dot.todo{background:var(--surface);border:2px solid var(--line)}
+.note{background:var(--warn-soft);border-radius:10px;padding:8px 10px;color:var(--ink);font-size:11.5px}
+.note b{color:var(--warn)}
+.duty{border-left:3px solid var(--saffron)}
+.lead{display:flex;align-items:center;gap:8px;background:var(--surface-2);border-radius:10px;padding:7px 8px}
+.lead .avatar{width:26px;height:26px;font-size:10px}
+.callbtn{margin-left:auto;width:28px;height:28px;border-radius:50%;background:var(--ok-soft);color:var(--ok);display:grid;place-items:center}
+.callbtn svg{width:13px;height:13px}
+.btnrow{display:grid;grid-template-columns:1.3fr 1fr;gap:6px}
+.btnrow .btn{padding:8px;font-size:11.5px}
+.lang{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;font-size:10px;font-weight:600}
+.lang span{padding:3px 8px}
+.lang .on{background:var(--ink);color:var(--bg)}
+
+/* Nav map */
+.navmap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px}
+.navlist{display:grid;gap:0}
+.navlist div{display:grid;grid-template-columns:96px minmax(0,1fr);gap:12px;padding:10px 0;border-bottom:1px solid var(--line);font-size:.93rem}
+.navlist div:last-child{border-bottom:0}
+.navlist b{font-family:var(--f-display);font-weight:700}
+.navlist span{color:var(--muted)}
+@media (max-width:860px){.navmap{grid-template-columns:1fr}}
+
+/* Admin */
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.tabs button{font:inherit;font-weight:600;font-size:.9rem;padding:8px 14px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--muted);cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.tabs button:focus-visible,.navtoggle:focus-visible{outline:2px solid var(--saffron);outline-offset:2px}
+.browser-scroll{overflow-x:auto;padding-bottom:8px}
+.browser{min-width:980px;border-radius:14px;border:1px solid var(--line);background:var(--surface);box-shadow:var(--shadow);overflow:hidden;font-size:13px}
+.chrome{display:flex;align-items:center;gap:10px;padding:9px 14px;background:var(--surface-2);border-bottom:1px solid var(--line)}
+.chrome i{width:10px;height:10px;border-radius:50%;background:var(--line);display:inline-block}
+.chrome .url{flex:1;max-width:420px;margin-left:10px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:4px 10px;font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.admin{display:grid;grid-template-columns:212px minmax(0,1fr);min-height:600px}
+.side{background:var(--surface-2);border-right:1px solid var(--line);padding:16px 12px;display:grid;align-content:start;gap:2px}
+.brand{display:flex;align-items:center;gap:9px;padding:0 6px 14px;font-family:var(--f-display);font-weight:800;font-size:15px}
+.brand i{width:28px;height:28px;border-radius:9px;background:var(--saffron);display:grid;place-items:center;color:var(--on-saffron)}
+.brand i svg{width:15px;height:15px}
+.side h6{margin:12px 8px 4px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.side a{display:flex;justify-content:space-between;align-items:center;padding:7px 9px;border-radius:8px;color:var(--ink);text-decoration:none;font-weight:500}
+.side a.on{background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);font-weight:700}
+.side a em{font-style:normal;font-size:10.5px;font-weight:700;background:var(--saffron);color:var(--on-saffron);border-radius:999px;padding:0 7px}
+.main{display:grid;grid-template-rows:auto 1fr;min-width:0}
+.topbar{display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid var(--line)}
+.scope{display:flex;align-items:center;gap:6px;background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:5px 10px;font-weight:600;font-size:12px}
+.scope span{color:var(--muted);font-weight:500}
+.topbar .grow{flex:1}
+.topbar .q{background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:6px 10px;color:var(--muted);width:240px;font-size:12px}
+.content{padding:20px;display:grid;gap:16px;align-content:start;background:var(--bg)}
+.content h3{font-size:1.25rem}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:grid;gap:4px}
+.kpi span{font-size:11.5px;color:var(--muted);font-weight:600}
+.kpi b{font-family:var(--f-display);font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1}
+.kpi small{font-size:11px;color:var(--muted)}
+.kpi.alert{box-shadow:inset 0 3px 0 var(--warn)}
+.grid2{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:12px}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:grid;gap:10px;align-content:start}
+.box h4{font-size:13.5px;font-weight:700;font-family:var(--f-body)}
+.bars{display:grid;gap:8px}
+.bar{display:grid;grid-template-columns:110px minmax(0,1fr) 44px;gap:10px;align-items:center;font-size:12px}
+.bar .t{height:8px;border-radius:4px;background:var(--surface-2);overflow:hidden}
+.bar .t i{display:block;height:100%;border-radius:4px;background:var(--saffron)}
+.bar .t i.w{background:var(--warn)}
+.bar b{text-align:right;font-variant-numeric:tabular-nums}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;font-weight:600;color:var(--muted);font-size:11px;padding:6px 8px;border-bottom:1px solid var(--line)}
+td{padding:8px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+tr:last-child td{border-bottom:0}
+.alertrow{display:grid;grid-template-columns:8px minmax(0,1fr);gap:10px;font-size:12px;align-items:start}
+.alertrow i{width:8px;height:8px;border-radius:50%;margin-top:5px}
+.queue{display:grid;grid-template-columns:330px minmax(0,1fr);gap:12px}
+.qi{display:grid;grid-template-columns:32px minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px;border-radius:10px;border:1px solid transparent}
+.qi.on{background:var(--surface);border-color:var(--saffron);box-shadow:var(--shadow)}
+.qi .avatar{width:32px;height:32px}
+.qi b{font-size:12.5px}
+.qi small{display:block;color:var(--muted);font-size:11px}
+.review{background:var(--surface);border:1px solid var(--line);border-radius:12px;display:grid;grid-template-rows:auto 1fr auto}
+.review .hd{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px}
+.review .bd{padding:16px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px 22px;align-content:start}
+.dl{display:grid;gap:2px}
+.dl span{font-size:11px;color:var(--muted);font-weight:600}
+.dl b{font-weight:600}
+.docs{grid-column:1/-1;display:flex;gap:10px}
+.doc{width:120px;border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:11px}
+.doc i{display:block;height:70px;background:repeating-linear-gradient(135deg,var(--surface-2) 0 8px,var(--line) 8px 9px)}
+.doc div{padding:6px 8px;display:flex;justify-content:space-between}
+.hist{grid-column:1/-1;border-top:1px dashed var(--line);padding-top:10px;font-size:11.5px;color:var(--muted);display:grid;gap:4px}
+.review .ft{padding:12px 16px;border-top:1px solid var(--line);display:flex;gap:8px;align-items:center;background:var(--surface-2);border-radius:0 0 12px 12px}
+.review .ft .btn{padding:8px 14px;font-size:12px}
+.btn.okb{background:var(--ok);color:var(--surface)}
+.reason{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:7px 10px;color:var(--muted);font-size:12px}
+.cc-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.live{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted)}
+.live::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px var(--ok-soft)}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.ring{display:flex;align-items:center;gap:14px}
+.ring svg{width:84px;height:84px;flex:none}
+.stack{display:flex;height:10px;border-radius:5px;overflow:hidden;background:var(--surface-2)}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:11px;color:var(--muted)}
+.legend i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px}
+.spark text{fill:var(--muted);font-size:10px;font-family:var(--f-body)}
+
+/* Hosting */
+.arch-scroll{overflow-x:auto}
+.arch{min-width:760px;display:grid;grid-template-columns:1fr 1.25fr 1fr;gap:16px;align-items:stretch}
+.col{display:grid;gap:12px;align-content:start}
+.node{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:grid;gap:3px}
+.node b{font-family:var(--f-display);font-size:1rem}
+.node small{color:var(--muted);font-size:.8rem;line-height:1.35}
+.node .mono{font-size:.72rem;color:var(--saffron-ink)}
+.host{border:2px dashed var(--saffron);border-radius:16px;padding:14px;display:grid;gap:10px;background:var(--saffron-soft)}
+.host>span{font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--saffron-ink)}
+.colhead{font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.limits{display:grid;gap:0;margin-top:22px;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.limits div{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:18px;padding:13px 18px;border-bottom:1px solid var(--line);font-size:.93rem}
+.limits div:last-child{border-bottom:0}
+.limits div:first-child{background:var(--surface-2);font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.limits b{font-weight:600}
+.limits span{color:var(--muted)}
+@media (max-width:620px){.limits div{grid-template-columns:1fr;gap:4px}}
+
+/* Roadmap */
+.road{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.ph{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;display:grid;gap:8px;align-content:start}
+.ph .n{font-family:var(--f-mono);font-size:.75rem;color:var(--saffron-ink);font-weight:600}
+.ph ul{margin:0;padding-left:18px;color:var(--muted);font-size:.9rem;display:grid;gap:3px}
+.ph.now{border-color:var(--saffron);box-shadow:inset 0 3px 0 var(--saffron)}
+@media (max-width:900px){.road{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){.road{grid-template-columns:1fr}}
+footer{padding-block:30px 50px;border-top:1px solid var(--line);color:var(--muted);font-size:.85rem}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-qr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v1M14 20h1M18 18h3v3"/></symbol>
+  <symbol id="i-task" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="m8 12 3 3 5-6"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 5-6 8-6s6.5 2 8 6"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24" fill="currentColor"><path d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.6 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.6 3.6a1 1 0 0 1-.25 1z"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+  <symbol id="i-torch" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c2 3 3.5 4.5 3.5 7A3.5 3.5 0 0 1 12 12.5 3.5 3.5 0 0 1 8.5 9C8.5 7 10 5.5 12 2z"/><path d="M9 14h6l-1.5 8h-3z"/></symbol>
+  <symbol id="i-people" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c1-3.5 3.8-5 6.5-5s5.5 1.5 6.5 5M16 4.5a3.5 3.5 0 0 1 0 7M18 15c2 .6 3.2 2.2 3.6 5"/></symbol>
+</svg>
+
+<div class="wrap">
+
+<header class="hero">
+  <div style="display:grid;gap:18px">
+    <p class="eyebrow">Design vision · v0.1 · 3 Nov 2026</p>
+    <h1>ABVP <span>Connect</span></h1>
+    <p class="hi">एक सदस्य · एक पहचान · हर कार्यक्रम</p>
+  </div>
+  <div style="display:grid;gap:16px">
+    <p class="thesis">On event day, every karyakarta should open the app and know in five seconds: where to go, what to do, and whom to report to. Every screen is judged against that.</p>
+    <ul class="journey" aria-label="Core journey">
+      <li><b>1</b>Join</li><li><b>2</b>Verify</li><li><b>3</b>Approve</li><li><b>4</b>Discover</li><li><b>5</b>Register</li><li><b>6</b>Duty</li><li><b>7</b>Check in</li>
+    </ul>
+  </div>
+</header>
+
+<section>
+  <div class="sec-head">
+    <p class="eyebrow">My thoughts on the plan</p>
+    <h2>What I would keep, add and cut</h2>
+    <p class="lede">The two documents are thorough and the flow is right. These are the changes I would make so the product feels simple to a first-year student and stays affordable on Hostinger.</p>
+  </div>
+  <div class="thoughts">
+    <article class="thought"><span class="tag">Keep</span><h3>One app for everyone, role-aware</h3><p>Members, guests, coordinators and check-in volunteers all use the same Flutter app. Extra tools (Scan, Team) appear only when that person holds a role for an event, and disappear after it closes. No separate "volunteer app" to install.</p></article>
+    <article class="thought"><span class="tag add">Add</span><h3>Event-day mode</h3><p>On the day of a registered event, Home turns into a single saffron card: today's duty, reporting point, gate, team lead's call button, and the pass one tap away. Everything else steps back.</p></article>
+    <article class="thought"><span class="tag add">Add</span><h3>Bilingual from day one</h3><p>English plus Hindi at launch, with Telugu and other state languages added as plain translation files. Switching language is on the sign-in screen, not hidden in settings. Fonts chosen here render Devanagari and Latin from one family.</p></article>
+    <article class="thought"><span class="tag add">Add</span><h3>Pass that works with no signal</h3><p>Large venues lose network. The QR pass is cached on the phone as a signed, time-limited token, and scanners queue check-ins offline and sync when back. Members never see a spinner at the gate.</p></article>
+    <article class="thought"><span class="tag add">Add</span><h3>Scope switcher in the admin</h3><p>A person can be District Admin of Hyderabad and Event Coordinator of one conference. The admin top bar always shows the active scope ("Telangana › Hyderabad") and every number on screen follows it. This prevents most "why can I see this?" confusion.</p></article>
+    <article class="thought"><span class="tag cut">Defer</span><h3>Logistics to phase 2</h3><p>Food, accommodation, transport and live location are a second product. Launch with the thin slice: apply → approve → event → register → pass → duty → check-in. Pilot it in one state, then add logistics module by module.</p></article>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <p class="eyebrow">Design system</p>
+    <h2>Saffron for action, ink for everything else</h2>
+    <p class="lede">Saffron is used only where the person must act or look: the primary button, the pass tab, today's card. The rest is quiet ink and grey, so the screen stays calm even with a lot of data. Status always shows as a coloured pill with words, never colour alone.</p>
+  </div>
+  <div class="ds">
+    <div class="panel">
+      <h3>Colour</h3>
+      <div class="swatches">
+        <div class="sw"><i style="background:var(--saffron)"></i><b>Saffron</b><span>Primary action, pass, today</span></div>
+        <div class="sw"><i style="background:var(--ink)"></i><b>Ink</b><span>Text, ID card, selected chips</span></div>
+        <div class="sw"><i style="background:var(--bg)"></i><b>Ground</b><span>App and admin background</span></div>
+        <div class="sw"><i style="background:var(--surface)"></i><b>Surface</b><span>Cards, tables, sheets</span></div>
+        <div class="sw"><i style="background:var(--ok)"></i><b>Approved</b><span>Approved, arrived, done</span></div>
+        <div class="sw"><i style="background:var(--warn)"></i><b>Needs action</b><span>Pending, returned, waitlist</span></div>
+        <div class="sw"><i style="background:var(--bad)"></i><b>Stopped</b><span>Rejected, blocked, full</span></div>
+        <div class="sw"><i style="background:var(--info)"></i><b>Info</b><span>Registered, in progress</span></div>
+      </div>
+      <h3>Type</h3>
+      <div class="typespec">
+        <div><span style="font-family:var(--f-display);font-size:1.6rem;font-weight:700">प्रांत अधिवेशन 2026</span><small>Anek Devanagari · headings</small></div>
+        <div><span>Report at Gate 3 by 8:00 AM. Carry your pass.</span><small>Mukta · body, Hindi + English</small></div>
+        <div><span class="mono">ABVP-TS-HYD-024871</span><small>JetBrains Mono · IDs, codes</small></div>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>Status language</h3>
+      <p class="muted" style="font-size:.9rem">Every status from the specification gets one fixed pill, used identically in the app and in the admin.</p>
+      <div class="statusgrid">
+        <div class="row"><span>Membership</span><div class="pills"><span class="pill p-mute">Draft</span><span class="pill p-info">Submitted</span><span class="pill p-warn">Under review</span><span class="pill p-warn">Needs correction</span><span class="pill p-ok">Approved</span><span class="pill p-bad">Rejected</span></div></div>
+        <div class="row"><span>Registration</span><div class="pills"><span class="pill p-info">Registered</span><span class="pill p-warn">Waitlist</span><span class="pill p-ok">Confirmed</span><span class="pill p-mute">Cancelled</span></div></div>
+        <div class="row"><span>Eligibility</span><div class="pills"><span class="pill p-sf">Open</span><span class="pill p-mute">Not eligible</span><span class="pill p-bad">Full</span><span class="pill p-mute">Closed</span></div></div>
+        <div class="row"><span>Duty</span><div class="pills"><span class="pill p-warn">Assigned</span><span class="pill p-info">Accepted</span><span class="pill p-info">In progress</span><span class="pill p-bad">Blocked</span><span class="pill p-ok">Completed</span></div></div>
+        <div class="row"><span>Arrival</span><div class="pills"><span class="pill p-mute">Expected</span><span class="pill p-ok">Checked in</span></div></div>
+      </div>
+      <h3>Rules</h3>
+      <ul style="margin:0;padding-left:18px;color:var(--muted);font-size:.92rem;display:grid;gap:4px">
+        <li>One primary (saffron) button per screen.</li>
+        <li>Touch targets at least 44 px; body text never below 14 px on phones.</li>
+        <li>Phone numbers are never shown in lists; a call button appears only where the role allows it.</li>
+        <li>Light and dark themes from the same tokens.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <p class="eyebrow">Mobile app · Flutter · Android and iOS</p>
+    <h2>Seven screens that carry the whole journey</h2>
+    <p class="lede">Bottom navigation has five places: Home, Events, Pass, Duties, Me. Pass sits in the middle and raised, because at the gate it is the only thing that matters. Scroll sideways to see all screens.</p>
+  </div>
+  <div class="film" tabindex="0" aria-label="Mobile screen concepts">
+    <div class="film-inner">
+
+      <figure class="shot">
+        <div class="phone"><div class="screen">
+          <div class="sbar"><span>9:41</span><span>▮▮▮</span></div>
+          <div class="scr" style="gap:14px;padding-top:24px">
+            <div class="row2"><div class="logo"><svg><use href="#i-torch"/></svg></div><div class="lang"><span class="on">EN</span><span>हिं</span><span>తె</span></div></div>
+            <div style="display:grid;gap:4px"><h4 style="font-size:21px;font-weight:800">Welcome to<br>ABVP Connect</h4><p class="muted">Sign in with your mobile number. New here? You can apply after verifying.</p></div>
+            <div class="field"><label>Mobile number</label><div class="mono">+91 98480 12345</div></div>
+            <div class="field"><label>Enter the 6-digit code sent by SMS</label><div class="otp" style="background:none;border:0;padding:0"><span>4</span><span>7</span><span>2</span><span>9</span><span class="f"></span><span></span></div></div>
+            <p class="small muted">Resend code in 0:24</p>
+            <div class="sticky"><div class="btn pri">Verify and continue</div><p class="small muted" style="text-align:center">Have an event invitation? <b style="color:var(--saffron-ink)">Continue as guest</b></p></div>
+          </div>
+        </div></div>
+        <figcaption><b>1 · Sign in</b><span>OTP only, no passwords. Language choice up front. Guests take a separate, lighter path.</span></figcaption>
+      </figure>
+
+      <figure class="shot">
+        <div class="phone"><div class="screen">
+          <div class="sbar"><span>9:41</span><span>▮▮▮</span></div>
+          <div class="scr">
+            <div class="apphead"><h4>Application</h4><span class="pill p-warn">Needs correction</span></div>
+            <div class="note"><b>Returned by District Admin, Hyderabad</b><br>Your photo is unclear. Please upload a clear front-facing photo.</div>
+            <div class="btn pri">Fix and resubmit</div>
+            <div class="card steps" style="padding-top:14px">
+              <div class="step"><span class="dot">✓</span><div><b>Mobile verified</b><div class="small muted">28 Oct, 6:10 PM</div></div></div>
+              <div class="step"><span class="dot">✓</span><div><b>Application submitted</b><div class="small muted">28 Oct · Telangana › Hyderabad</div></div></div>
+              <div class="step"><span class="dot cur">!</span><div><b>Returned for correction</b><div class="small muted">1 Nov · Photo unclear</div></div></div>
+              <div class="step"><span class="dot todo"></span><div><b class="muted">Approval and Member ID</b><div class="small muted">Usually within 7 days</div></div></div>
+            </div>
+            <p class="small muted">Questions? <b style="color:var(--ink)">Contact Hyderabad district office</b></p>
+          </div>
+        </div></div>
+        <figcaption><b>2 · Application status</b><span>The applicant always sees where they stand, who has it, and exactly what to fix.</span></figcaption>
+      </figure>
+
+      <figure class="shot">
+        <div class="phone"><div class="screen">
+          <div class="sbar"><span>7:12</span><span>▮▮▮</span></div>
+          <div class="scr">
+            <div class="apphead"><div><p class="small muted">नमस्ते</p><h4>Ravi Kumar</h4></div><div class="avatar">RK</div></div>
+            <div class="today">
+              <span class="small" style="font-weight:700;letter-spacing:.08em">TODAY · STATE CONFERENCE · DAY 2</span>
+              <b>Registration Desk · Gate 3</b>
+              <span class="small">Report by 8:00 AM to Srinivas R. (Team lead)</span>
+              <div style="display:flex;gap:6px;margin-top:6px"><span class="chip" style="background:var(--on-saffron);color:var(--saffron-ink);border:0;font-weight:700">Show pass</span><span class="chip" style="background:transparent;color:var(--on-saffron);border-color:var(--on-saffron)">Directions</span></div>
+            </div>
+            <div class="idcard">
+              <span class="lbl">Member ID</span>
+              <span class="mono" style="font-size:13px">ABVP-TS-HYD-024871</span>
+              <div class="row"><div><span class="lbl">District</span><div>Hyderabad</div></div><div><span class="lbl">Vibhag</span><div>SFD, Think India</div></div></div>
+            </div>
+            <div class="row2"><b>Upcoming</b><span class="small" style="color:var(--saffron-ink);font-weight:600">See all</span></div>
+            <div class="card ev"><div class="date"><b>22</b><span>Nov</span></div><div><h5>Campus Sampark Abhiyan</h5><div class="small muted">Osmania University</div></div></div>
+          </div>
+          <div class="tabbar">
+            <div class="on"><svg><use href="#i-home"/></svg>Home</div><div><svg><use href="#i-cal"/></svg>Events</div><div class="pass"><i><svg><use href="#i-qr"/></svg></i><span>Pass</span></div><div><svg><use href="#i-task"/></svg>Duties</div><div><svg><use href="#i-user"/></svg>Me</div>
+          </div>
+        </div></div>
+        <figcaption><b>3 · Home in event-day mode</b><span>Today's duty first, identity second, everything else below. On normal days the saffron card shows announcements instead.</span></figcaption>
+      </figure>
+
+      <figure class="shot">
+        <div class="phone"><div class="screen">
+          <div class="sbar"><span>9:41</span><span>▮▮▮</span></div>
+          <div class="scr">
+            <div class="apphead"><h4>Events</h4></div>
+            <div class="search"><svg><use href="#i-search"/></svg>Search events, places</div>
+            <div class="chips"><span class="chip on">For me</span><span class="chip">Telangana</span><span class="chip">This month</span><span class="chip">SFD</span></div>
+            <div class="card ev"><div class="date"><b>14</b><span>Dec</span></div><div style="display:grid;gap:4px"><h5>Telangana Pranth Adhiveshan</h5><div class="small muted">Warangal · 3 days</div><span class="pill p-info" style="justify-self:start">Registered</span></div></div>
+            <div class="card ev"><div class="date"><b>22</b><span>Nov</span></div><div style="display:grid;gap:4px"><h5>Campus Sampark Abhiyan</h5><div class="small muted">Osmania University</div><span class="pill p-sf" style="justify-self:start">Open · closes 18 Nov</span></div></div>
+            <div class="card ev"><div class="date"><b>29</b><span>Nov</span></div><div style="display:grid;gap:4px"><h5>Think India Policy Dialogue</h5><div class="small muted">Hyderabad · 180 seats</div><span class="pill p-bad" style="justify-self:start">Full · join waitlist</span></div></div>
+            <div class="card ev" style="opacity:.75"><div class="date"><b>06</b><span>Dec</span></div><div style="display:grid;gap:4px"><h5>Karimnagar Zilla Abhyas Varg</h5><div class="small muted">For Karimnagar district</div><span class="pill p-mute" style="justify-self:start">Not eligible</span></div></div>
+          </div>
+          <div class="tabbar">
+            <div><svg><use href="#i-home"/></svg>Home</div><div class="on"><svg><use href="#i-cal"/></svg>Events</div><div class="pass"><i><svg><use href="#i-qr"/></svg></i><span>Pass</span></div><div><svg><use href="#i-task"/></svg>Duties</div><div><svg><use href="#i-user"/></svg>Me</div>
+          </div>
+        </div></div>
+        <figcaption><b>4 · Events</b><span>Every published event is visible. The pill tells the member, before tapping, whether they can register.</span></figcaption>
+      </figure>
+
+      <figure class="shot">
+        <div class="phone"><div class="screen">
+          <div class="sbar" style="background:var(--ink);color:var(--bg)"><span>9:41</span><span>▮▮▮</span></div>
+          <div class="scr">
+            <div class="cover"><b>Campus Sampark Abhiyan</b></div>
+            <div class="kv"><svg><use href="#i-clock"/></svg><div><b>Sat, 22 Nov · 9:00 AM – 4:00 PM</b><div class="small muted">Registration closes 18 Nov</div></div></div>
+            <div class="kv"><svg><use href="#i-pin"/></svg><div><b>Arts College, Osmania University</b><div class="small muted">Tarnaka, Hyderabad · Open map</div></div></div>
+            <div class="kv"><svg><use href="#i-people"/></svg><div><b>132 of 400 registered</b><div class="small muted">Organised by Hyderabad district</div></div></div>
+            <div class="check"><svg><use href="#i-ok"/></svg><span>You can register. Open to all approved members in Telangana.</span></div>
+            <p class="small muted">Bring your college ID. Volunteers will be assigned duties after registration closes.</p>
+            <div class="sticky"><div class="btn pri">Register for this event</div></div>
+          </div>
+        </div></div>
+        <figcaption><b>5 · Event details</b><span>Eligibility is answered in plain words above the button. When not eligible, the button is replaced by the reason.</span></figcaption>
+      </figure>
+
+      <figure class="shot">
+        <div class="phone"><div class="screen">
+          <div class="sbar"><span>7:58</span><span>▮▮▮</span></div>
+          <div class="scr" style="align-content:start">
+            <div class="apphead"><h4>My pass</h4><span class="pill p-ok">Works offline</span></div>
+            <div class="qrbox"><canvas id="qr" width="29" height="29" aria-label="Sample QR pass"></canvas><span class="mono">ABVP-TS-HYD-024871</span></div>
+            <div class="card" style="text-align:center;gap:2px"><b style="font-family:var(--f-display);font-size:14px">Telangana Pranth Adhiveshan</b><span class="small muted">Day 2 · Member · Gate 3</span></div>
+            <div class="check" style="justify-content:center"><svg><use href="#i-ok"/></svg><span>Checked in at 7:52 AM</span></div>
+            <p class="small muted" style="text-align:center">Screen brightness is raised while this is open. The code changes daily and cannot be reused from a screenshot.</p>
+          </div>
+          <div class="tabbar">
+            <div><svg><use href="#i-home"/></svg>Home</div><div><svg><use href="#i-cal"/></svg>Events</div><div class="pass"><i><svg><use href="#i-qr"/></svg></i><span>Pass</span></div><div><svg><use href="#i-task"/></svg>Duties</div><div><svg><use href="#i-user"/></svg>Me</div>
+          </div>
+        </div></div>
+        <figcaption><b>6 · Pass</b><span>One code, cached on the phone, no personal data inside it. Guests get the same screen with a "Guest" label.</span></figcaption>
+      </figure>
+
+      <figure class="shot">
+        <div class="phone"><div class="screen">
+          <div class="sbar"><span>9:41</span><span>▮▮▮</span></div>
+          <div class="scr">
+            <div class="apphead"><h4>My duties</h4><span class="small muted">2 this event</span></div>
+            <div class="card duty">
+              <div class="row2"><b>Registration Desk</b><span class="pill p-warn">Assigned</span></div>
+              <div class="kv"><svg><use href="#i-clock"/></svg><span>14 Dec · 7:30 AM – 12:00 PM</span></div>
+              <div class="kv"><svg><use href="#i-pin"/></svg><span>Gate 3, Main Ground, Warangal</span></div>
+              <p class="small muted">Verify passes, guide guests to the guest desk, record walk-ins for the coordinator.</p>
+              <div class="lead"><div class="avatar">SR</div><div><b style="font-size:11.5px">Srinivas R.</b><div class="small muted">Team lead · Registration</div></div><span class="callbtn"><svg><use href="#i-phone"/></svg></span></div>
+              <div class="btnrow"><div class="btn pri">I'll do this</div><div class="btn sec">Can't make it</div></div>
+            </div>
+            <div class="card duty" style="border-left-color:var(--ok)">
+              <div class="row2"><b>Stage Support</b><span class="pill p-ok">Completed</span></div>
+              <span class="small muted">13 Dec · 4:00 PM · Main stage</span>
+            </div>
+          </div>
+          <div class="tabbar">
+            <div><svg><use href="#i-home"/></svg>Home</div><div><svg><use href="#i-cal"/></svg>Events</div><div class="pass"><i><svg><use href="#i-qr"/></svg></i><span>Pass</span></div><div class="on"><svg><use href="#i-task"/></svg>Duties</div><div><svg><use href="#i-user"/></svg>Me</div>
+          </div>
+        </div></div>
+        <figcaption><b>7 · Duties</b><span>When, where, whom to report to, in that order. Acknowledge in one tap; "Can't make it" asks for a reason and alerts the coordinator.</span></figcaption>
+      </figure>
+
+    </div>
+  </div>
+
+  <div class="navmap" style="margin-top:30px">
+    <div class="panel">
+      <h3>App navigation</h3>
+      <div class="navlist">
+        <div><b>Home</b><span>Today card, member ID, upcoming events, announcements</span></div>
+        <div><b>Events</b><span>Browse, filter, register, my registrations, waitlist</span></div>
+        <div><b>Pass</b><span>Event QR (or member QR when no event is active)</span></div>
+        <div><b>Duties</b><span>Assigned duties, acknowledge, report done or problem</span></div>
+        <div><b>Me</b><span>Profile, documents, Vibhags, language, notifications, help</span></div>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>Role tools inside the same app</h3>
+      <div class="navlist">
+        <div><b>Scan</b><span>Check-in volunteers: scan pass, see name and photo, mark arrived. Works offline, syncs later.</span></div>
+        <div><b>Team</b><span>Team leads: see their team, mark duties in progress, done or blocked.</span></div>
+        <div><b>Guest</b><span>Guests: invitation, pass, venue and contact only. No member features.</span></div>
+        <div><b>Approve</b><span>District admins on the move: a simple approvals list. Full review stays in the web admin.</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <p class="eyebrow">Web admin · React, built as static files</p>
+    <h2>An admin panel that only shows your scope</h2>
+    <p class="lede">A fixed left sidebar, a scope switcher at the top, and content below. The panel is designed for a district office laptop at 1366 px. Switch between three key screens.</p>
+  </div>
+  <div class="tabs" role="tablist" aria-label="Admin screens">
+    <button role="tab" id="t-dash" aria-controls="v-dash" aria-selected="true">Dashboard</button>
+    <button role="tab" id="t-appr" aria-controls="v-appr" aria-selected="false">Membership approvals</button>
+    <button role="tab" id="t-cc" aria-controls="v-cc" aria-selected="false">Event command centre</button>
+  </div>
+
+  <div class="browser-scroll">
+  <div class="browser">
+    <div class="chrome"><i></i><i></i><i></i><span class="url" id="url">admin.abvpconnect.in/dashboard</span></div>
+    <div class="admin">
+      <aside class="side">
+        <div class="brand"><i><svg><use href="#i-torch"/></svg></i>ABVP Connect</div>
+        <a href="#" class="on" data-nav="dash" onclick="return false">Dashboard</a>
+        <h6>Membership</h6>
+        <a href="#" data-nav="appr" onclick="return false">Approvals <em>312</em></a>
+        <a href="#" onclick="return false">Members</a>
+        <h6>Events</h6>
+        <a href="#" onclick="return false">All events</a>
+        <a href="#" data-nav="cc" onclick="return false">Command centre</a>
+        <a href="#" onclick="return false">Duties and teams</a>
+        <a href="#" onclick="return false">Attendance</a>
+        <h6>Organisation</h6>
+        <a href="#" onclick="return false">Units and Vibhags</a>
+        <a href="#" onclick="return false">Admins and roles</a>
+        <h6>Insights</h6>
+        <a href="#" onclick="return false">Reports</a>
+        <a href="#" onclick="return false">Audit log</a>
+      </aside>
+      <div class="main">
+        <div class="topbar">
+          <div class="scope"><span>Scope</span> Telangana › Hyderabad ▾</div>
+          <span class="pill p-mute">District Admin</span>
+          <div class="grow"></div>
+          <div class="q">Search member ID, name, event</div>
+          <div class="avatar">PR</div>
+        </div>
+
+        <!-- Dashboard -->
+        <div class="content" id="v-dash" role="tabpanel" aria-labelledby="t-dash">
+          <div class="row2"><h3>Good morning, Pranay</h3><span class="muted" style="font-size:12px">Hyderabad district · Tue, 3 Nov 2026</span></div>
+          <div class="kpis">
+            <div class="kpi"><span>Approved members</span><b>48,210</b><small>+1,126 this month</small></div>
+            <div class="kpi alert"><span>Waiting for approval</span><b>312</b><small style="color:var(--warn);font-weight:600">41 waiting over 7 days</small></div>
+            <div class="kpi"><span>Active events</span><b>6</b><small>2 registrations closing this week</small></div>
+            <div class="kpi"><span>Duties not acknowledged</span><b>87</b><small>Across 3 events</small></div>
+          </div>
+          <div class="grid2">
+            <div class="box">
+              <div class="row2"><h4>Pending approvals by unit</h4><span class="muted" style="font-size:11px">Oldest first in queue</span></div>
+              <div class="bars">
+                <div class="bar"><span>Secunderabad</span><div class="t"><i class="w" style="width:92%"></i></div><b>96</b></div>
+                <div class="bar"><span>Osmania Univ.</span><div class="t"><i style="width:71%"></i></div><b>74</b></div>
+                <div class="bar"><span>Kukatpally</span><div class="t"><i style="width:53%"></i></div><b>55</b></div>
+                <div class="bar"><span>LB Nagar</span><div class="t"><i style="width:41%"></i></div><b>43</b></div>
+                <div class="bar"><span>Charminar</span><div class="t"><i style="width:42%"></i></div><b>44</b></div>
+              </div>
+              <h4 style="margin-top:6px">Upcoming events</h4>
+              <table>
+                <thead><tr><th>Event</th><th>Date</th><th>Registered</th><th>Status</th></tr></thead>
+                <tbody>
+                  <tr><td>Campus Sampark Abhiyan</td><td>22 Nov</td><td>132 / 400</td><td><span class="pill p-sf">Open</span></td></tr>
+                  <tr><td>Think India Policy Dialogue</td><td>29 Nov</td><td>180 / 180</td><td><span class="pill p-bad">Full</span></td></tr>
+                  <tr><td>Telangana Pranth Adhiveshan</td><td>14 Dec</td><td>2,940</td><td><span class="pill p-info">Published</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="box">
+              <h4>Needs your attention</h4>
+              <div class="alertrow"><i style="background:var(--warn)"></i><div><b>41 applications older than 7 days</b><div class="muted">Mostly Secunderabad. Assign a second verifier?</div></div></div>
+              <div class="alertrow"><i style="background:var(--bad)"></i><div><b>Gate 2 has no check-in volunteer</b><div class="muted">Pranth Adhiveshan, Day 1, 7:00 AM</div></div></div>
+              <div class="alertrow"><i style="background:var(--warn)"></i><div><b>14 duty conflicts</b><div class="muted">Same person on two overlapping duties</div></div></div>
+              <div class="alertrow"><i style="background:var(--info)"></i><div><b>Venue changed for Campus Sampark</b><div class="muted">132 registrants will be notified when you publish</div></div></div>
+              <h4 style="margin-top:6px">Recent actions</h4>
+              <div class="hist" style="border:0;padding:0"><span>10:42 · Kiran M. approved 12 applications</span><span>10:15 · You returned 2 applications for correction</span><span>09:58 · Duty list imported for Pranth Adhiveshan</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Approvals -->
+        <div class="content" id="v-appr" role="tabpanel" aria-labelledby="t-appr" hidden>
+          <div class="row2"><h3>Membership approvals</h3><div class="pills"><span class="chip on">Waiting · 312</span><span class="chip">Returned · 18</span><span class="chip">Decided today · 46</span></div></div>
+          <div class="queue">
+            <div class="box" style="padding:8px;gap:4px">
+              <div class="qi on"><div class="avatar">AN</div><div><b>Anusha Naidu</b><small>Osmania Univ. · 9 days</small></div><span class="pill p-warn">Review</span></div>
+              <div class="qi"><div class="avatar">MS</div><div><b>Mohammed Sameer</b><small>Secunderabad · 8 days</small></div><span class="pill p-warn">Review</span></div>
+              <div class="qi"><div class="avatar">VK</div><div><b>Vamshi Krishna</b><small>Kukatpally · 6 days</small></div><span class="pill p-info">New</span></div>
+              <div class="qi"><div class="avatar">SP</div><div><b>Sneha Patil</b><small>LB Nagar · 5 days</small></div><span class="pill p-info">Resubmitted</span></div>
+              <div class="qi"><div class="avatar">RT</div><div><b>Rahul Tiwari</b><small>Charminar · 4 days</small></div><span class="pill p-info">New</span></div>
+              <div class="qi"><div class="avatar">LD</div><div><b>Lakshmi Devi</b><small>Osmania Univ. · 3 days</small></div><span class="pill p-info">New</span></div>
+            </div>
+            <div class="review">
+              <div class="hd"><div class="avatar" style="width:42px;height:42px">AN</div><div><b style="font-size:15px">Anusha Naidu</b><div class="muted" style="font-size:11.5px">Applied 25 Oct · Mobile verified</div></div><div style="margin-left:auto"><span class="pill p-warn">Under review</span></div></div>
+              <div class="bd">
+                <div class="dl"><span>Mobile</span><b class="mono">+91 99xxx xx214</b></div>
+                <div class="dl"><span>Date of birth</span><b>14 Mar 2005</b></div>
+                <div class="dl"><span>State › District › Unit</span><b>Telangana › Hyderabad › Osmania Univ.</b></div>
+                <div class="dl"><span>Institution</span><b>University College for Women, Koti · B.Sc 2nd yr</b></div>
+                <div class="dl"><span>Vibhags requested</span><b>SFD, Think India</b></div>
+                <div class="dl"><span>Referred by</span><b>Kiran M. (ABVP-TS-HYD-011902)</b></div>
+                <div class="docs"><div class="doc"><i></i><div><b>Photo</b><span class="muted">✓</span></div></div><div class="doc"><i></i><div><b>College ID</b><span class="muted">✓</span></div></div></div>
+                <div class="hist"><b style="color:var(--ink)">History</b><span>25 Oct 18:22 · Submitted by applicant</span><span>26 Oct 09:10 · Routed to Hyderabad district queue</span></div>
+              </div>
+              <div class="ft"><div class="btn okb">Approve</div><div class="btn sec">Return for correction</div><div class="btn ghost">Reject</div><div class="reason">Note to applicant (required to return or reject)</div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Command centre -->
+        <div class="content" id="v-cc" role="tabpanel" aria-labelledby="t-cc" hidden>
+          <div class="cc-head"><h3>Telangana Pranth Adhiveshan · Day 2</h3><span class="pill p-ok">Live</span><span class="live">Updated 12 s ago</span><div style="flex:1"></div><div class="btn sec" style="padding:6px 12px;font-size:12px">Send announcement</div></div>
+          <div class="kpis">
+            <div class="kpi"><span>Checked in</span><b>2,318</b><small>of 2,940 registered · 79%</small></div>
+            <div class="kpi"><span>Guests arrived</span><b>46</b><small>of 58 invited</small></div>
+            <div class="kpi alert"><span>Duties blocked</span><b>3</b><small style="color:var(--warn);font-weight:600">Parking, Hall B, Water</small></div>
+            <div class="kpi"><span>Help requests open</span><b>9</b><small>Avg. reply 6 min</small></div>
+          </div>
+          <div class="grid3">
+            <div class="box">
+              <h4>Arrivals per 30 minutes</h4>
+              <svg class="spark" viewBox="0 0 300 120" width="100%" role="img" aria-label="Arrivals peaked at 8:00 to 8:30 with 812 check-ins">
+                <g stroke="var(--line)" stroke-width="1"><line x1="20" y1="20" x2="295" y2="20"/><line x1="20" y1="60" x2="295" y2="60"/><line x1="20" y1="100" x2="295" y2="100"/></g>
+                <text x="0" y="23">800</text><text x="0" y="63">400</text><text x="8" y="103">0</text>
+                <path d="M30 100 L75 86 L120 46 L165 20 L210 52 L255 82 L290 92 L290 100 Z" fill="var(--saffron-soft)"/>
+                <path d="M30 100 L75 86 L120 46 L165 20 L210 52 L255 82 L290 92" fill="none" stroke="var(--saffron)" stroke-width="2.2"/>
+                <circle cx="165" cy="20" r="4" fill="var(--saffron)"/>
+                <text x="30" y="117">7:00</text><text x="150" y="117">8:30</text><text x="262" y="117">10:00</text>
+              </svg>
+            </div>
+            <div class="box">
+              <h4>Duties</h4>
+              <div class="stack"><i style="width:58%;background:var(--ok)"></i><i style="width:27%;background:var(--info)"></i><i style="width:12%;background:var(--warn)"></i><i style="width:3%;background:var(--bad)"></i></div>
+              <div class="legend"><span><i style="background:var(--ok)"></i>Done 214</span><span><i style="background:var(--info)"></i>In progress 98</span><span><i style="background:var(--warn)"></i>Not acknowledged 44</span><span><i style="background:var(--bad)"></i>Blocked 3</span></div>
+              <table><tbody>
+                <tr><td>Registration</td><td style="text-align:right">36/40</td></tr>
+                <tr><td>Hospitality</td><td style="text-align:right">52/60</td></tr>
+                <tr><td>Stage and sound</td><td style="text-align:right">18/18</td></tr>
+              </tbody></table>
+            </div>
+            <div class="box">
+              <h4>Gates</h4>
+              <div class="bars">
+                <div class="bar" style="grid-template-columns:60px minmax(0,1fr) 44px"><span>Gate 1</span><div class="t"><i style="width:88%"></i></div><b>1,034</b></div>
+                <div class="bar" style="grid-template-columns:60px minmax(0,1fr) 44px"><span>Gate 2</span><div class="t"><i style="width:31%"></i></div><b>362</b></div>
+                <div class="bar" style="grid-template-columns:60px minmax(0,1fr) 44px"><span>Gate 3</span><div class="t"><i style="width:79%"></i></div><b>922</b></div>
+              </div>
+              <h4>Exceptions</h4>
+              <div class="alertrow"><i style="background:var(--warn)"></i><div><b>17 walk-ins not on list</b><div class="muted">Waiting for coordinator decision</div></div></div>
+              <div class="alertrow"><i style="background:var(--bad)"></i><div><b>Gate 2 scanner offline 11 min</b><div class="muted">212 check-ins queued on device</div></div></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <p class="eyebrow">Running on Hostinger shared hosting</p>
+    <h2>Designed to fit the hosting you already have</h2>
+    <p class="lede">Shared hosting runs PHP well and nothing long-running. So the API is Laravel, the admin is a static React build, background work runs from cron in small batches, and live screens refresh by polling. Nothing in the design depends on a server that stays awake.</p>
+  </div>
+  <div class="arch-scroll">
+  <div class="arch">
+    <div class="col">
+      <span class="colhead">People use</span>
+      <div class="node"><b>Flutter app</b><small>Android and iOS. Caches pass, duties and event details for offline use.</small></div>
+      <div class="node"><b>Admin panel</b><span class="mono">admin.abvpconnect.in</span><small>Static React files, no Node server needed.</small></div>
+      <div class="node"><b>Public website</b><span class="mono">abvpconnect.in</span><small>Download links, event pages, guest invitation links.</small></div>
+    </div>
+    <div class="host">
+      <span>Hostinger shared plan</span>
+      <div class="node"><b>Laravel API</b><span class="mono">api.abvpconnect.in → /public only</span><small>REST <span class="mono">/api/v1</span>, roles and scopes checked on every request, audit log.</small></div>
+      <div class="node"><b>MySQL (Hostinger, same server)</b><small>My suggestion for the pilot: no outbound-connection risk and nothing extra to pay. Move to managed PostgreSQL or MySQL when you scale.</small></div>
+      <div class="node"><b>Cron, every minute</b><span class="mono">schedule:run · queue:work --stop-when-empty</span><small>Sends push and SMS in batches, builds report exports, expires passes.</small></div>
+    </div>
+    <div class="col">
+      <span class="colhead">Outside services</span>
+      <div class="node"><b>DigitalOcean Spaces</b><small>Photos and documents. Private files through short-lived signed links.</small></div>
+      <div class="node"><b>SMS OTP provider</b><small>DLT-registered Indian sender, for example MSG91.</small></div>
+      <div class="node"><b>Firebase Cloud Messaging</b><small>Push notifications, free tier.</small></div>
+      <div class="node"><b>Maps</b><small>Open in Google Maps by link. No paid map SDK in phase 1.</small></div>
+    </div>
+  </div>
+  </div>
+
+  <div class="limits">
+    <div><span>Shared hosting limit</span><span>How the design responds</span></div>
+    <div><b>No WebSockets or always-on processes</b><span>Command centre polls every 15–20 s and shows "Updated 12 s ago" so nobody expects instant updates.</span></div>
+    <div><b>CPU and memory caps, traffic spikes</b><span>Pass check-ins go through one small endpoint; scanners batch offline check-ins. Event lists are cached as JSON for 60 s.</span></div>
+    <div><b>Limited disk and slow uploads</b><span>Photos are resized on the phone to under 300 KB before upload, and stored on Spaces, not Hostinger.</span></div>
+    <div><b>Cron runs at most every minute</b><span>Notifications say "within a few minutes"; OTP SMS is sent directly in the request, not queued.</span></div>
+    <div><b>When to move off</b><span>Before the first multi-state event with more than about 5,000 people on one day, move the API to a Hostinger VPS. The code does not change.</span></div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <p class="eyebrow">Delivery</p>
+    <h2>Ship the thin slice first</h2>
+  </div>
+  <div class="road">
+    <div class="ph now"><span class="n">Phase 1 · pilot</span><h3>Members</h3><ul><li>OTP sign-in, apply, status</li><li>District approval queue</li><li>Member ID and QR</li><li>Admin shell with scopes</li></ul></div>
+    <div class="ph"><span class="n">Phase 2</span><h3>Events</h3><ul><li>Create, publish, eligibility</li><li>Register, waitlist</li><li>Event pass and gate scanning</li><li>Guests</li></ul></div>
+    <div class="ph"><span class="n">Phase 3</span><h3>Operations</h3><ul><li>Teams and duties</li><li>Command centre</li><li>Announcements and help requests</li><li>Reports</li></ul></div>
+    <div class="ph"><span class="n">Phase 4</span><h3>Logistics</h3><ul><li>Travel and arrivals</li><li>Stay, food, transport</li><li>Consent-based live location</li><li>Move to VPS if needed</li></ul></div>
+  </div>
+</section>
+
+<footer>
+  Concept screens for discussion. Names, member IDs, counts and events shown are examples, not real records. Official ABVP logo, colours and wording need sign-off from the organisation before build.
+</footer>
+</div>
+
+<script>
+// Tabs for admin views
+(function(){
+  var urls={dash:"admin.abvpconnect.in/dashboard",appr:"admin.abvpconnect.in/membership/approvals",cc:"admin.abvpconnect.in/events/pranth-adhiveshan-2026/live"};
+  var tabs=document.querySelectorAll('[role="tab"]');
+  function show(key){
+    tabs.forEach(function(t){var k=t.id.slice(2);var on=k===key;t.setAttribute('aria-selected',on);document.getElementById('v-'+k).hidden=!on;});
+    document.querySelectorAll('.side a').forEach(function(a){a.classList.toggle('on',a.dataset.nav===key);});
+    document.getElementById('url').textContent=urls[key];
+  }
+  tabs.forEach(function(t){t.addEventListener('click',function(){show(t.id.slice(2));});});
+  document.querySelectorAll('.side a[data-nav]').forEach(function(a){a.addEventListener('click',function(){show(a.dataset.nav);});});
+})();
+// Decorative QR-like pattern (not a real code)
+(function(){
+  var c=document.getElementById('qr');if(!c)return;var x=c.getContext('2d'),n=29;
+  x.fillStyle='#fff';x.fillRect(0,0,n,n);x.fillStyle='#171A2E';
+  var s=24871;function r(){s=(s*1103515245+12345)&0x7fffffff;return s/0x7fffffff;}
+  function finder(a,b){x.fillRect(a,b,7,7);x.fillStyle='#fff';x.fillRect(a+1,b+1,5,5);x.fillStyle='#171A2E';x.fillRect(a+2,b+2,3,3);}
+  for(var i=0;i<n;i++)for(var j=0;j<n;j++){var inF=(i<8&&j<8)||(i>n-9&&j<8)||(i<8&&j>n-9);if(!inF&&r()>.52)x.fillRect(i,j,1,1);}
+  finder(0,0);finder(n-7,0);finder(0,n-7);
+  x.fillStyle='#E3620C';x.fillRect(12,12,5,5);x.fillStyle='#fff';x.fillRect(13,13,3,3);
+})();
+</script>
