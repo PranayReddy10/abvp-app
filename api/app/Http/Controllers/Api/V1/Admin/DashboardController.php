@@ -7,6 +7,7 @@ use App\Models\ApplicationEvent;
 use App\Models\MemberProfile;
 use App\Models\MembershipApplication as Application;
 use App\Models\OrgUnit;
+use App\Models\Post;
 use App\Services\AccessControl;
 use Illuminate\Http\Request;
 
@@ -54,6 +55,10 @@ class DashboardController extends Controller
             'decided_today' => $apps()->whereIn('status', [Application::APPROVED, Application::REJECTED, Application::MORE_INFO])->where('decided_at', '>=', now()->startOfDay())->count(),
             'pending_by_unit' => $byUnit,
             'recent_decisions' => $recent,
+            'reported_posts' => $access->can($user, 'feed.moderate')
+                ? Post::whereIn('user_id', $access->scopeQuery(MemberProfile::query(), $user, 'feed.moderate')->select('user_id'))
+                    ->where('reports_count', '>', 0)->whereNull('reviewed_at')->count()
+                : 0,
         ]);
     }
 }

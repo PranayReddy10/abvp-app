@@ -5,14 +5,17 @@ import '../state/session.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/format.dart';
+import '../widgets/kit.dart';
 import '../widgets/loader.dart';
 import '../widgets/motion.dart';
 import 'circulars_screen.dart';
 import 'directory_screen.dart';
 import 'duties_screen.dart';
+import 'events_screen.dart';
 import 'meeting_screen.dart';
 import 'notifications_screen.dart';
 import 'report_activity_screen.dart';
+import 'vibhags_screen.dart';
 
 class _HomeData {
   _HomeData(
@@ -22,10 +25,12 @@ class _HomeData {
     this.unreadNotifications,
     this.duties,
     this.passes,
+    this.events,
   );
   final List<Map<String, dynamic>> duties;
   final List<Map<String, dynamic>> passes;
   final List<Map<String, dynamic>> meetings;
+  final List<Map<String, dynamic>> events;
   final int unreadCirculars;
   final List<Map<String, dynamic>> actionItems;
   final int unreadNotifications;
@@ -37,10 +42,12 @@ class HomeScreen extends StatefulWidget {
     required this.session,
     required this.onShowPass,
     required this.onOpenCalendar,
+    this.onOpenFeed,
   });
   final Session session;
   final VoidCallback onShowPass;
   final VoidCallback onOpenCalendar;
+  final VoidCallback? onOpenFeed;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -58,6 +65,7 @@ class _HomeScreenState extends State<HomeScreen> {
       api.getWithMeta('/notifications'),
       api.get('/me/duties'),
       api.get('/me/passes'),
+      api.get('/events?when=upcoming'),
     ]);
     await widget.session.refresh();
     return _HomeData(
@@ -73,6 +81,10 @@ class _HomeScreenState extends State<HomeScreen> {
       ((results[3] as Map)['meta']['unread'] as int?) ?? 0,
       (results[4] as List).cast<Map<String, dynamic>>(),
       (results[5] as List).cast<Map<String, dynamic>>(),
+      (results[6] as List)
+          .cast<Map<String, dynamic>>()
+          .where((e) => e['status'] != 'cancelled')
+          .toList(),
     );
   }
 
@@ -84,249 +96,428 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final p = widget.session.me!.profile!;
-    final text = Theme.of(context).textTheme;
+    final first = p.fullName.split(' ').first;
 
     return SafeArea(
+      bottom: false,
       child: Loader<_HomeData>(
         key: _key,
         load: _load,
         builder: (context, d, reload) {
           final next = d.meetings.isEmpty ? null : d.meetings.first;
-          final soon =
-              next != null &&
-              DateTime.parse(next['starts_at'] as String)
-                      .difference(DateTime.now())
-                      .inHours <
-                  24;
-          return ListView(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-            children: staggered([
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('नमस्ते', style: text.bodySmall),
-                        NameWithBadge(
-                          p.fullName,
-                          verified: p.verified,
-                          style: text.headlineSmall,
-                          badgeSize: 20,
+          return RefreshIndicator(
+            onRefresh: reload,
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 120),
+              children: staggered([
+                // Top bar: avatar, area pill, bell.
+                Row(
+                  children: [
+                    Initials(p.fullName, photoUrl: p.photoUrl, size: 50),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Container(
+                          padding: const EdgeInsets.fromLTRB(10, 9, 14, 9),
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.place_rounded,
+                                size: 18,
+                                color: AppColors.saffron,
+                              ),
+                              const SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                  (p.orgUnitLabel ?? '').split('›').last.trim(),
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ],
+                      ),
+                    ),
+                    CircleIconButton(
+                      icon: Icons.notifications_none_rounded,
+                      tooltip: 'Notifications',
+                      badge: d.unreadNotifications,
+                      onTap: () =>
+                          _open(NotificationsScreen(session: widget.session)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 22),
+                Text(
+                  '${greeting()},',
+                  style: const TextStyle(color: AppColors.muted, fontSize: 17),
+                ),
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        '$first 👋',
+                        style: const TextStyle(
+                          fontFamily: 'Anek',
+                          fontSize: 34,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.ink,
+                          height: 1.1,
+                        ),
+                      ),
+                    ),
+                    if (p.verified) ...[
+                      const SizedBox(width: 8),
+                      const VerifiedBadge(size: 24),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 18),
+                // Search pill + saffron button, as in the references.
+                Row(
+                  children: [
+                    Expanded(
+                      child: Pressable(
+                        onTap: () =>
+                            _open(DirectoryScreen(session: widget.session)),
+                        child: Container(
+                          height: 56,
+                          padding: const EdgeInsets.symmetric(horizontal: 18),
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: const Row(
+                            children: [
+                              Icon(
+                                Icons.search_rounded,
+                                color: AppColors.muted,
+                              ),
+                              SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  'Find karyakartas, colleges…',
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: AppColors.muted,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    CircleIconButton(
+                      icon: Icons.tune_rounded,
+                      tooltip: 'Office bearers',
+                      accent: true,
+                      onTap: () =>
+                          _open(DirectoryScreen(session: widget.session)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  clipBehavior: Clip.none,
+                  child: Row(
+                    children: [
+                      const PillChip(
+                        label: 'For you',
+                        icon: Icons.auto_awesome_rounded,
+                        selected: true,
+                      ),
+                      const SizedBox(width: 8),
+                      PillChip(
+                        label: 'Community',
+                        icon: Icons.forum_outlined,
+                        onTap: widget.onOpenFeed,
+                      ),
+                      const SizedBox(width: 8),
+                      PillChip(
+                        label: 'Vibhags',
+                        icon: Icons.grid_view_rounded,
+                        onTap: () => _open(
+                          Scaffold(
+                            appBar: AppBar(title: const Text('Vibhags')),
+                            body: VibhagsScreen(session: widget.session),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      PillChip(
+                        label: d.unreadCirculars > 0
+                            ? 'Circulars · ${d.unreadCirculars}'
+                            : 'Circulars',
+                        icon: Icons.campaign_outlined,
+                        onTap: () =>
+                            _open(CircularsScreen(session: widget.session)),
+                      ),
+                      const SizedBox(width: 8),
+                      PillChip(
+                        label: 'Report activity',
+                        icon: Icons.add_a_photo_outlined,
+                        onTap: () => _open(
+                          ReportActivityScreen(session: widget.session),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 18),
+                ..._eventDay(context, d),
+                if (d.events.isNotEmpty) ...[
+                  SectionTitle(
+                    'Upcoming events',
+                    action: 'See all',
+                    onAction: widget.onOpenCalendar,
+                  ),
+                  const SizedBox(height: 6),
+                  SizedBox(
+                    height: 300,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      clipBehavior: Clip.none,
+                      itemCount: d.events.length,
+                      separatorBuilder: (_, _) => const SizedBox(width: 14),
+                      itemBuilder: (_, i) => EventImageCard(
+                        event: d.events[i],
+                        width: d.events.length == 1
+                            ? MediaQuery.sizeOf(context).width - 40
+                            : 250,
+                        onTap: () => _open(
+                          EventScreen(
+                            session: widget.session,
+                            id: d.events[i]['id'] as int,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                  IconButton(
-                    tooltip: 'Notifications',
-                    onPressed: () =>
-                        _open(NotificationsScreen(session: widget.session)),
-                    icon: Badge(
-                      isLabelVisible: d.unreadNotifications > 0,
-                      label: Text('${d.unreadNotifications}'),
-                      child: const Icon(Icons.notifications_none),
-                    ),
-                  ),
-                  Initials(p.fullName, photoUrl: p.photoUrl),
+                  const SizedBox(height: 20),
                 ],
-              ),
-              const SizedBox(height: 16),
-              ..._eventDay(context, d),
-              if (next != null)
-                Material(
-                  color: soon ? AppColors.saffron : AppColors.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(16),
+                if (next != null) ...[
+                  const SectionTitle('Next up'),
+                  const SizedBox(height: 8),
+                  _NextMeeting(
+                    meeting: next,
                     onTap: () => _open(
                       MeetingScreen(
                         session: widget.session,
                         id: next['id'] as int,
                       ),
                     ),
-                    child: Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: soon
-                          ? null
-                          : BoxDecoration(
-                              border: Border.all(color: AppColors.line),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            next['kind'] == 'call'
-                                ? 'NEXT CALL'
-                                : 'NEXT MEETING',
-                            style: TextStyle(
-                              fontSize: 11,
-                              letterSpacing: 1.2,
-                              fontWeight: FontWeight.w700,
-                              color: soon
-                                  ? Colors.white70
-                                  : AppColors.saffronInk,
-                            ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+                if (d.actionItems.isNotEmpty) ...[
+                  Panel(
+                    onTap: widget.onOpenCalendar,
+                    padding: const EdgeInsets.all(14),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 46,
+                          height: 46,
+                          decoration: const BoxDecoration(
+                            color: AppColors.saffronSoft,
+                            shape: BoxShape.circle,
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            next['title'] as String,
-                            style: TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w800,
-                              color: soon ? Colors.white : AppColors.ink,
-                            ),
+                          child: const Icon(
+                            Icons.task_alt_rounded,
+                            color: AppColors.saffronInk,
                           ),
-                          const SizedBox(height: 2),
-                          Text(
-                            '${dayTime(next['starts_at'] as String)} · ${next['mode'] == 'in_person' ? next['venue'] : providerNames[next['provider']] ?? 'Online'}',
-                            style: TextStyle(
-                              color: soon ? Colors.white : AppColors.muted,
-                            ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${d.actionItems.length} action item${d.actionItems.length == 1 ? '' : 's'} to do',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              Text(
+                                d.actionItems.first['title'] as String,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(color: AppColors.muted),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
+                        ),
+                        const Icon(Icons.chevron_right, color: AppColors.muted),
+                      ],
                     ),
                   ),
+                  const SizedBox(height: 12),
+                ],
+                const SizedBox(height: 8),
+                const SectionTitle('My card'),
+                const SizedBox(height: 8),
+                GestureDetector(
+                  onTap: widget.onShowPass,
+                  child: _MemberCard(
+                    verified: p.verified,
+                    name: p.fullName,
+                    memberId: p.memberId ?? '',
+                    area: p.orgUnitLabel ?? '',
+                    vibhags: p.vibhags.map((v) => v.name).join(', '),
+                  ),
                 ),
-              if (d.unreadCirculars > 0 || d.actionItems.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                Card(
-                  child: Column(
-                    children: [
-                      if (d.unreadCirculars > 0)
-                        ListTile(
-                          leading: const Icon(
-                            Icons.campaign_outlined,
-                            color: AppColors.saffron,
-                          ),
-                          title: Text(
-                            '${d.unreadCirculars} unread circular${d.unreadCirculars == 1 ? '' : 's'}',
-                            style: const TextStyle(fontWeight: FontWeight.w700),
-                          ),
-                          trailing: const Icon(Icons.chevron_right),
-                          onTap: () =>
-                              _open(CircularsScreen(session: widget.session)),
-                        ),
-                      if (d.actionItems.isNotEmpty)
-                        ListTile(
-                          leading: const Icon(
-                            Icons.task_alt,
-                            color: AppColors.saffron,
-                          ),
-                          title: Text(
-                            '${d.actionItems.length} action item${d.actionItems.length == 1 ? '' : 's'} to do',
-                            style: const TextStyle(fontWeight: FontWeight.w700),
-                          ),
-                          subtitle: Text(
-                            d.actionItems.first['title'] as String,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          trailing: const Icon(Icons.chevron_right),
-                          onTap: widget.onOpenCalendar,
-                        ),
-                    ],
+                if (p.responsibilities.isNotEmpty) ...[
+                  const SizedBox(height: 20),
+                  const SectionTitle('Dayitva'),
+                  const SizedBox(height: 8),
+                  Panel(
+                    child: Column(
+                      children: p.responsibilities
+                          .map(
+                            (r) => Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 5),
+                              child: Row(
+                                children: [
+                                  SizedBox(
+                                    width: 82,
+                                    child: Text(
+                                      r.years,
+                                      style: const TextStyle(
+                                        color: AppColors.muted,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Text(
+                                      '${r.title}${r.place != null ? ', ${r.place}' : ''}',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ),
+                ],
+              ]),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _NextMeeting extends StatelessWidget {
+  const _NextMeeting({required this.meeting, required this.onTap});
+  final Map<String, dynamic> meeting;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final start = DateTime.parse(meeting['starts_at'] as String).toLocal();
+    final soon = start.difference(DateTime.now()).inHours < 24;
+    final fg = soon ? Colors.white : AppColors.ink;
+    final sub = soon ? Colors.white70 : AppColors.muted;
+    return Panel(
+      onTap: onTap,
+      color: soon ? AppColors.ink : AppColors.surface,
+      padding: const EdgeInsets.all(14),
+      child: Row(
+        children: [
+          Container(
+            width: 58,
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            decoration: BoxDecoration(
+              color: soon ? AppColors.saffron : AppColors.ground,
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Column(
+              children: [
+                Text(
+                  monthShort(start).toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.8,
+                    color: soon ? Colors.white : AppColors.muted,
+                  ),
+                ),
+                Text(
+                  '${start.day}',
+                  style: TextStyle(
+                    fontFamily: 'Anek',
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
+                    height: 1.1,
+                    color: soon ? Colors.white : AppColors.ink,
                   ),
                 ),
               ],
-              const SizedBox(height: 12),
-              _MemberCard(
-                verified: p.verified,
-                name: p.fullName,
-                memberId: p.memberId ?? '',
-                area: p.orgUnitLabel ?? '',
-                vibhags: p.vibhags.map((v) => v.name).join(', '),
-              ),
-              const SizedBox(height: 12),
-              IntrinsicHeight(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Expanded(
-                      child: _Action(
-                        icon: Icons.qr_code_2,
-                        label: 'My pass',
-                        onTap: widget.onShowPass,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _Action(
-                        icon: Icons.add_a_photo_outlined,
-                        label: 'Report activity',
-                        onTap: () => _open(
-                          ReportActivityScreen(session: widget.session),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _Action(
-                        icon: Icons.campaign_outlined,
-                        label: 'Circulars',
-                        onTap: () =>
-                            _open(CircularsScreen(session: widget.session)),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _Action(
-                        icon: Icons.people_alt_outlined,
-                        label: 'Directory',
-                        onTap: () =>
-                            _open(DirectoryScreen(session: widget.session)),
-                      ),
-                    ),
-                  ],
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  meeting['kind'] == 'call' ? 'CALL' : 'MEETING',
+                  style: TextStyle(
+                    fontSize: 11,
+                    letterSpacing: 1.2,
+                    fontWeight: FontWeight.w800,
+                    color: soon ? AppColors.saffron : AppColors.saffronInk,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 22),
-              Text('Dayitva', style: text.titleMedium),
-              const SizedBox(height: 8),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: p.responsibilities.isEmpty
-                      ? Text(
-                          'Responsibilities your office assigns will appear here.',
-                          style: text.bodySmall,
-                        )
-                      : Column(
-                          children: p.responsibilities
-                              .map(
-                                (r) => Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 5,
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      SizedBox(
-                                        width: 82,
-                                        child: Text(
-                                          r.years,
-                                          style: text.bodySmall,
-                                        ),
-                                      ),
-                                      Expanded(
-                                        child: Text(
-                                          '${r.title}${r.place != null ? ', ${r.place}' : ''}',
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              )
-                              .toList(),
-                        ),
+                Text(
+                  meeting['title'] as String,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 16.5,
+                    fontWeight: FontWeight.w800,
+                    color: fg,
+                  ),
                 ),
-              ),
-            ]),
-          );
-        },
+                Text(
+                  '${TimeOfDay.fromDateTime(start).format(context)} · ${meeting['mode'] == 'in_person' ? meeting['venue'] : providerNames[meeting['provider']] ?? 'Online'}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: sub),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: soon ? Colors.white12 : AppColors.ground,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.north_east, size: 18, color: fg),
+          ),
+        ],
       ),
     );
   }
@@ -470,39 +661,6 @@ extension on _HomeScreenState {
       const SizedBox(height: 12),
     ];
   }
-}
-
-class _Action extends StatelessWidget {
-  const _Action({required this.icon, required this.label, required this.onTap});
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) => Card(
-    child: InkWell(
-      borderRadius: BorderRadius.circular(16),
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: AppColors.saffron),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 11.5,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
 }
 
 class _MemberCard extends StatelessWidget {

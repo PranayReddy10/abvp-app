@@ -13,12 +13,19 @@ class FadeSlideIn extends StatefulWidget {
   State<FadeSlideIn> createState() => _FadeSlideInState();
 }
 
-class _FadeSlideInState extends State<FadeSlideIn> with SingleTickerProviderStateMixin {
+class _FadeSlideInState extends State<FadeSlideIn>
+    with SingleTickerProviderStateMixin {
   // The stagger delay is part of the curve (an Interval), so no timers are left running.
   static const _base = 420;
   late final int _delay = 40 * widget.index.clamp(0, 8);
-  late final AnimationController _c = AnimationController(vsync: this, duration: Duration(milliseconds: _base + _delay))..forward();
-  late final Animation<double> _t = CurvedAnimation(parent: _c, curve: Interval(_delay / (_base + _delay), 1, curve: Curves.easeOutCubic));
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: Duration(milliseconds: _base + _delay),
+  )..forward();
+  late final Animation<double> _t = CurvedAnimation(
+    parent: _c,
+    curve: Interval(_delay / (_base + _delay), 1, curve: Curves.easeOutCubic),
+  );
 
   @override
   void dispose() {

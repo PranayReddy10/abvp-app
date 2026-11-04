@@ -42,3 +42,19 @@ String? providerFor(String url) {
   if (host.endsWith('youtube.com') || host == 'youtu.be') return 'youtube';
   return 'link';
 }
+
+const _months = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
+String monthShort(DateTime d) => _months[d.month - 1];

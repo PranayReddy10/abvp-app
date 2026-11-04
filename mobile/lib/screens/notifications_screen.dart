@@ -5,6 +5,7 @@ import '../theme.dart';
 import '../widgets/format.dart';
 import '../widgets/loader.dart';
 import 'circulars_screen.dart';
+import 'feed_screen.dart';
 import 'meeting_screen.dart';
 
 class NotificationsScreen extends StatelessWidget {
@@ -17,6 +18,10 @@ class NotificationsScreen extends StatelessWidget {
     'meeting_cancelled' => Icons.event_busy_outlined,
     'action_item' => Icons.task_alt,
     'circular_reminder' => Icons.campaign_outlined,
+    'post_comment' => Icons.chat_bubble_outline,
+    'post_repost' => Icons.repeat,
+    'post_hidden' => Icons.visibility_off_outlined,
+    'new_follower' => Icons.person_add_alt,
     _ => Icons.notifications_none,
   };
 
@@ -82,6 +87,22 @@ class NotificationsScreen extends StatelessWidget {
                               id: data['meeting_id'] as int,
                             ),
                           ),
+                        );
+                      } else if (data['post_id'] != null) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => PostScreen(
+                              session: session,
+                              id: data['post_id'] as int,
+                            ),
+                          ),
+                        );
+                      } else if (data['member_id'] != null) {
+                        openMember(
+                          context,
+                          session,
+                          data['member_id'] as String,
                         );
                       } else if (data['circular_id'] != null) {
                         Navigator.push(

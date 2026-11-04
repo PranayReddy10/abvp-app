@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 
 import '../state/session.dart';
-import '../theme.dart';
+import '../widgets/kit.dart';
 import 'calendar_screen.dart';
+import 'feed_screen.dart';
 import 'home_screen.dart';
 import 'pass_screen.dart';
 import 'profile_screen.dart';
-import 'vibhags_screen.dart';
 
-/// Approved members: Home, Calendar, Pass (raised, in the middle), Vibhags, Me.
+/// Approved members: Home, Community, Pass, Calendar, Me in a floating pill bar.
 class MemberShell extends StatefulWidget {
   const MemberShell({super.key, required this.session});
   final Session session;
@@ -26,52 +26,27 @@ class _MemberShellState extends State<MemberShell> {
       HomeScreen(
         session: widget.session,
         onShowPass: () => setState(() => _tab = 2),
-        onOpenCalendar: () => setState(() => _tab = 1),
+        onOpenCalendar: () => setState(() => _tab = 3),
+        onOpenFeed: () => setState(() => _tab = 1),
       ),
-      CalendarScreen(session: widget.session),
+      FeedScreen(session: widget.session),
       PassScreen(session: widget.session),
-      VibhagsScreen(session: widget.session),
+      CalendarScreen(session: widget.session),
       ProfileScreen(session: widget.session),
     ];
 
     return Scaffold(
+      extendBody: true,
       body: IndexedStack(index: _tab, children: pages),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _tab,
-        onDestinationSelected: (i) => setState(() => _tab = i),
-        destinations: [
-          const NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          const NavigationDestination(
-            icon: Icon(Icons.calendar_month_outlined),
-            selectedIcon: Icon(Icons.calendar_month),
-            label: 'Calendar',
-          ),
-          NavigationDestination(
-            icon: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: AppColors.saffron,
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: const Icon(Icons.qr_code_2, color: Colors.white),
-            ),
-            label: 'Pass',
-          ),
-          const NavigationDestination(
-            icon: Icon(Icons.grid_view_outlined),
-            selectedIcon: Icon(Icons.grid_view),
-            label: 'Vibhags',
-          ),
-          const NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person),
-            label: 'Me',
-          ),
+      bottomNavigationBar: FloatingNavBar(
+        index: _tab,
+        onTap: (i) => setState(() => _tab = i),
+        items: const [
+          (Icons.home_rounded, 'Home'),
+          (Icons.forum_rounded, 'Community'),
+          (Icons.qr_code_2_rounded, 'Pass'),
+          (Icons.calendar_month_rounded, 'Calendar'),
+          (Icons.person_rounded, 'Me'),
         ],
       ),
     );

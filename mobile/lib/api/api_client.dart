@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart' show XFile;
 
 import '../config.dart';
 
@@ -100,6 +101,28 @@ class ApiClient {
       ..fields.addAll(fields);
     for (final f in files) {
       req.files.add(await http.MultipartFile.fromPath(fileField, f.path));
+    }
+    return http.Response.fromStream(await _http.send(req));
+  });
+
+  /// Multipart form from picked files (bytes), so it works on phones and the web build alike.
+  Future<dynamic> uploadPicked(
+    String path,
+    Map<String, String> fields,
+    String fileField,
+    List<XFile> files,
+  ) => _send(() async {
+    final req = http.MultipartRequest('POST', _uri(path))
+      ..headers.addAll(_headers)
+      ..fields.addAll(fields);
+    for (final f in files) {
+      req.files.add(
+        http.MultipartFile.fromBytes(
+          fileField,
+          await f.readAsBytes(),
+          filename: f.name,
+        ),
+      );
     }
     return http.Response.fromStream(await _http.send(req));
   });

@@ -15,6 +15,7 @@ import AuditLog from './pages/AuditLog'
 import Dashboard from './pages/Dashboard'
 import Login from './pages/Login'
 import Members from './pages/Members'
+import Moderation from './pages/Moderation'
 import Roles from './pages/Roles'
 import Vibhags from './pages/Vibhags'
 import './styles.css'
@@ -40,6 +41,7 @@ function App() {
         <Route path="circulars" element={<Circulars />} />
         <Route path="reports" element={<Reports />} />
         <Route path="updates" element={<VibhagUpdates />} />
+        <Route path="moderation" element={<Moderation />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

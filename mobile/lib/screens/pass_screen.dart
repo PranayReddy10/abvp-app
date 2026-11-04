@@ -8,6 +8,7 @@ import '../state/session.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/format.dart';
+import '../widgets/kit.dart';
 
 /// Event passes first (today's on top), then the member pass. Everything is saved
 /// on the phone so the gate works without signal.
@@ -107,14 +108,19 @@ class _PassScreenState extends State<PassScreen> {
       child: RefreshIndicator(
         onRefresh: _load,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 120),
           children: [
             Row(
               children: [
-                Expanded(
+                const Expanded(
                   child: Text(
                     'My pass',
-                    style: Theme.of(context).textTheme.headlineSmall,
+                    style: TextStyle(
+                      fontFamily: 'Anek',
+                      fontSize: 30,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.ink,
+                    ),
                   ),
                 ),
                 if (_loaded && _error == null)
@@ -205,97 +211,214 @@ class EventPassCard extends StatelessWidget {
       );
     }
 
-    return Container(
+    final start = DateTime.parse(event['starts_at'] as String).toLocal();
+    const topHeight = 168.0;
+    const label = TextStyle(
+      color: AppColors.muted,
+      fontSize: 11.5,
+      letterSpacing: 0.8,
+      fontWeight: FontWeight.w600,
+    );
+    const value = TextStyle(
+      color: AppColors.ink,
+      fontSize: 15.5,
+      fontWeight: FontWeight.w800,
+    );
+    Widget info(
+      String l,
+      String v, {
+      CrossAxisAlignment a = CrossAxisAlignment.start,
+    }) => Column(
+      crossAxisAlignment: a,
+      children: [
+        Text(l, style: label),
+        const SizedBox(height: 2),
+        Text(v, style: value, maxLines: 1, overflow: TextOverflow.ellipsis),
+      ],
+    );
+
+    return DecoratedBox(
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: highlight ? AppColors.saffron : AppColors.line,
-          width: highlight ? 2 : 1,
-        ),
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: (highlight ? AppColors.saffron : AppColors.ink).withValues(
+              alpha: 0.14,
+            ),
+            blurRadius: 30,
+            offset: const Offset(0, 14),
+            spreadRadius: -10,
+          ),
+        ],
       ),
-      padding: const EdgeInsets.all(18),
-      child: Column(
-        children: [
-          Row(
+      child: ClipPath(
+        clipper: TicketClipper(topHeight),
+        child: Container(
+          color: Colors.white,
+          child: Column(
             children: [
-              Expanded(
+              SizedBox(
+                height: topHeight,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  highlight ? 'TODAY' : 'EVENT PASS',
+                                  style: const TextStyle(
+                                    color: AppColors.saffronInk,
+                                    fontSize: 11,
+                                    letterSpacing: 1.2,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                Text(
+                                  event['title'] as String,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontFamily: 'Anek',
+                                    color: AppColors.ink,
+                                    fontSize: 21,
+                                    fontWeight: FontWeight.w700,
+                                    height: 1.15,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          StatusPill(
+                            guest ? 'Guest' : 'Member',
+                            color: guest
+                                ? const Color(0xFF2E55C9)
+                                : AppColors.saffronInk,
+                            background: guest
+                                ? const Color(0xFFE6ECFB)
+                                : AppColors.saffronSoft,
+                          ),
+                        ],
+                      ),
+                      const Spacer(),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: info(
+                              'Date',
+                              '${start.day} ${monthShort(start)}',
+                            ),
+                          ),
+                          Expanded(
+                            child: info(
+                              'Time',
+                              TimeOfDay.fromDateTime(start).format(context),
+                              a: CrossAxisAlignment.center,
+                            ),
+                          ),
+                          Expanded(
+                            flex: 2,
+                            child: info(
+                              'Venue',
+                              (event['venue'] as String).split(',').first,
+                              a: CrossAxisAlignment.end,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 22),
+                child: DashedLine(),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      highlight
-                          ? 'TODAY'
-                          : dayTime(event['starts_at'] as String).toUpperCase(),
-                      style: const TextStyle(
-                        color: AppColors.saffronInk,
-                        fontSize: 11,
-                        letterSpacing: 1.2,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    Text(
-                      event['title'] as String,
-                      style: const TextStyle(
+                    QrImageView(
+                      data: pass['token'] as String,
+                      size: highlight ? 220 : 160,
+                      eyeStyle: const QrEyeStyle(
+                        eyeShape: QrEyeShape.square,
                         color: AppColors.ink,
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
+                      ),
+                      dataModuleStyle: const QrDataModuleStyle(
+                        dataModuleShape: QrDataModuleShape.square,
+                        color: AppColors.ink,
+                      ),
+                    ),
+                    if (arrived) ...[
+                      const SizedBox(height: 10),
+                      StatusPill(
+                        'Checked in ${dayTime(pass['checked_in_at'] as String)}',
+                        color: AppColors.ok,
+                        background: AppColors.okSoft,
+                      ),
+                    ],
+                    if (highlight && event['instructions'] != null) ...[
+                      const SizedBox(height: 10),
+                      Text(
+                        event['instructions'] as String,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: AppColors.muted),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 14,
+                ),
+                color: highlight ? AppColors.saffron : AppColors.ink,
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.confirmation_number_outlined,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        pass['name'] as String,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                        ),
                       ),
                     ),
                     Text(
-                      event['venue'] as String,
-                      style: const TextStyle(color: AppColors.muted),
+                      status == 'registered'
+                          ? 'CONFIRMED'
+                          : status.toUpperCase(),
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 11.5,
+                        letterSpacing: 1,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ],
                 ),
               ),
-              StatusPill(
-                guest ? 'Guest' : 'Member',
-                color: guest ? const Color(0xFF2E55C9) : AppColors.saffronInk,
-                background: guest
-                    ? const Color(0xFFE6ECFB)
-                    : AppColors.saffronSoft,
-              ),
             ],
           ),
-          const SizedBox(height: 14),
-          QrImageView(
-            data: pass['token'] as String,
-            size: highlight ? 230 : 160,
-            eyeStyle: const QrEyeStyle(
-              eyeShape: QrEyeShape.square,
-              color: AppColors.ink,
-            ),
-            dataModuleStyle: const QrDataModuleStyle(
-              dataModuleShape: QrDataModuleShape.square,
-              color: AppColors.ink,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            pass['name'] as String,
-            style: const TextStyle(
-              color: AppColors.ink,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          if (arrived) ...[
-            const SizedBox(height: 8),
-            StatusPill(
-              'Checked in ${dayTime(pass['checked_in_at'] as String)}',
-              color: AppColors.ok,
-              background: AppColors.okSoft,
-            ),
-          ],
-          if (highlight && event['instructions'] != null) ...[
-            const SizedBox(height: 10),
-            Text(
-              event['instructions'] as String,
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.muted),
-            ),
-          ],
-        ],
+        ),
       ),
     );
   }
@@ -315,8 +438,7 @@ class _QrCard extends StatelessWidget {
     padding: const EdgeInsets.all(20),
     decoration: BoxDecoration(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(22),
-      border: Border.all(color: AppColors.line),
+      borderRadius: BorderRadius.circular(28),
     ),
     child: Column(
       children: [

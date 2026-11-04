@@ -80,12 +80,22 @@ It adds about 115 example members across Telangana with six months of history. I
 - **Blue tick.** State and district admins (and above) can mark a member's identity as verified from Members, with a note on how it was checked. It is recorded in the audit log and the member is notified. The tick shows next to their name in the app (profile, member card, directory, duties, teams) and in the admin panel. Only approved members can be verified, and the tick can be removed.
 - **People who work together can reach each other.** A phone number normally follows the member's own privacy choice. During a current event it is also visible to: teammates on the same duty team, the team lead, the person they report to, the event's coordinators, and admins of their area. The duty screen lists "Your team" with phone numbers and call buttons; coordinators see phone numbers in the Duties and Registrations tabs. The exception ends a day after the event.
 
+## What works now (Phase 6: community feed)
+
+- **Post like on Twitter.** Approved members write short posts (up to 500 characters) with up to 4 photos, and choose who sees them: all members, only their district, or one of their Vibhags. #Hashtags become links, and the week's trending tags appear above the feed.
+- **Like, reply, repost, quote.** Replies notify the author. A repost shares a post as it is; a quote adds your own words on top.
+- **Follow.** Member profiles show posts, followers and following, with Follow, Schedule a call and (when allowed) Call buttons. The Following tab shows only people you follow. New followers are notified.
+- **Safe by default.** Members report posts with a reason (abusive, false information, spam, private details, other). Five reports hide a post until someone reviews it. Posting is limited to 10 a minute.
+- **Moderation in the admin panel.** "Community" lists reported and hidden posts from members in the admin's area, with reasons and notes. Hide (the author is told why), restore, or dismiss reports; every action is in the audit log. The sidebar shows how many are waiting.
+- **Event cover photos.** Upload a cover in the event's Details tab; it appears on the event cards and event page in the app.
+
 ## Design
 
-- App: bundled Mukta and Anek Devanagari fonts (work offline and in Hindi), new theme, gradient member card, page transitions, list items that cascade in, press feedback, animated loading placeholders, and a new sign-in screen. Respects the phone's "reduce motion" setting.
+- App (refreshed after the travel-app references): light grey background with large white rounded cards and no borders, a floating dark pill navigation bar (Home, Community, Pass, Calendar, Me) whose active tab turns saffron, round icon buttons, a "Good morning, Name 👋" greeting with the member's area, a pill search with a saffron filter button, icon chips that turn dark when selected, photo event cards with a round arrow, and event passes styled as boarding passes with a perforated edge.
+- App (earlier): bundled Mukta and Anek Devanagari fonts (work offline and in Hindi), new theme, gradient member card, page transitions, list items that cascade in, press feedback, animated loading placeholders, and a new sign-in screen. Respects the phone's "reduce motion" setting.
 - Admin: sidebar with icons and an active marker, softer cards with depth and hover lift, pages and sections that fade in, bars that grow into place, shimmering loading rows, a two-panel sign-in page, and verified badges. Respects "reduce motion".
 
-All five phases in the design vision are now built. See `docs/deploy-hostinger.md` for going live, and its last section for moving to a VPS when national events need it.
+All phases in the design vision, plus the community feed, are now built. See `docs/deploy-hostinger.md` for going live, and its last section for moving to a VPS when national events need it.
 
 ## Run it on your computer
 
@@ -153,7 +163,9 @@ All routes start with `/api/v1`. Responses look like `{ "success": true, "data":
 | Admin operations | `admin/events/{id}/teams`, `admin/events/{id}/duties` (assign with clash check, edit/reassign, cancel), `admin/events/{id}/help`, `admin/events/{id}/announcements` |
 | Logistics | `GET events/{id}/my-logistics`, `PUT events/{id}/travel`, `GET events/{id}/meal-sessions`, `POST events/{id}/meal-sessions/{m}/serve`, `POST events/{id}/location-sessions`, `POST location-sessions/{id}/points\|stop`, `GET events/{id}/team-locations` |
 | Admin logistics | `GET admin/events/{id}/logistics`, `stays` (+ `auto-allocate`), `rooms/{room}/allocate`, `allocations/{a}`, `meal-sessions`, `vehicles`, `arrivals` (+ `assign`, `picked-up`) |
-| Admin events | `admin/events` (list, create, edit, `publish`, `cancel`, `registrations`, `decide`, `guests`, `staff`, `live`) |
+| Community | `GET feed?tab=for_you\|following&tag=&before=`, `GET feed/trending`, `POST posts` (multipart, `photos[]`), `GET/DELETE posts/{id}`, `POST posts/{id}/like\|comments\|report`, `DELETE comments/{id}`, `POST members/{memberId}/follow`, `GET members/{memberId}/posts` |
+| Admin events | `admin/events` (list, create, edit, `publish`, `cancel`, `cover`, `registrations`, `decide`, `guests`, `staff`, `live`) |
+| Admin moderation | `GET admin/moderation?status=reported\|hidden`, `POST admin/moderation/posts/{id}` (`hide` with reason, `restore`, `dismiss`) |
 | Admin | `GET admin/analytics?months=&unit_id=`, `admin/circulars` (+ `/remind`), `GET admin/meetings`, `GET admin/activity-reports`, `GET admin/dashboard`, `GET admin/applications`, `POST admin/applications/{id}/approve\|return\|reject`, `GET admin/members`, `admin/vibhags`, `admin/org-units`, `admin/role-assignments`, `admin/responsibilities`, `GET admin/audit-logs` |
 
 ## Roles

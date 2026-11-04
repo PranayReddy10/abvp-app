@@ -156,7 +156,7 @@ The code does not change. Steps:
 3. Clone the repository, copy `.env` from shared hosting, change `DB_HOST` to `127.0.0.1`, run `composer install --no-dev -o` and `php artisan migrate --force && php artisan optimize`.
 4. Point Nginx at `api/public` for `api.abvpconnect.in`, add HTTPS with Certbot.
 5. Add one cron line: `* * * * * cd /var/www/abvp-app/api && php artisan schedule:run`. Optionally run `php artisan queue:work` under Supervisor.
-6. Copy `storage/app` (member photos, if not on Spaces) to the VPS.
+6. Copy `storage/app` (member photos, post photos and event covers, if not on Spaces) to the VPS.
 7. Change the `api` DNS record to the VPS address. The admin panel and the app keep working because they use the same `api.abvpconnect.in` address.
 
 Keep the shared hosting running until the VPS has served one full day without errors, then switch it off.

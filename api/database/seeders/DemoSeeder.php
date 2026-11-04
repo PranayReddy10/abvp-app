@@ -30,7 +30,12 @@ use App\Models\MeetingInvitee;
 use App\Models\OrgUnit;
 use App\Models\Responsibility;
 use App\Models\RoleAssignment;
+use App\Models\Post;
+use App\Models\PostComment;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use App\Models\Vibhag;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
@@ -143,6 +148,7 @@ class DemoSeeder extends Seeder
         }
 
         $this->events($state, $members, $admin);
+        $this->feed($members);
 
         // Activity reports. Some units go quiet so the analysis has something to flag.
         $types = array_keys(ActivityReport::TYPES);
@@ -160,6 +166,106 @@ class DemoSeeder extends Seeder
                 $type = $types[mt_rand(0, count($types) - 1)];
                 $held = $recentOk ? now()->subDays(mt_rand(0, 175)) : now()->subDays(mt_rand(60, 160));
                 ActivityReport::create(['org_unit_id' => $unit->id, 'vibhag_id' => mt_rand(0, 2) ? $vibhags->random()->id : null, 'submitted_by' => $submitter->id, 'title' => $titles[$type], 'programme_type' => $type, 'held_on' => $held->toDateString(), 'place' => $unit->name, 'participants' => mt_rand(15, 220), 'institutions' => mt_rand(1, 6), 'created_at' => $held, 'updated_at' => $held]);
+            }
+        }
+    }
+
+    /** Community posts with photos, hashtags, likes, replies, follows, and one reported post; covers for events. */
+    private function feed($members): void
+    {
+        $disk = config('abvp.media_disk');
+        $palettes = [[[240, 138, 60], [120, 40, 10]], [[59, 74, 140], [15, 18, 38]], [[47, 143, 107], [11, 36, 28]], [[156, 79, 184], [30, 14, 38]], [[227, 98, 12], [40, 26, 18]]];
+        $image = function (string $dir, int $seed) use ($disk, $palettes): string {
+            [$a, $b] = $palettes[$seed % count($palettes)];
+            $w = 1200;
+            $h = 800;
+            $img = imagecreatetruecolor($w, $h);
+            for ($y = 0; $y < $h; $y++) {
+                $t = $y / $h;
+                $c = imagecolorallocate($img, (int) ($a[0] + ($b[0] - $a[0]) * $t), (int) ($a[1] + ($b[1] - $a[1]) * $t), (int) ($a[2] + ($b[2] - $a[2]) * $t));
+                imageline($img, 0, $y, $w, $y, $c);
+            }
+            mt_srand($seed * 7919);
+            for ($i = 0; $i < 7; $i++) {
+                $col = imagecolorallocatealpha($img, 255, 255, 255, mt_rand(96, 120));
+                $r = mt_rand(80, 420);
+                imagefilledellipse($img, mt_rand(0, $w), mt_rand(0, $h), $r, $r, $col);
+            }
+            ob_start();
+            imagejpeg($img, null, 82);
+            $path = $dir.'/'.Str::uuid().'.jpg';
+            Storage::disk($disk)->put($path, ob_get_clean());
+            imagedestroy($img);
+
+            return $path;
+        };
+
+        foreach (Event::orderBy('id')->get() as $i => $event) {
+            if ($i % 3 !== 1) { // leave one on the gradient fallback
+                $event->forceFill(['cover_path' => $image('events/covers', $i + 3)])->save();
+            }
+        }
+
+        $lines = [
+            ['Sadasyata abhiyan at Arts College today – 46 new members signed up before lunch. Thank you to every karyakarta who stood at the gate since 8 AM! #SadasyataAbhiyan #OU', 2],
+            ['Blood donation camp with NSS at Kakatiya University: 112 units collected. #SevaHiSangathan', 3],
+            ['Preparations for the Pranth Adhiveshan are in full swing. Volunteers, please check your duties in the app before tomorrow. #Adhiveshan2026', 1],
+            ['Study circle on the new education policy this Saturday, 5 PM, Keshav Memorial. Bring a friend. #NEP #StudyCircle', 0],
+            ['Swachh campus drive done at Nizam College. Small work, big change. #SwachhCampus', 2],
+            ['Reminder: membership renewals for this year close on the 30th. Ask your Ikai Mantri if you need help.', 0],
+            ['Our Kala Manch team rehearsing for the cultural evening at the Adhiveshan. 🎶 #Adhiveshan2026 #KalaManch', 4],
+            ['Tree plantation along the Hanamkonda bypass with SFD – 300 saplings. #SFD #Paryavaran', 3],
+            ['Visited the girls hostel at Kukatpally to hear their concerns about the bus timings. Taking it to the principal on Monday. #CampusIssues', 0],
+            ['Great discussion at the Think India session on startups and rural innovation. #ThinkIndia', 1],
+        ];
+        $authors = $members->take(40)->values();
+        $posts = [];
+        foreach ($lines as $i => [$body, $photos]) {
+            $author = $authors[($i * 7) % $authors->count()];
+            $post = Post::create([
+                'user_id' => $author->id, 'body' => $body, 'audience' => 'members',
+                'photos' => $photos ? collect(range(1, $photos))->map(fn ($k) => $image('posts/demo', $i * 5 + $k))->all() : null,
+            ]);
+            $post->forceFill(['created_at' => now()->subHours(3 + $i * 9 + mt_rand(0, 5))])->save();
+            foreach (Post::extractTags($body) as $tag) {
+                DB::table('post_tags')->insert(['post_id' => $post->id, 'tag' => $tag, 'created_at' => $post->created_at]);
+            }
+            foreach ($members->random(mt_rand(4, 30)) as $fan) {
+                DB::table('post_likes')->insertOrIgnore(['post_id' => $post->id, 'user_id' => $fan->id, 'created_at' => now()]);
+            }
+            $posts[] = $post;
+        }
+        $replies = ['Proud of the team! 🙌', 'Count me in for the next one.', 'Please share the photos in the Vibhag group as well.', 'Well organised, bhaiya.', 'Which time should we report?'];
+        foreach ($posts as $i => $post) {
+            foreach (range(0, $i % 4) as $k) {
+                PostComment::create(['post_id' => $post->id, 'user_id' => $members[($i + $k * 11 + 3) % $members->count()]->id, 'body' => $replies[($i + $k) % count($replies)]]);
+            }
+        }
+        // A repost and a quote.
+        Post::create(['user_id' => $authors[5]->id, 'audience' => 'members', 'repost_of_id' => $posts[1]->id]);
+        Post::create(['user_id' => $authors[9]->id, 'audience' => 'members', 'repost_of_id' => $posts[0]->id, 'body' => 'This is how it is done. Next week, Secunderabad! #SadasyataAbhiyan']);
+
+        // A post several members reported, waiting for review.
+        $bad = Post::create(['user_id' => $authors[21]->id, 'audience' => 'members', 'body' => 'Selling used textbooks cheap, call 98xxxxxx12 – DM for price list!!!']);
+        foreach ($members->slice(50, 3) as $r) {
+            DB::table('post_reports')->insert(['post_id' => $bad->id, 'user_id' => $r->id, 'reason' => 'spam', 'note' => null, 'created_at' => now()]);
+        }
+
+        foreach (Post::all() as $p) {
+            $p->forceFill([
+                'likes_count' => DB::table('post_likes')->where('post_id', $p->id)->count(),
+                'comments_count' => PostComment::where('post_id', $p->id)->count(),
+                'reposts_count' => Post::where('repost_of_id', $p->id)->count(),
+                'reports_count' => DB::table('post_reports')->where('post_id', $p->id)->count(),
+            ])->save();
+        }
+
+        // Everyone follows a few people.
+        foreach ($members->take(60) as $i => $m) {
+            foreach ($authors->random(4) as $f) {
+                if ($f->id !== $m->id) {
+                    DB::table('follows')->insertOrIgnore(['follower_id' => $m->id, 'followee_id' => $f->id, 'created_at' => now()]);
+                }
             }
         }
     }

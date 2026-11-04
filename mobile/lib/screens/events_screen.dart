@@ -6,6 +6,7 @@ import '../state/session.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/format.dart';
+import '../widgets/kit.dart';
 import '../widgets/loader.dart';
 import '../widgets/motion.dart';
 import 'help_screen.dart';
@@ -88,118 +89,205 @@ class EventsList extends StatelessWidget {
           : ListView.separated(
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
               itemCount: rows.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 8),
+              separatorBuilder: (_, _) => const SizedBox(height: 14),
               itemBuilder: (context, i) => FadeSlideIn(
                 index: i,
                 child: Builder(
                   builder: (context) {
                     final e = rows[i] as Map<String, dynamic>;
-                    final start = DateTime.parse(e['starts_at'] as String)
-                        .toLocal();
                     return Opacity(
                       opacity:
                           e['eligible'] == true || e['my_registration'] != null
                           ? 1
                           : 0.7,
-                      child: Card(
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(16),
-                          onTap: () async {
-                            await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => EventScreen(
-                                  session: session,
-                                  id: e['id'] as int,
-                                ),
+                      child: EventImageCard(
+                        event: e,
+                        height: 230,
+                        onTap: () async {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => EventScreen(
+                                session: session,
+                                id: e['id'] as int,
                               ),
-                            );
-                            await reload();
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.all(14),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Container(
-                                  width: 48,
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 6,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.ground,
-                                    border: Border.all(color: AppColors.line),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Column(
-                                    children: [
-                                      Text(
-                                        '${start.day}',
-                                        style: const TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.w800,
-                                        ),
-                                      ),
-                                      Text(
-                                        const [
-                                          'JAN',
-                                          'FEB',
-                                          'MAR',
-                                          'APR',
-                                          'MAY',
-                                          'JUN',
-                                          'JUL',
-                                          'AUG',
-                                          'SEP',
-                                          'OCT',
-                                          'NOV',
-                                          'DEC',
-                                        ][start.month - 1],
-                                        style: const TextStyle(
-                                          fontSize: 10,
-                                          color: AppColors.muted,
-                                          letterSpacing: 0.6,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        e['title'] as String,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        '${e['venue']}',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodySmall,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      const SizedBox(height: 6),
-                                      eventPill(e),
-                                    ],
-                                  ),
-                                ),
-                              ],
                             ),
-                          ),
-                        ),
+                          );
+                          await reload();
+                        },
                       ),
                     );
                   },
                 ),
               ),
             ),
+    );
+  }
+}
+
+/// Cover image (or a saffron gradient) behind the event, with a round arrow.
+class EventCover extends StatelessWidget {
+  const EventCover({super.key, required this.event, required this.child});
+  final Map<String, dynamic> event;
+  final Widget child;
+
+  static const _gradients = [
+    [Color(0xFFF08A3C), Color(0xFFB8420A), Color(0xFF2A1A12)],
+    [Color(0xFF3B4A8C), Color(0xFF1E2550), Color(0xFF0F1226)],
+    [Color(0xFF2F8F6B), Color(0xFF155A43), Color(0xFF0B241C)],
+    [Color(0xFF9C4FB8), Color(0xFF5A2373), Color(0xFF1E0E26)],
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final url = event['cover_url'] as String?;
+    final g = _gradients[(event['id'] as int? ?? 0) % _gradients.length];
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topRight,
+              end: Alignment.bottomLeft,
+              colors: g,
+            ),
+          ),
+          child: url == null
+              ? const Align(
+                  alignment: Alignment(0.9, -0.6),
+                  child: Icon(
+                    Icons.local_fire_department,
+                    size: 120,
+                    color: Colors.white12,
+                  ),
+                )
+              : Image.network(
+                  url,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                ),
+        ),
+        const DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0x14000000), Color(0x00000000), Color(0xCC000000)],
+              stops: [0, 0.35, 1],
+            ),
+          ),
+        ),
+        child,
+      ],
+    );
+  }
+}
+
+class EventImageCard extends StatelessWidget {
+  const EventImageCard({
+    super.key,
+    required this.event,
+    required this.onTap,
+    this.width,
+    this.height = 300,
+  });
+  final Map<String, dynamic> event;
+  final VoidCallback onTap;
+  final double? width;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    final start = DateTime.parse(event['starts_at'] as String).toLocal();
+    return Pressable(
+      onTap: onTap,
+      child: Container(
+        width: width,
+        height: height,
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(28)),
+        child: EventCover(
+          event: event,
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 7,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.22),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        '${start.day} ${monthShort(start)}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    const Spacer(),
+                    eventPill(event),
+                  ],
+                ),
+                const Spacer(),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            event['title'] as String,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontFamily: 'Anek',
+                              color: Colors.white,
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                              height: 1.1,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.place_rounded,
+                                size: 16,
+                                color: Colors.white70,
+                              ),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  '${event['venue']}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(color: Colors.white70),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    const ArrowBadge(),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -242,7 +330,20 @@ class _EventScreenState extends State<EventScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Event')),
+      appBar: AppBar(
+        title: const Text('Event'),
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 12),
+          child: Center(
+            child: CircleIconButton(
+              icon: Icons.arrow_back,
+              tooltip: 'Back',
+              onTap: () => Navigator.pop(context),
+            ),
+          ),
+        ),
+        leadingWidth: 68,
+      ),
       body: Loader<Map<String, dynamic>>(
         key: _key,
         load: () async {
@@ -275,39 +376,47 @@ class _EventScreenState extends State<EventScreen> {
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
             children: [
               Container(
-                padding: const EdgeInsets.all(18),
+                height: 260,
+                clipBehavior: Clip.antiAlias,
                 decoration: BoxDecoration(
-                  color: AppColors.ink,
-                  borderRadius: BorderRadius.circular(18),
+                  borderRadius: BorderRadius.circular(30),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      (e['category_label'] as String).toUpperCase(),
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 11,
-                        letterSpacing: 1.2,
-                        fontWeight: FontWeight.w700,
-                      ),
+                child: EventCover(
+                  event: e,
+                  child: Padding(
+                    padding: const EdgeInsets.all(18),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Text(
+                          (e['category_label'] as String).toUpperCase(),
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 11,
+                            letterSpacing: 1.2,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          e['title'] as String,
+                          style: const TextStyle(
+                            fontFamily: 'Anek',
+                            color: Colors.white,
+                            fontSize: 26,
+                            fontWeight: FontWeight.w700,
+                            height: 1.1,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Organised by ${e['organised_by']}',
+                          style: const TextStyle(color: Colors.white70),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      e['title'] as String,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                        height: 1.2,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Organised by ${e['organised_by']}',
-                      style: const TextStyle(color: Colors.white70),
-                    ),
-                  ],
+                  ),
                 ),
               ),
               const SizedBox(height: 14),

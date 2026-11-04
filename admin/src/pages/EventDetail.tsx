@@ -84,7 +84,8 @@ export default function EventDetail() {
         <div className="grid2">
           {e.status !== 'cancelled' && e.status !== 'completed' ? <EventForm event={e} onSaved={() => { setMsg('Saved.'); reload() }} /> : <section className="card"><p className="muted">This event is closed.</p></section>}
           <section className="card">
-            <h3>Who can register</h3>
+            <CoverBox id={e.id} url={e.cover_url ?? null} onSaved={() => { setMsg('Cover photo updated.'); reload() }} />
+            <h3 style={{ marginTop: 16 }}>Who can register</h3>
             <p>{e.rules.length ? e.rules.map((r) => r.label).join(' or ') : 'All approved members'}</p>
             {e.status === 'published' && (
               <>
@@ -262,5 +263,42 @@ function PeopleTab({ id, onChange }: { id: number; onChange: () => void }) {
         ))}</div>
       </section>
     </div>
+  )
+}
+
+/** Cover photo shown on the event card and event page in the app. */
+function CoverBox({ id, url, onSaved }: { id: number; url: string | null; onSaved: () => void }) {
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState<unknown>(null)
+  async function upload(file: File | undefined) {
+    if (!file) return
+    const form = new FormData()
+    form.append('cover', file)
+    setBusy(true)
+    setErr(null)
+    try {
+      await api.post(`/admin/events/${id}/cover`, form)
+      onSaved()
+    } catch (e) {
+      setErr(e)
+    } finally {
+      setBusy(false)
+    }
+  }
+  return (
+    <>
+      <h3>Cover photo</h3>
+      <ErrorBox error={err} />
+      <div className="cover-box">
+        {url ? <img src={url} alt="Event cover" /> : <div className="cover-ph">No cover yet</div>}
+        <div>
+          <label className="btn">
+            {busy ? 'Uploading…' : url ? 'Replace photo' : 'Upload photo'}
+            <input type="file" accept="image/jpeg,image/png,image/webp" hidden disabled={busy} onChange={(ev) => upload(ev.target.files?.[0])} />
+          </label>
+          <p className="muted" style={{ fontSize: 12.5, margin: '6px 0 0' }}>Wide photo, JPG/PNG/WebP up to 4 MB.<br />Shown on the event card in the app.</p>
+        </div>
+      </div>
+    </>
   )
 }

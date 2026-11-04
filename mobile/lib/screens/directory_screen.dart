@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 
-import '../api/api_client.dart';
 import '../state/session.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/loader.dart';
 
-import 'package:url_launcher/url_launcher.dart';
-
 import '../widgets/motion.dart';
+import 'feed_screen.dart';
 import 'schedule_call_screen.dart';
 
 /// Find office bearers and members. Phone numbers never appear here.
@@ -114,8 +112,11 @@ class _DirectoryScreenState extends State<DirectoryScreen> {
                                 ),
                               ),
                             ),
-                            onTap: () =>
-                                _profile(context, r['member_id'] as String),
+                            onTap: () => openMember(
+                              context,
+                              widget.session,
+                              r['member_id'] as String,
+                            ),
                           ),
                         );
                       },
@@ -123,127 +124,6 @@ class _DirectoryScreenState extends State<DirectoryScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Future<void> _profile(BuildContext context, String memberId) async {
-    Map<String, dynamic> p;
-    try {
-      p = await widget.session.api.get(
-        '/members/$memberId',
-      ) as Map<String, dynamic>;
-    } on ApiException catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(e.message)));
-      }
-      return;
-    }
-    if (!context.mounted) return;
-    final resp = (p['responsibilities'] as List).cast<Map<String, dynamic>>();
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Initials(
-                    p['full_name'] as String,
-                    size: 56,
-                    photoUrl: p['photo_url'] as String?,
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        NameWithBadge(
-                          p['full_name'] as String,
-                          verified: p['verified'] == true,
-                          style: Theme.of(ctx).textTheme.titleLarge,
-                          badgeSize: 20,
-                        ),
-                        if (p['works_with_you'] == true)
-                          const Padding(
-                            padding: EdgeInsets.only(top: 4),
-                            child: StatusPill(
-                              'Works with you at an event',
-                              color: AppColors.info,
-                              background: AppColors.infoSoft,
-                            ),
-                          ),
-                        Text(
-                          p['org_unit'] as String? ?? '',
-                          style: Theme.of(ctx).textTheme.bodySmall,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              if (p['bio'] != null) Text(p['bio'] as String),
-              if (resp.isNotEmpty)
-                Fact(
-                  'Dayitva',
-                  resp
-                      .map(
-                        (r) =>
-                            '${r['title']}${r['org_unit'] != null ? ', ${r['org_unit']['name']}' : ''}',
-                      )
-                      .join('\n'),
-                ),
-              Fact('Vibhags', (p['vibhags'] as List).join(', ')),
-              if (p['institution'] != null)
-                Fact('College', p['institution'] as String),
-              if (p['mobile'] != null)
-                Row(
-                  children: [
-                    Expanded(child: Fact('Mobile', p['mobile'] as String)),
-                    IconButton.filledTonal(
-                      tooltip: 'Call',
-                      icon: const Icon(Icons.call),
-                      onPressed: () =>
-                          launchUrl(Uri.parse('tel:${p['mobile']}')),
-                    ),
-                  ],
-                ),
-              const SizedBox(height: 12),
-              FilledButton.icon(
-                icon: const Icon(Icons.videocam_outlined),
-                label: const Text('Schedule a call'),
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => ScheduleCallScreen(
-                        session: widget.session,
-                        memberId: memberId,
-                        name: p['full_name'] as String,
-                      ),
-                    ),
-                  );
-                },
-              ),
-              if (p['mobile'] == null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Text(
-                    'Phone number hidden by their privacy settings.',
-                    style: Theme.of(ctx).textTheme.bodySmall,
-                  ),
-                ),
-            ],
-          ),
-        ),
       ),
     );
   }

@@ -43,6 +43,7 @@ export default function Layout() {
         {can('circulars.issue') && <Item to="/circulars" icon="circulars" label="Circulars" />}
         {can('reports.view') && <Item to="/reports" icon="reports" label="Activity reports" />}
         {can('vibhag.post') && <Item to="/updates" icon="updates" label="Vibhag updates" />}
+        {can('feed.moderate') && <Item to="/moderation" icon="flag" label="Community" count={dash?.reported_posts} />}
         <h6>Setup</h6>
         <Item to="/vibhags" icon="vibhags" label="Vibhags" />
         {can('roles.assign') && <Item to="/roles" icon="roles" label="Admins and roles" />}

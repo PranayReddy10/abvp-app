@@ -41,6 +41,7 @@ export interface Dashboard {
   returned_for_correction: number; decided_today: number
   pending_by_unit: { org_unit: { id: number; name: string }; pending: number }[]
   recent_decisions: { action: string; actor: string | null; at: string }[]
+  reported_posts?: number
 }
 
 export interface Vibhag { id: number; name: string; code: string; description: string | null; is_active: boolean; members_count?: number }

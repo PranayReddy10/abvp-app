@@ -113,7 +113,10 @@ class _SignInScreenState extends State<SignInScreen> {
             child: FadeSlideIn(
               index: 2,
               child: AnimatedSwitcher(
-                layoutBuilder: (current, previous) => Stack(alignment: Alignment.topCenter, children: [...previous, ?current]),
+                layoutBuilder: (current, previous) => Stack(
+                  alignment: Alignment.topCenter,
+                  children: [...previous, ?current],
+                ),
                 duration: const Duration(milliseconds: 280),
                 transitionBuilder: (child, a) => FadeTransition(
                   opacity: a,

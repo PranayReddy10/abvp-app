@@ -8,6 +8,7 @@ export interface EventDetail {
   id: number; title: string; description: string | null; category: string; category_label: string; instructions: string | null
   venue: string; venue_map_url: string | null; starts_at: string; ends_at: string; status: string
   org_unit: { id: number; name: string }; organiser: string | null
+  cover_url?: string | null
   registration_opens_at: string | null; registration_closes_at: string | null; capacity: number | null
   requires_approval: boolean; waitlist_enabled: boolean; contact_name: string | null; contact_phone: string | null
   rules: { org_unit_id: number | null; vibhag_id: number | null; label: string }[]

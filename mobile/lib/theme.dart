@@ -11,7 +11,7 @@ class AppColors {
   static const inkSoft = Color(0xFF2A2E4A);
   static const muted = Color(0xFF5D6178);
   static const line = Color(0xFFE6E8EF);
-  static const ground = Color(0xFFF4F5F8);
+  static const ground = Color(0xFFF1F2F5);
   static const surface = Color(0xFFFFFFFF);
   static const ok = Color(0xFF1C7F55);
   static const okSoft = Color(0xFFE3F4EC);
@@ -130,8 +130,8 @@ ThemeData buildTheme() {
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
-        minimumSize: const Size.fromHeight(54),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        minimumSize: const Size.fromHeight(56),
+        shape: const StadiumBorder(),
         textStyle: const TextStyle(
           fontFamily: 'Mukta',
           fontSize: 16,
