@@ -6,6 +6,7 @@ import { Empty, ErrorBox, Pill } from '../components/ui'
 import { fmtDate, fmtNum, fmtTime } from '../format'
 import { useFetch } from '../useFetch'
 import EventForm, { type EventDetail as Detail } from './EventForm'
+import { AnnouncementsTab, DutiesTab, DutySummary, HelpTab } from './EventOperations'
 import { EVENT_STATUS } from './Events'
 
 interface Live {
@@ -13,11 +14,12 @@ interface Live {
   pending_approval: number; waitlisted: number
   by_gate: { gate: string; count: number }[]; timeline: { at: string; count: number }[]
   recent: { name: string; kind: string; gate: string | null; place: string | null; at: string }[]; updated_at: string
+  duties: Record<string, number>; help_open: number; help_medical_open: number
 }
 interface RegRow { id: number; name: string; kind: string; member_id: string | null; mobile: string | null; place: string | null; status: string; registered_at: string; checked_in_at: string | null; gate: string | null; method: string | null }
 interface Staff { id: number; role: string; name: string | null; member_id: string | null }
 
-const TABS = ['Live', 'Registrations', 'Guests and team', 'Details'] as const
+const TABS = ['Live', 'Duties', 'Help desk', 'Announcements', 'Registrations', 'Guests and team', 'Details'] as const
 const REG_STATUS: Record<string, string> = { registered: 'approved', waitlisted: 'submitted', pending: 'submitted', cancelled: 'draft', rejected: 'rejected' }
 const REG_LABEL: Record<string, string> = { registered: 'Confirmed', waitlisted: 'Waitlist', pending: 'To approve', cancelled: 'Cancelled', rejected: 'Not approved' }
 const time = new Intl.DateTimeFormat('en-IN', { hour: 'numeric', minute: '2-digit' })
@@ -69,6 +71,9 @@ export default function EventDetail() {
         {TABS.map((t) => <button key={t} role="tab" aria-selected={tab === t} className={`chip ${tab === t ? 'on' : ''}`} onClick={() => setTab(t)}>{t}</button>)}
       </div>
       {tab === 'Live' && <LiveTab id={e.id} />}
+      {tab === 'Duties' && <DutiesTab id={e.id} title={e.title} startsAt={e.starts_at} />}
+      {tab === 'Help desk' && <HelpTab id={e.id} />}
+      {tab === 'Announcements' && <AnnouncementsTab id={e.id} />}
       {tab === 'Registrations' && <RegistrationsTab id={e.id} title={e.title} onChange={reload} />}
       {tab === 'Guests and team' && <PeopleTab id={e.id} onChange={reload} />}
       {tab === 'Details' && (
@@ -115,7 +120,10 @@ function LiveTab({ id }: { id: number }) {
           {l.timeline.length ? <Columns unit="arrived" data={l.timeline.map((b) => ({ label: time.format(new Date(b.at)), full: time.format(new Date(b.at)), value: b.count }))} /> : <p className="muted">No arrivals yet.</p>}
         </section>
         <section className="card">
-          <h3>By gate</h3>
+          <div className="page-head"><h3>Duties</h3>
+            {l.help_open > 0 && <span className={`pill ${l.help_medical_open ? 'bad' : 'warn'}`}>{l.help_open} open help request{l.help_open === 1 ? '' : 's'}{l.help_medical_open ? ` · ${l.help_medical_open} medical` : ''}</span>}</div>
+          {Object.keys(l.duties ?? {}).length ? <DutySummary counts={l.duties} /> : <p className="muted">No duties assigned yet.</p>}
+          <h3 style={{ marginTop: 6 }}>By gate</h3>
           <HBars rows={l.by_gate.map((g) => ({ label: g.gate, value: g.count }))} />
           <h3 style={{ marginTop: 6 }}>Latest arrivals</h3>
           {l.recent.length === 0 ? <p className="muted">No one yet.</p> : (

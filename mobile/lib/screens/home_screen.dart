@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../state/session.dart';
 import '../theme.dart';
@@ -7,6 +8,7 @@ import '../widgets/format.dart';
 import '../widgets/loader.dart';
 import 'circulars_screen.dart';
 import 'directory_screen.dart';
+import 'duties_screen.dart';
 import 'meeting_screen.dart';
 import 'notifications_screen.dart';
 import 'report_activity_screen.dart';
@@ -17,7 +19,11 @@ class _HomeData {
     this.unreadCirculars,
     this.actionItems,
     this.unreadNotifications,
+    this.duties,
+    this.passes,
   );
+  final List<Map<String, dynamic>> duties;
+  final List<Map<String, dynamic>> passes;
   final List<Map<String, dynamic>> meetings;
   final int unreadCirculars;
   final List<Map<String, dynamic>> actionItems;
@@ -49,6 +55,8 @@ class _HomeScreenState extends State<HomeScreen> {
       api.getWithMeta('/circulars'),
       api.get('/me/action-items'),
       api.getWithMeta('/notifications'),
+      api.get('/me/duties'),
+      api.get('/me/passes'),
     ]);
     await widget.session.refresh();
     return _HomeData(
@@ -62,6 +70,8 @@ class _HomeScreenState extends State<HomeScreen> {
           .where((a) => a['done'] != true)
           .toList(),
       ((results[3] as Map)['meta']['unread'] as int?) ?? 0,
+      (results[4] as List).cast<Map<String, dynamic>>(),
+      (results[5] as List).cast<Map<String, dynamic>>(),
     );
   }
 
@@ -115,6 +125,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
               const SizedBox(height: 16),
+              ..._eventDay(context, d),
               if (next != null)
                 Material(
                   color: soon ? AppColors.saffron : AppColors.surface,
@@ -311,6 +322,146 @@ class _HomeScreenState extends State<HomeScreen> {
         },
       ),
     );
+  }
+}
+
+bool _isToday(String startIso, String endIso) {
+  final now = DateTime.now();
+  final s = DateTime.parse(startIso).toLocal();
+  return now.isAfter(DateTime(s.year, s.month, s.day)) &&
+      now.isBefore(DateTime.parse(endIso).toLocal());
+}
+
+extension on _HomeScreenState {
+  /// Event-day mode: today's duty (or today's pass) first, everything else below.
+  List<Widget> _eventDay(BuildContext context, _HomeData d) {
+    final duty = d.duties
+        .where(
+          (x) =>
+              !['done', 'declined', 'cancelled'].contains(x['status']) &&
+              _isToday(x['starts_at'] as String, x['ends_at'] as String),
+        )
+        .firstOrNull;
+    final pass = d.passes
+        .where(
+          (p) =>
+              p['token'] != null &&
+              p['checked_in_at'] == null &&
+              _isToday(
+                p['event']['starts_at'] as String,
+                p['event']['ends_at'] as String,
+              ),
+        )
+        .firstOrNull;
+    if (duty == null && pass == null) return [];
+
+    const white = TextStyle(color: Colors.white);
+    final report = duty?['report_to'] as Map<String, dynamic>?;
+    final start = duty == null
+        ? null
+        : DateTime.parse(duty['starts_at'] as String).toLocal();
+    return [
+      Material(
+        color: AppColors.saffron,
+        borderRadius: BorderRadius.circular(18),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: duty == null
+              ? widget.onShowPass
+              : () => _open(DutyScreen(session: widget.session, duty: duty)),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'TODAY · ${(duty?['event']?['title'] ?? pass?['event']?['title'] ?? '').toString().toUpperCase()}',
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 11,
+                    letterSpacing: 1.1,
+                    fontWeight: FontWeight.w800,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                if (duty != null) ...[
+                  Text(
+                    '${duty['title']}${duty['location'] != null ? ' · ${duty['location']}' : ''}',
+                    style: white.copyWith(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Report by ${TimeOfDay.fromDateTime(start!).format(context)}${report != null ? ' to ${report['name']}' : ''}',
+                    style: white,
+                  ),
+                  if (duty['status'] == 'assigned')
+                    Text(
+                      'Please accept this duty',
+                      style: white.copyWith(fontWeight: FontWeight.w700),
+                    ),
+                ] else
+                  Text(
+                    'Show your pass at the gate',
+                    style: white.copyWith(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    if (pass != null)
+                      ActionChip(
+                        onPressed: widget.onShowPass,
+                        avatar: const Icon(
+                          Icons.qr_code_2,
+                          size: 18,
+                          color: AppColors.saffronInk,
+                        ),
+                        label: const Text(
+                          'Show pass',
+                          style: TextStyle(
+                            color: AppColors.saffronInk,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        backgroundColor: Colors.white,
+                        side: BorderSide.none,
+                      ),
+                    if (report?['phone'] != null)
+                      ActionChip(
+                        onPressed: () =>
+                            launchUrl(Uri.parse('tel:${report['phone']}')),
+                        avatar: const Icon(
+                          Icons.call,
+                          size: 18,
+                          color: Colors.white,
+                        ),
+                        label: Text(
+                          'Call ${(report!['name'] as String).split(' ').first}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        backgroundColor: AppColors.saffron,
+                        side: const BorderSide(color: Colors.white),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      const SizedBox(height: 12),
+    ];
   }
 }
 

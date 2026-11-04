@@ -7,6 +7,7 @@ import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/format.dart';
 import '../widgets/loader.dart';
+import 'help_screen.dart';
 
 /// Status pill for an event card, from the member's point of view.
 StatusPill eventPill(Map<String, dynamic> e) {
@@ -233,9 +234,22 @@ class _EventScreenState extends State<EventScreen> {
       appBar: AppBar(title: const Text('Event')),
       body: Loader<Map<String, dynamic>>(
         key: _key,
-        load: () async =>
-            await widget.session.api.get('/events/${widget.id}')
-                as Map<String, dynamic>,
+        load: () async {
+          final e = await widget.session.api.get(
+            '/events/${widget.id}',
+          ) as Map<String, dynamic>;
+          final reg = e['my_registration'] as Map<String, dynamic>?;
+          if (reg?['status'] == 'registered') {
+            try {
+              e['announcements'] = await widget.session.api.get(
+                '/events/${widget.id}/announcements',
+              );
+            } on ApiException {
+              e['announcements'] = [];
+            }
+          }
+          return e;
+        },
         builder: (context, e, _) {
           final text = Theme.of(context).textTheme;
           final reg = e['my_registration'] as Map<String, dynamic>?;
@@ -369,6 +383,37 @@ class _EventScreenState extends State<EventScreen> {
                   padding: const EdgeInsets.only(top: 10),
                   child: ErrorBanner('Not approved: ${reg!['note']}'),
                 ),
+              if ((e['announcements'] as List?)?.isNotEmpty == true) ...[
+                const SizedBox(height: 18),
+                Text('Announcements', style: text.titleMedium),
+                const SizedBox(height: 6),
+                for (final a
+                    in (e['announcements'] as List)
+                        .cast<Map<String, dynamic>>())
+                  Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.saffronSoft,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          a['title'] as String,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.saffronInk,
+                          ),
+                        ),
+                        Text(a['body'] as String),
+                        Text(ago(a['at'] as String), style: text.bodySmall),
+                      ],
+                    ),
+                  ),
+              ],
               if ((e['description'] as String?)?.isNotEmpty == true) ...[
                 const SizedBox(height: 18),
                 Text(e['description'] as String, style: text.bodyMedium),
@@ -431,6 +476,28 @@ class _EventScreenState extends State<EventScreen> {
                               : 'Register for this event'),
                   ),
                 ),
+              if (!cancelled &&
+                  status == 'registered' &&
+                  DateTime.now().isAfter(
+                    DateTime.parse(e['starts_at'] as String)
+                        .subtract(const Duration(days: 1)),
+                  )) ...[
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => AskHelpScreen(
+                        session: widget.session,
+                        eventId: widget.id,
+                        eventTitle: e['title'] as String,
+                      ),
+                    ),
+                  ),
+                  icon: const Icon(Icons.support_agent),
+                  label: const Text('Ask for help'),
+                ),
+              ],
               if (!cancelled &&
                   active &&
                   reg?['kind'] != 'guest' &&

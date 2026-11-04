@@ -7,7 +7,12 @@ use App\Models\ApplicationEvent;
 use App\Models\Circular;
 use App\Models\Event;
 use App\Models\EventRegistration;
+use App\Models\EventAnnouncement;
+use App\Models\EventDuty;
 use App\Models\EventStaff;
+use App\Models\EventTeam;
+use App\Models\HelpReply;
+use App\Models\HelpRequest;
 use App\Models\CircularRead;
 use App\Models\MemberProfile;
 use App\Models\MembershipApplication;
@@ -199,6 +204,7 @@ class DemoSeeder extends Seeder
                 'invited_by' => $organiser, 'checked_in_at' => $came ? now()->setTime(4, 10 + $k) : null, 'gate' => $came ? 'Guest desk' : null, 'check_in_method' => $came ? 'manual' : null]);
         }
         EventStaff::create(['event_id' => $today->id, 'user_id' => $members[95]->id, 'role' => 'scanner']);
+        $this->operations($today, $members, $organiser);
 
         // Upcoming, nearly full, with approvals and a waitlist.
         $soon = Event::create(['title' => 'Campus Sampark Abhiyan', 'category' => 'campaign', 'venue' => 'Arts College, Osmania University',
@@ -217,6 +223,55 @@ class DemoSeeder extends Seeder
             $came = mt_rand(1, 100) <= 78;
             EventRegistration::create(['event_id' => $past->id, 'user_id' => $m->id, 'kind' => 'member', 'status' => 'registered',
                 'checked_in_at' => $came ? $past->starts_at->copy()->addMinutes(mt_rand(-40, 60)) : null, 'gate' => $came ? 'Main gate' : null, 'check_in_method' => $came ? 'scan' : null]);
+        }
+    }
+
+    /** Teams, duties in every state, help requests and announcements for today's event. */
+    private function operations(Event $event, $members, int $organiser): void
+    {
+        $people = $members->take(90)->values();
+        $start = $event->starts_at->copy();
+        $teams = [
+            ['Registration desk', 0, 'Gate 1 and Gate 3', 10],
+            ['Hospitality', 1, 'Guest lounge, Admin block', 8],
+            ['Stage and sound', 2, 'Main stage', 5],
+            ['Parking', 3, 'North parking lot', 6],
+            ['Food', 4, 'Dining hall B', 7],
+        ];
+        $statuses = ['done', 'done', 'in_progress', 'in_progress', 'in_progress', 'accepted', 'accepted', 'assigned', 'blocked', 'declined'];
+        $blockedNotes = ['Registration desk' => 'Scanner phone battery dead at Gate 3', 'Hospitality' => 'Guest lounge AC not working',
+            'Stage and sound' => 'Second microphone not working', 'Parking' => 'Lot is full, cars queuing on the main road', 'Food' => 'Running short of plates at counter 2'];
+        $i = 10;
+        foreach ($teams as [$name, $leadIdx, $place, $n]) {
+            $lead = $people[$leadIdx];
+            $team = EventTeam::create(['event_id' => $event->id, 'name' => $name, 'lead_user_id' => $lead->id]);
+            EventStaff::firstOrCreate(['event_id' => $event->id, 'user_id' => $lead->id], ['role' => 'scanner']);
+            for ($k = 0; $k < $n; $k++, $i++) {
+                $status = $statuses[($i * 7 + $k) % count($statuses)];
+                EventDuty::create(['event_id' => $event->id, 'team_id' => $team->id, 'assignee_id' => $people[$i % 90]->id,
+                    'title' => $name === 'Registration desk' ? 'Pass check' : $name, 'location' => $place,
+                    'starts_at' => $start->copy()->addMinutes(-30 + 30 * ($k % 3)), 'ends_at' => $start->copy()->addHours(6),
+                    'status' => $status, 'status_note' => $status === 'blocked' ? $blockedNotes[$name] : ($status === 'declined' ? 'I have an exam this morning' : null), 'assigned_by' => $organiser,
+                    'responded_at' => $status === 'assigned' ? null : $start->copy()->subDay(), 'completed_at' => $status === 'done' ? now()->subMinutes(20) : null]);
+            }
+        }
+
+        foreach ([
+            ['medical', 'A delegate feels dizzy near Hall B, needs water and a place to sit', 'Hall B entrance', 'open', 12],
+            ['food', 'Lunch coupons not given at Gate 2 desk', 'Gate 2', 'in_progress', 35],
+            ['stay', 'Room key for Hostel 3, room 14 not working', 'Hostel 3', 'open', 8],
+            ['venue', 'Which hall is the Think India session in?', null, 'resolved', 70],
+        ] as $j => [$cat, $msg, $loc, $status, $minsAgo]) {
+            $h = HelpRequest::create(['event_id' => $event->id, 'raised_by' => $people[40 + $j]->id, 'category' => $cat, 'message' => $msg, 'location' => $loc,
+                'status' => $status, 'handled_by' => $status === 'open' ? null : $organiser, 'resolved_at' => $status === 'resolved' ? now()->subMinutes(50) : null]);
+            $h->forceFill(['created_at' => now()->subMinutes($minsAgo)])->save();
+            if ($status !== 'open') {
+                HelpReply::create(['help_request_id' => $h->id, 'user_id' => $organiser, 'body' => $cat === 'venue' ? 'Seminar Hall 2, first floor.' : 'Sending someone from the food team now.']);
+            }
+        }
+
+        foreach ([['Volunteers: briefing at 8 AM at the main stage', 'All duty holders please be there 15 minutes early.', 'team_only', 64], ['Lunch moved to 1:30 PM', 'Lunch is now at 1:30 PM in Dining hall B.', 'everyone', 157]] as [$t, $b, $aud, $n]) {
+            EventAnnouncement::create(['event_id' => $event->id, 'sent_by' => $organiser, 'title' => $t, 'body' => $b, 'audience' => $aud, 'recipients' => $n]);
         }
     }
 }

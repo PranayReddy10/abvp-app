@@ -8,11 +8,14 @@ export class ApiError extends Error {
   code: string
   status: number
   fields?: Record<string, string[]>
-  constructor(status: number, code: string, message: string, fields?: Record<string, string[]>) {
+  /** The whole response body, for errors that carry extra detail (e.g. duty clashes). */
+  body?: Record<string, unknown>
+  constructor(status: number, code: string, message: string, fields?: Record<string, string[]>, body?: Record<string, unknown>) {
     super(message)
     this.status = status
     this.code = code
     this.fields = fields
+    this.body = body
   }
 }
 
@@ -45,7 +48,7 @@ export async function request<T>(method: string, path: string, body?: unknown): 
       window.dispatchEvent(new Event('abvp:signed-out'))
     }
     const err = json?.error ?? {}
-    throw new ApiError(res.status, err.code ?? `HTTP_${res.status}`, err.message ?? 'Request failed.', err.fields)
+    throw new ApiError(res.status, err.code ?? `HTTP_${res.status}`, err.message ?? 'Request failed.', err.fields, json ?? undefined)
   }
   return { data: json.data as T, meta: json.meta ?? {} }
 }

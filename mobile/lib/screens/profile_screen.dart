@@ -4,6 +4,8 @@ import '../api/api_client.dart';
 import '../state/session.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
+import 'duties_screen.dart';
+import 'help_screen.dart';
 import 'scanner_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -175,6 +177,59 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ],
               ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Card(
+            child: Column(
+              children: [
+                FutureBuilder<dynamic>(
+                  future: widget.session.api
+                      .get('/me/teams')
+                      .catchError((_) => <dynamic>[]),
+                  builder: (context, snap) =>
+                      (snap.data as List?)?.isNotEmpty == true
+                      ? ListTile(
+                          leading: const Icon(
+                            Icons.groups_2_outlined,
+                            color: AppColors.saffron,
+                          ),
+                          title: const Text(
+                            'My teams',
+                            style: TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                          subtitle: Text(
+                            'You lead ${(snap.data as List).length} team${(snap.data as List).length == 1 ? '' : 's'}',
+                          ),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  MyTeamsScreen(session: widget.session),
+                            ),
+                          ),
+                        )
+                      : const SizedBox.shrink(),
+                ),
+                ListTile(
+                  leading: const Icon(
+                    Icons.support_agent,
+                    color: AppColors.saffron,
+                  ),
+                  title: const Text(
+                    'My help requests',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => MyHelpScreen(session: widget.session),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
           if (me.canCheckIn) ...[

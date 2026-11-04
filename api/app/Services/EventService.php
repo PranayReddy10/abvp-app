@@ -136,6 +136,20 @@ class EventService
             || $this->access->canIn($user, 'events.manage', $event->orgUnit);
     }
 
+    /** Organisers: admins of the area, or members put on the team as coordinator. */
+    public function canCoordinate(User $user, Event $event): bool
+    {
+        return EventStaff::where('event_id', $event->id)->where('user_id', $user->id)->where('role', 'coordinator')->exists()
+            || $this->access->canIn($user, 'events.manage', $event->orgUnit);
+    }
+
+    /** People taking part: confirmed registrations and the event team. */
+    public function participantIds(Event $event)
+    {
+        return Reg::where('event_id', $event->id)->where('status', Reg::REGISTERED)->pluck('user_id')
+            ->merge(EventStaff::where('event_id', $event->id)->pluck('user_id'))->unique()->values();
+    }
+
     /**
      * Mark arrival. Returns [registration, already]. Never creates a registration:
      * people not on the list go to the coordinator.

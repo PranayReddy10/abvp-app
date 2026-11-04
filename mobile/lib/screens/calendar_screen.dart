@@ -6,6 +6,7 @@ import '../widgets/common.dart';
 import '../widgets/format.dart';
 import '../widgets/loader.dart';
 import 'directory_screen.dart';
+import 'duties_screen.dart';
 import 'events_screen.dart';
 import 'meeting_screen.dart';
 
@@ -53,9 +54,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
             child: SegmentedButton<String>(
+              showSelectedIcon: false,
               segments: const [
                 ButtonSegment(value: 'upcoming', label: Text('Meetings')),
                 ButtonSegment(value: 'events', label: Text('Events')),
+                ButtonSegment(value: 'duties', label: Text('Duties')),
                 ButtonSegment(value: 'past', label: Text('Past')),
               ],
               selected: {_when},
@@ -68,6 +71,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
           if (_when == 'events')
             Expanded(
               child: EventsList(key: _key, session: widget.session),
+            )
+          else if (_when == 'duties')
+            Expanded(
+              child: DutiesList(key: _key, session: widget.session),
             )
           else
             Expanded(

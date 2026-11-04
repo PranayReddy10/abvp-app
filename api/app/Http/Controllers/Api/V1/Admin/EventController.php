@@ -287,6 +287,9 @@ class EventController extends Controller
             'by_gate' => $arrived->groupBy(fn ($r) => $r->gate ?: 'No gate given')->map(fn ($g, $k) => ['gate' => $k, 'count' => $g->count()])->sortByDesc('count')->values(),
             'by_method' => $arrived->groupBy('check_in_method')->map->count(),
             'timeline' => $buckets,
+            'duties' => \App\Models\EventDuty::where('event_id', $event->id)->selectRaw('status, count(*) n')->groupBy('status')->pluck('n', 'status'),
+            'help_open' => \App\Models\HelpRequest::where('event_id', $event->id)->where('status', '!=', 'resolved')->count(),
+            'help_medical_open' => \App\Models\HelpRequest::where('event_id', $event->id)->where('status', '!=', 'resolved')->where('category', 'medical')->count(),
             'recent' => $recent->map(fn (Reg $r) => [
                 'name' => $r->displayName(), 'kind' => $r->kind, 'gate' => $r->gate,
                 'place' => $r->kind === 'guest' ? $r->guest_organisation : $r->user?->profile?->orgUnit?->name,

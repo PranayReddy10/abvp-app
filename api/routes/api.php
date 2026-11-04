@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\V1\MediaController;
 use App\Http\Controllers\Api\V1\MeetingController;
 use App\Http\Controllers\Api\V1\MembershipController;
 use App\Http\Controllers\Api\V1\NotificationController;
+use App\Http\Controllers\Api\V1\OperationsController;
 use App\Http\Controllers\Api\V1\OrganisationController;
 use App\Http\Controllers\Api\V1\ProfileController;
 use App\Http\Controllers\Api\V1\VibhagSpaceController;
@@ -92,6 +93,16 @@ Route::prefix('v1')->group(function () {
         Route::post('events/{event}/check-in', [CheckInController::class, 'scan']);
         Route::post('events/{event}/check-in/batch', [CheckInController::class, 'batch']);
         Route::post('events/{event}/registrations/{registration}/check-in', [CheckInController::class, 'manual']);
+
+        // Phase 4: event-day operations
+        Route::get('me/duties', [OperationsController::class, 'myDuties']);
+        Route::post('duties/{duty}/respond', [OperationsController::class, 'respond']);
+        Route::post('duties/{duty}/progress', [OperationsController::class, 'progress']);
+        Route::get('me/teams', [OperationsController::class, 'myTeams']);
+        Route::get('events/{event}/announcements', [OperationsController::class, 'announcements']);
+        Route::post('events/{event}/help', [OperationsController::class, 'raiseHelp']);
+        Route::get('me/help', [OperationsController::class, 'myHelp']);
+        Route::post('help/{help}/reply', [OperationsController::class, 'reply']);
         Route::post('notifications/read-all', [NotificationController::class, 'readAll']);
         Route::post('qr/verify', [DirectoryController::class, 'verifyQr']);
 
@@ -143,6 +154,17 @@ Route::prefix('v1')->group(function () {
             Route::post('events/{event}/staff', [Admin\EventController::class, 'addStaff']);
             Route::delete('events/{event}/staff/{staff}', [Admin\EventController::class, 'removeStaff']);
             Route::get('events/{event}/live', [Admin\EventController::class, 'live']);
+            Route::get('events/{event}/teams', [Admin\OperationsController::class, 'teams']);
+            Route::post('events/{event}/teams', [Admin\OperationsController::class, 'storeTeam']);
+            Route::delete('events/{event}/teams/{team}', [Admin\OperationsController::class, 'deleteTeam']);
+            Route::get('events/{event}/duties', [Admin\OperationsController::class, 'duties']);
+            Route::post('events/{event}/duties', [Admin\OperationsController::class, 'assign']);
+            Route::patch('events/{event}/duties/{duty}', [Admin\OperationsController::class, 'updateDuty']);
+            Route::delete('events/{event}/duties/{duty}', [Admin\OperationsController::class, 'cancelDuty']);
+            Route::get('events/{event}/help', [Admin\OperationsController::class, 'help']);
+            Route::patch('events/{event}/help/{help}', [Admin\OperationsController::class, 'updateHelp']);
+            Route::get('events/{event}/announcements', [Admin\OperationsController::class, 'announcements']);
+            Route::post('events/{event}/announcements', [Admin\OperationsController::class, 'announce']);
         });
     });
 });

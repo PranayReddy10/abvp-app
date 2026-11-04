@@ -54,7 +54,19 @@ It adds about 115 example members across Telangana with six months of history. I
 - **Live arrivals board** in the admin panel, refreshing every 15 seconds: arrived vs expected, members vs guests, arrivals every 30 minutes, by gate, and the latest arrivals. Registrations list with filters (to approve, waitlist, arrived, not arrived), approve/reject, "Mark arrived", and CSV download.
 - **Analysis** now includes events held, registrations and turnout.
 
-Next: teams and duties for event day (Phase 4). See the design vision for the full plan.
+## What works now (Phase 4: event-day operations)
+
+- **Teams and duties.** Coordinators make teams (Registration desk, Hospitality, Stage and sound, Parking, Food…) with a team lead, and give duties to one or many people at once: what, where to report, from when to when, instructions. Only people registered for the event or on its team can get duties.
+- **Clash check.** If someone already has a duty at that time (at any event), the coordinator sees who and where, and can choose others or assign anyway.
+- **Accept or decline.** Each person accepts, or says they can't with a reason; the team lead and coordinator are told at once, and the duty can be reassigned (both people are notified).
+- **On the day.** "I've reached, starting now", "Mark as done", "Report a problem". The person sees whom to report to with a call button. Team leads see their whole team in the app, can call anyone, and can update statuses.
+- **Event-day Home.** On the day, Home opens with a saffron card: today's duty, where, when to report and to whom, a call button, and the pass.
+- **Help requests.** Anyone at the event can ask for help (medical, registration, stay, food, transport, venue, lost and found). Medical requests show "Call 108 first" and go to the top of the coordinators' help desk. Replies come back into the app.
+- **Announcements.** Coordinators send a message to everyone at the event or only to volunteers; it shows as a notification and on the event page.
+- **Admin event page** gains Duties (status bar, filters, reassign, cancel, CSV), Help desk (oldest and medical first, reply, resolve) and Announcements tabs. The live board now shows duty progress and open help requests.
+- **Coordinators** can be admins of the area or members added to the event team with the Coordinator role.
+
+Next: logistics (stay, food, transport, consent-based live location) in Phase 5. See the design vision for the full plan.
 
 ## Run it on your computer
 
@@ -118,6 +130,8 @@ All routes start with `/api/v1`. Responses look like `{ "success": true, "data":
 | Circulars and reports | `GET circulars`, `GET circulars/{id}`, `POST activity-reports`, `GET me/activity-reports`, `GET directory`, `GET notifications` |
 | Events | `GET events`, `GET events/{id}`, `POST events/{id}/register\|cancel-registration`, `GET me/passes` |
 | Gate check-in | `GET me/check-in-events`, `GET events/{id}/roster`, `POST events/{id}/check-in`, `POST events/{id}/check-in/batch`, `GET events/{id}/check-in/search`, `POST events/{id}/registrations/{reg}/check-in` |
+| Event day | `GET me/duties`, `POST duties/{id}/respond\|progress`, `GET me/teams`, `GET events/{id}/announcements`, `POST events/{id}/help`, `GET me/help`, `POST help/{id}/reply` |
+| Admin operations | `admin/events/{id}/teams`, `admin/events/{id}/duties` (assign with clash check, edit/reassign, cancel), `admin/events/{id}/help`, `admin/events/{id}/announcements` |
 | Admin events | `admin/events` (list, create, edit, `publish`, `cancel`, `registrations`, `decide`, `guests`, `staff`, `live`) |
 | Admin | `GET admin/analytics?months=&unit_id=`, `admin/circulars` (+ `/remind`), `GET admin/meetings`, `GET admin/activity-reports`, `GET admin/dashboard`, `GET admin/applications`, `POST admin/applications/{id}/approve\|return\|reject`, `GET admin/members`, `admin/vibhags`, `admin/org-units`, `admin/role-assignments`, `admin/responsibilities`, `GET admin/audit-logs` |
 
