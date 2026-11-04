@@ -94,7 +94,8 @@ It adds about 115 example members across Telangana with six months of history. I
 
 - App (refreshed after the travel-app references): light grey background with large white rounded cards and no borders, a floating dark pill navigation bar (Home, Community, Pass, Calendar, Me) whose active tab turns saffron, round icon buttons, a "Good morning, Name 👋" greeting with the member's area, a pill search with a saffron filter button, icon chips that turn dark when selected, photo event cards with a round arrow, and event passes styled as boarding passes with a perforated edge.
 - App (earlier): bundled Mukta and Anek Devanagari fonts (work offline and in Hindi), new theme, gradient member card, page transitions, list items that cascade in, press feedback, animated loading placeholders, and a new sign-in screen. Respects the phone's "reduce motion" setting.
-- Admin: sidebar with icons and an active marker, softer cards with depth and hover lift, pages and sections that fade in, bars that grow into place, shimmering loading rows, a two-panel sign-in page, and verified badges. Respects "reduce motion".
+- Admin (refreshed after the dashboard references): Plus Jakarta Sans type with Hindi falling back to Mukta, a solid saffron pill for the active menu item, a top bar with a wide member search, round icon buttons, a light/dark switch and the signed-in admin, pastel stat tiles with big numbers, icons and trend tags, white cards with softer table headers and soft status tags.
+- Admin (earlier): sidebar with icons and an active marker, softer cards with depth and hover lift, pages and sections that fade in, bars that grow into place, shimmering loading rows, a two-panel sign-in page, and verified badges. Respects "reduce motion".
 
 All phases in the design vision, plus the community feed, are now built. See `docs/deploy-hostinger.md` for going live, and its last section for moving to a VPS when national events need it.
 

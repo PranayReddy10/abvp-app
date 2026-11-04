@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { api } from '../api'
 import { VerifiedBadge } from '../components/icons'
 import { qs } from '../api'
@@ -14,8 +15,9 @@ interface Row {
 interface Detail { user_id: number; mobile: string; profile: Profile; roles: { id: number; label: string; org_unit: string }[]; verified_by: string | null; verification_note: string | null; can_verify: boolean }
 
 export default function Members() {
-  const [q, setQ] = useState('')
-  const [search, setSearch] = useState('')
+  const [params] = useSearchParams()
+  const [q, setQ] = useState(params.get('q') ?? '')
+  const [search, setSearch] = useState(params.get('q') ?? '')
   const [page, setPage] = useState(1)
   const [open, setOpen] = useState<number | null>(null)
   const { data, meta, error, loading } = useFetch<Row[]>(`/admin/members${qs({ q: search, page })}`)
