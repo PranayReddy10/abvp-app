@@ -79,6 +79,30 @@ class ApiClient {
         return http.Response.fromStream(await _http.send(req));
       });
 
+  /// Multipart form with text fields and any number of files under one field name (e.g. photos[]).
+  Future<dynamic> uploadForm(String path, Map<String, String> fields, String fileField, List<File> files) => _send(() async {
+        final req = http.MultipartRequest('POST', _uri(path))
+          ..headers.addAll(_headers)
+          ..fields.addAll(fields);
+        for (final f in files) {
+          req.files.add(await http.MultipartFile.fromPath(fileField, f.path));
+        }
+        return http.Response.fromStream(await _http.send(req));
+      });
+
+  Future<dynamic> delete(String path) => _send(() => _http.delete(_uri(path), headers: _headers));
+
+  /// Full envelope (data + meta) for list screens that need counts.
+  Future<Map<String, dynamic>> getWithMeta(String path) async {
+    final res = await _http.get(_uri(path), headers: _headers).timeout(const Duration(seconds: 20));
+    final json = jsonDecode(res.body) as Map<String, dynamic>;
+    if (json['success'] != true) {
+      final e = (json['error'] as Map<String, dynamic>?) ?? {};
+      throw ApiException(e['code'] as String? ?? 'HTTP_${res.statusCode}', e['message'] as String? ?? 'Something went wrong.', status: res.statusCode);
+    }
+    return json;
+  }
+
   Uri _uri(String path) => Uri.parse('$apiBaseUrl$path');
 
   Future<dynamic> _send(Future<http.Response> Function() call) async {

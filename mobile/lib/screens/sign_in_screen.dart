@@ -43,11 +43,14 @@ class _SignInScreenState extends State<SignInScreen> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(24, 40, 24, 24),
           children: [
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(color: AppColors.saffron, borderRadius: BorderRadius.circular(16)),
-              child: const Icon(Icons.local_fire_department, color: Colors.white, size: 30),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(color: AppColors.saffron, borderRadius: BorderRadius.circular(16)),
+                child: const Icon(Icons.local_fire_department, color: Colors.white, size: 30),
+              ),
             ),
             const SizedBox(height: 24),
             Text('Welcome to\nABVP Connect', style: text.headlineMedium?.copyWith(fontWeight: FontWeight.w800)),

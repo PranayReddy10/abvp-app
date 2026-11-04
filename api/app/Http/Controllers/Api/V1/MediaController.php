@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityReport;
+use App\Models\Circular;
 use App\Models\MemberProfile;
 use Illuminate\Support\Facades\Storage;
 
@@ -17,5 +19,23 @@ class MediaController extends Controller
         abort_unless($disk->exists($profile->photo_path), 404);
 
         return $disk->response($profile->photo_path, null, ['Cache-Control' => 'private, max-age=1800']);
+    }
+
+    public function circular(Circular $circular)
+    {
+        return $this->stream($circular->attachment_path);
+    }
+
+    public function report(ActivityReport $report, int $index)
+    {
+        return $this->stream($report->photos[$index] ?? null);
+    }
+
+    private function stream(?string $path)
+    {
+        $disk = Storage::disk(config('abvp.media_disk'));
+        abort_unless($path && $disk->exists($path), 404);
+
+        return $disk->response($path, null, ['Cache-Control' => 'private, max-age=1800']);
     }
 }

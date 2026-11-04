@@ -21,6 +21,7 @@ export default function Layout() {
       <aside className="side" aria-label="Main">
         <div className="brand"><img src="/favicon.svg" alt="" />ABVP Connect</div>
         <NavLink to="/" end>Dashboard</NavLink>
+        {can('analytics.view') && <NavLink to="/analytics">Analysis</NavLink>}
         <h6>Membership</h6>
         {can('members.view') && (
           <NavLink to="/approvals">
@@ -28,7 +29,12 @@ export default function Layout() {
           </NavLink>
         )}
         {can('members.view') && <NavLink to="/members">Members</NavLink>}
-        <h6>Organisation</h6>
+        <h6>Organisation work</h6>
+        {can('meetings.schedule') && <NavLink to="/meetings">Meetings</NavLink>}
+        {can('circulars.issue') && <NavLink to="/circulars">Circulars</NavLink>}
+        {can('reports.view') && <NavLink to="/reports">Activity reports</NavLink>}
+        {can('vibhag.post') && <NavLink to="/updates">Vibhag updates</NavLink>}
+        <h6>Setup</h6>
         <NavLink to="/vibhags">Vibhags</NavLink>
         {can('roles.assign') && <NavLink to="/roles">Admins and roles</NavLink>}
         {can('audit.view') && <><h6>Insights</h6><NavLink to="/audit">Audit log</NavLink></>}

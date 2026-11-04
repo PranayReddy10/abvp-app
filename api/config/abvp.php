@@ -52,6 +52,12 @@ return [
         'roles.assign' => ['super_admin', 'national_admin', 'state_admin', 'district_admin'],
         'responsibilities.manage' => ['super_admin', 'national_admin', 'state_admin', 'district_admin'],
         'audit.view' => ['super_admin', 'national_admin'],
+        // Phase 2. A role tied to one Vibhag only works for that Vibhag.
+        'meetings.schedule' => ['super_admin', 'national_admin', 'state_admin', 'district_admin', 'vibhag_admin'],
+        'circulars.issue' => ['super_admin', 'national_admin', 'state_admin', 'district_admin', 'vibhag_admin'],
+        'vibhag.post' => ['super_admin', 'national_admin', 'state_admin', 'district_admin', 'vibhag_admin'],
+        'reports.view' => ['super_admin', 'national_admin', 'state_admin', 'district_admin', 'vibhag_admin'],
+        'analytics.view' => ['super_admin', 'national_admin', 'state_admin', 'district_admin', 'vibhag_admin'],
     ],
 
     'unit_types' => ['national', 'state', 'district', 'unit'],

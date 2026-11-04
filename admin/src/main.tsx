@@ -3,7 +3,12 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider, useAuth } from './auth'
 import Layout from './components/Layout'
+import Analytics from './pages/Analytics'
 import Approvals from './pages/Approvals'
+import Circulars from './pages/Circulars'
+import Meetings from './pages/Meetings'
+import Reports from './pages/Reports'
+import VibhagUpdates from './pages/VibhagUpdates'
 import AuditLog from './pages/AuditLog'
 import Dashboard from './pages/Dashboard'
 import Login from './pages/Login'
@@ -26,6 +31,11 @@ function App() {
         <Route path="vibhags" element={<Vibhags />} />
         <Route path="roles" element={<Roles />} />
         <Route path="audit" element={<AuditLog />} />
+        <Route path="analytics" element={<Analytics />} />
+        <Route path="meetings" element={<Meetings />} />
+        <Route path="circulars" element={<Circulars />} />
+        <Route path="reports" element={<Reports />} />
+        <Route path="updates" element={<VibhagUpdates />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

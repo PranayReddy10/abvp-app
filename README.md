@@ -23,7 +23,26 @@ The design vision is in [`docs/design/design-vision.html`](docs/design/design-vi
 - **Admin panel.** Dashboard, approval queue, member search, Vibhag list (the ~70 Vibhags are data, not code), admin roles, audit log.
 - **Roles with areas.** Every admin role is tied to an area. You can only give roles below your own, inside your own area.
 
-Next phases: Vibhag spaces, meetings and calls by link, circulars, activity reports (Phase 2), then events and passes (Phase 3). See the design vision for the full plan.
+## What works now (Phase 2: organisation work)
+
+- **Vibhag spaces.** Members join one or many Vibhags. Each space has coordinators, updates and a list of members nearby. Only that Vibhag's coordinators can post.
+- **Meetings and calls by link.** Admins call a baithak for an area (and optionally one Vibhag); every approved member in that audience is invited. Any member can propose a one-to-one call from the directory. Paste any https link: Google Meet, Zoom, Teams, Jitsi and YouTube Live are recognised by name. Going / Maybe / Can't, "Add to Google Calendar", attendance recorded when people tap Join, minutes and action items with owners and due dates. Reminders go out a day before and 15 minutes before.
+- **Circulars with read receipts.** Issued at any level to everyone below it, with an optional PDF. The issuer sees the read rate and can remind those who have not read it.
+- **Activity reports.** A unit reports a programme with date, students, colleges and up to 6 photos.
+- **Directory.** Find office bearers by name, college or Vibhag. Phone numbers are never listed; contact goes through a call request.
+- **In-app notifications** for invitations, call requests, replies, reminders, action items and circular reminders.
+- **Analysis in the admin panel.** For the admin's area over 3, 6 or 12 months: members, approval rate and time to decide, meetings and attendance, circular read rate, units active in the last 30 days, month-by-month charts, a table of every area inside it with "needs attention" flags (applications waiting over 7 days, no activity for 30+ days), drill-down into any area, members by Vibhag, field work by programme type, age and gender, and who is reviewing applications and how fast. Tables download as CSV.
+
+To see the analysis with example data on your computer:
+
+```bash
+cd api
+php artisan db:seed --class=DemoSeeder
+```
+
+It adds about 115 example members across Telangana with six months of history. It refuses to run in production.
+
+Next: events, registration and gate scanning (Phase 3). See the design vision for the full plan.
 
 ## Run it on your computer
 
@@ -82,7 +101,10 @@ All routes start with `/api/v1`. Responses look like `{ "success": true, "data":
 | Me | `GET/PATCH me/profile`, `PUT me/privacy`, `POST me/photo`, `GET me/qr` |
 | Membership | `POST membership/application` |
 | Directory | `GET members/{memberId}`, `POST qr/verify` |
-| Admin | `GET admin/dashboard`, `GET admin/applications`, `POST admin/applications/{id}/approve\|return\|reject`, `GET admin/members`, `admin/vibhags`, `admin/org-units`, `admin/role-assignments`, `admin/responsibilities`, `GET admin/audit-logs` |
+| Vibhag spaces | `GET spaces`, `GET spaces/{id}`, `POST/DELETE spaces/{id}/join`, `GET/POST spaces/{id}/posts`, `GET spaces/{id}/members` |
+| Meetings | `GET/POST meetings`, `GET meetings/{id}`, `POST meetings/{id}/rsvp\|join\|cancel`, `PUT meetings/{id}/minutes`, `GET meetings/{id}/calendar.ics`, `GET me/action-items`, `POST action-items/{id}/done` |
+| Circulars and reports | `GET circulars`, `GET circulars/{id}`, `POST activity-reports`, `GET me/activity-reports`, `GET directory`, `GET notifications` |
+| Admin | `GET admin/analytics?months=&unit_id=`, `admin/circulars` (+ `/remind`), `GET admin/meetings`, `GET admin/activity-reports`, `GET admin/dashboard`, `GET admin/applications`, `POST admin/applications/{id}/approve\|return\|reject`, `GET admin/members`, `admin/vibhags`, `admin/org-units`, `admin/role-assignments`, `admin/responsibilities`, `GET admin/audit-logs` |
 
 ## Roles
 

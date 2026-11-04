@@ -47,6 +47,20 @@ class AccessControl
     }
 
     /**
+     * Like canIn, but a role tied to a single Vibhag only counts for that Vibhag.
+     * Pass null for an action that is not about any Vibhag.
+     */
+    public function canInFor(User $user, string $permission, ?OrgUnit $unit, ?int $vibhagId): bool
+    {
+        if (! $unit) {
+            return false;
+        }
+
+        return $this->grants($user, $permission)->contains(fn (RoleAssignment $r) => $r->orgUnit?->contains($unit)
+            && ($r->vibhag_id === null || $r->vibhag_id === $vibhagId));
+    }
+
+    /**
      * Restrict a query to rows whose org unit sits inside the user's scope for
      * the permission. $unitColumn is the foreign key column on the queried table.
      */

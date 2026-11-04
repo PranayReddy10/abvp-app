@@ -28,11 +28,12 @@ export async function request<T>(method: string, path: string, body?: unknown): 
   const headers: Record<string, string> = { Accept: 'application/json' }
   const t = token.get()
   if (t) headers.Authorization = `Bearer ${t}`
-  if (body !== undefined) headers['Content-Type'] = 'application/json'
+  const isForm = body instanceof FormData
+  if (body !== undefined && !isForm) headers['Content-Type'] = 'application/json'
 
   let res: Response
   try {
-    res = await fetch(BASE + path, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) })
+    res = await fetch(BASE + path, { method, headers, body: body === undefined ? undefined : isForm ? body : JSON.stringify(body) })
   } catch {
     throw new ApiError(0, 'NETWORK', 'Cannot reach the server. Check your connection and try again.')
   }

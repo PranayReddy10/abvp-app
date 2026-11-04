@@ -84,7 +84,7 @@ In **Advanced › Cron Jobs**, add a job that runs every minute:
 cd /home/USER/domains/abvpconnect.in/abvp-app/api && php artisan schedule:run >> /dev/null 2>&1
 ```
 
-This clears old OTP codes and expired sign-ins. Later phases use it for reminders and notifications.
+This clears old OTP codes and expired sign-ins, and sends meeting reminders (a day before and 15 minutes before). Without it, reminders do not go out.
 
 ## 5. Admin panel
 

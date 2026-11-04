@@ -32,6 +32,52 @@ class DirectoryController extends Controller
         return $this->ok($this->publicView($profile, $viewer, $isAdmin));
     }
 
+    /**
+     * Find members to contact or call. Approved members only; phone numbers never appear here.
+     * office_bearers=1 limits to people holding a current dayitva.
+     */
+    public function search(Request $request, AccessControl $access)
+    {
+        $request->validate([
+            'q' => ['nullable', 'string', 'max:60'],
+            'vibhag_id' => ['nullable', 'integer'],
+            'org_unit_id' => ['nullable', 'integer'],
+            'office_bearers' => ['nullable', 'boolean'],
+        ]);
+        $viewer = $request->user();
+        if (! $viewer->isApprovedMember() && ! $access->can($viewer, 'members.view')) {
+            throw new ApiException('NOT_A_MEMBER', 'The directory is for approved members.', 403);
+        }
+
+        $query = MemberProfile::where('membership_status', MemberProfile::STATUS_APPROVED)
+            ->where('user_id', '!=', $viewer->id)
+            ->with('orgUnit', 'user.responsibilities')
+            ->orderBy('full_name');
+
+        if ($q = $request->input('q')) {
+            $query->where(fn ($w) => $w->where('full_name', 'like', "%$q%")->orWhere('member_id', $q)->orWhere('institution', 'like', "%$q%"));
+        }
+        if ($request->filled('vibhag_id')) {
+            $query->whereIn('user_id', fn ($s) => $s->select('user_id')->from('member_vibhag')->where('vibhag_id', $request->integer('vibhag_id')));
+        }
+        if ($request->filled('org_unit_id') && ($unit = \App\Models\OrgUnit::find($request->integer('org_unit_id')))) {
+            $query->whereIn('org_unit_id', \App\Models\OrgUnit::within($unit)->select('id'));
+        }
+        if ($request->boolean('office_bearers')) {
+            $query->whereIn('user_id', fn ($s) => $s->select('user_id')->from('responsibilities')->whereNull('ends_on'));
+        }
+
+        $page = $query->paginate(30);
+
+        return $this->ok($page->getCollection()->map(fn (MemberProfile $p) => [
+            'member_id' => $p->member_id,
+            'full_name' => $p->full_name,
+            'place' => $p->orgUnit?->name,
+            'roles' => $p->user->responsibilities->whereNull('ends_on')->map(fn ($r) => $r->title)->values(),
+            'photo_url' => $p->photo_path ? URL::temporarySignedRoute('media.photo', now()->addMinutes(30), ['profile' => $p->id]) : null,
+        ]), meta: ['page' => $page->currentPage(), 'last_page' => $page->lastPage()]);
+    }
+
     /** Scanner check: who does this pass belong to? */
     public function verifyQr(Request $request, QrToken $qr)
     {
