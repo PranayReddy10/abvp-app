@@ -42,7 +42,19 @@ php artisan db:seed --class=DemoSeeder
 
 It adds about 115 example members across Telangana with six months of history. It refuses to run in production.
 
-Next: events, registration and gate scanning (Phase 3). See the design vision for the full plan.
+## What works now (Phase 3: events)
+
+- **Events.** Admins create an event as a draft (type, dates, venue, map link, seats, closing date, instructions, contact person) and publish it. Changing the time or venue tells everyone registered; cancelling tells everyone with the reason.
+- **Who can register.** Open to all approved members, or limited to an area and/or a Vibhag. Every member still sees every published event; the app says clearly whether they can register and why not.
+- **Registration.** One tap. Seats are counted inside a database lock so two people cannot take the last seat. When full, people join a waitlist and move up automatically (with a notification) when someone cancels. Optional approval per registration.
+- **Event pass.** A QR code holding only a signed registration number, no personal data. It is saved on the phone and works without signal. Today's pass sits on top of the Pass tab.
+- **Gate check-in.** Members put on an event's gate team get "Gate check-in" under Me. Scan with the camera, type the code, or find someone by name. Green = welcome, amber = already checked in (with time and gate), red = do not let in. A person is never checked in twice, and people not on the list are sent to the coordinator rather than added at the gate.
+- **No signal at the gate.** The confirmed list is kept on the scanner's phone. Scans made offline show who the person is, are saved, and are sent in one go when the signal is back; each is confirmed or flagged.
+- **Guests.** Invite chief guests and speakers by name and mobile. They sign in with OTP and see only their invitations and pass; they do not become members. Guest and member arrivals are counted separately.
+- **Live arrivals board** in the admin panel, refreshing every 15 seconds: arrived vs expected, members vs guests, arrivals every 30 minutes, by gate, and the latest arrivals. Registrations list with filters (to approve, waitlist, arrived, not arrived), approve/reject, "Mark arrived", and CSV download.
+- **Analysis** now includes events held, registrations and turnout.
+
+Next: teams and duties for event day (Phase 4). See the design vision for the full plan.
 
 ## Run it on your computer
 
@@ -104,6 +116,9 @@ All routes start with `/api/v1`. Responses look like `{ "success": true, "data":
 | Vibhag spaces | `GET spaces`, `GET spaces/{id}`, `POST/DELETE spaces/{id}/join`, `GET/POST spaces/{id}/posts`, `GET spaces/{id}/members` |
 | Meetings | `GET/POST meetings`, `GET meetings/{id}`, `POST meetings/{id}/rsvp\|join\|cancel`, `PUT meetings/{id}/minutes`, `GET meetings/{id}/calendar.ics`, `GET me/action-items`, `POST action-items/{id}/done` |
 | Circulars and reports | `GET circulars`, `GET circulars/{id}`, `POST activity-reports`, `GET me/activity-reports`, `GET directory`, `GET notifications` |
+| Events | `GET events`, `GET events/{id}`, `POST events/{id}/register\|cancel-registration`, `GET me/passes` |
+| Gate check-in | `GET me/check-in-events`, `GET events/{id}/roster`, `POST events/{id}/check-in`, `POST events/{id}/check-in/batch`, `GET events/{id}/check-in/search`, `POST events/{id}/registrations/{reg}/check-in` |
+| Admin events | `admin/events` (list, create, edit, `publish`, `cancel`, `registrations`, `decide`, `guests`, `staff`, `live`) |
 | Admin | `GET admin/analytics?months=&unit_id=`, `admin/circulars` (+ `/remind`), `GET admin/meetings`, `GET admin/activity-reports`, `GET admin/dashboard`, `GET admin/applications`, `POST admin/applications/{id}/approve\|return\|reject`, `GET admin/members`, `admin/vibhags`, `admin/org-units`, `admin/role-assignments`, `admin/responsibilities`, `GET admin/audit-logs` |
 
 ## Roles

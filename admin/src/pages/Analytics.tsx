@@ -14,7 +14,7 @@ interface Analytics {
     members_total: number; members_new: number; applications_received: number; approval_rate: number | null
     median_days_to_decision: number | null; pending_now: number; pending_over_7_days: number
     meetings_held: number; attendance_rate: number | null; circulars_issued: number; circular_read_rate: number | null
-    reports_submitted: number; participants_reached: number; units_total: number; units_active_30_days: number
+    reports_submitted: number; participants_reached: number; events_held: number; event_registrations: number; event_turnout: number | null; units_total: number; units_active_30_days: number
   }
   monthly: Month[]
   funnel: { received: number; approved: number; returned: number; rejected: number; pending: number }
@@ -70,12 +70,13 @@ export default function Analytics() {
       {loading && !a && <p className="muted">Loading…</p>}
       {a && s && (
         <>
-          <div className="kpis six">
+          <div className="kpis seven">
             <div className="kpi"><span>Approved members</span><b>{fmtNum(s.members_total)}</b><small>+{fmtNum(s.members_new)} in period</small></div>
             <div className={`kpi ${s.pending_over_7_days ? 'alert' : ''}`}><span>Waiting for approval</span><b>{fmtNum(s.pending_now)}</b>
               <small style={s.pending_over_7_days ? { color: 'var(--warn)', fontWeight: 600 } : undefined}>{fmtNum(s.pending_over_7_days)} over 7 days</small></div>
             <div className="kpi"><span>Approval rate</span><b>{pct(s.approval_rate)}</b><small>Median {s.median_days_to_decision ?? '–'} days to decide</small></div>
             <div className="kpi"><span>Meetings held</span><b>{fmtNum(s.meetings_held)}</b><small>{pct(s.attendance_rate)} of invitees joined</small></div>
+            <div className="kpi"><span>Events</span><b>{fmtNum(s.events_held)}</b><small>{fmtNum(s.event_registrations)} registered · {pct(s.event_turnout)} turned up</small></div>
             <div className="kpi"><span>Circulars read</span><b>{pct(s.circular_read_rate)}</b><small>{fmtNum(s.circulars_issued)} issued</small></div>
             <div className={`kpi ${s.units_total && s.units_active_30_days / s.units_total < 0.5 ? 'alert' : ''}`}><span>Units active (30 days)</span>
               <b>{fmtNum(s.units_active_30_days)}<span style={{ fontSize: 16, color: 'var(--muted)' }}> / {fmtNum(s.units_total)}</span></b>

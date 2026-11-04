@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'api/api_client.dart';
 import 'screens/apply_screen.dart';
+import 'screens/guest_shell.dart';
 import 'screens/member_shell.dart';
 import 'screens/sign_in_screen.dart';
 import 'screens/status_screen.dart';
@@ -26,11 +27,14 @@ class AbvpConnectApp extends StatelessWidget {
       home: ListenableBuilder(
         listenable: session,
         builder: (context, _) => switch (session.stage) {
-          SessionStage.loading => const Scaffold(body: Center(child: CircularProgressIndicator())),
+          SessionStage.loading => const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          ),
           SessionStage.signedOut => SignInScreen(session: session),
           SessionStage.applying => ApplyScreen(session: session),
           SessionStage.waiting => StatusScreen(session: session),
           SessionStage.member => MemberShell(session: session),
+          SessionStage.guest => GuestShell(session: session),
         },
       ),
     );

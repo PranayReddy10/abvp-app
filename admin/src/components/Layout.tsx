@@ -29,6 +29,7 @@ export default function Layout() {
           </NavLink>
         )}
         {can('members.view') && <NavLink to="/members">Members</NavLink>}
+        {can('events.manage') && <><h6>Events</h6><NavLink to="/events">Events</NavLink></>}
         <h6>Organisation work</h6>
         {can('meetings.schedule') && <NavLink to="/meetings">Meetings</NavLink>}
         {can('circulars.issue') && <NavLink to="/circulars">Circulars</NavLink>}

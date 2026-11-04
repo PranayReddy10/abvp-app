@@ -38,6 +38,13 @@ class MeResource extends JsonResource
                 'label' => config("abvp.roles.{$r->role}.label"),
                 'org_unit' => ['id' => $r->orgUnit->id, 'name' => $r->orgUnit->name, 'type' => $r->orgUnit->type, 'label' => $r->orgUnit->label() ?: $r->orgUnit->name],
             ])->values(),
+            // Invited guest without membership: the app shows the guest view.
+            'is_guest' => ! $this->isApprovedMember() && \App\Models\EventRegistration::where('user_id', $this->id)->where('kind', 'guest')
+                ->whereIn('status', ['registered'])->exists(),
+            // Shows "Gate check-in" in the app.
+            'can_check_in' => \App\Models\EventStaff::where('user_id', $this->id)
+                ->whereHas('event', fn ($q) => $q->where('status', 'published')->where('ends_at', '>=', now()->subDay()))->exists()
+                || $access->can($this->resource, 'events.manage'),
             'permissions' => collect(config('abvp.permissions'))->keys()
                 ->filter(fn ($p) => $access->can($this->resource, $p))->values(),
         ];

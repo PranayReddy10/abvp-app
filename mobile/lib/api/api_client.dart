@@ -21,8 +21,8 @@ class ApiException implements Exception {
 /// { success: false, error: { code, message } }.
 class ApiClient {
   ApiClient({http.Client? client, FlutterSecureStorage? storage})
-      : _http = client ?? http.Client(),
-        _storage = storage ?? const FlutterSecureStorage();
+    : _http = client ?? http.Client(),
+      _storage = storage ?? const FlutterSecureStorage();
 
   final http.Client _http;
   final FlutterSecureStorage _storage;
@@ -45,34 +45,43 @@ class ApiClient {
   }
 
   Future<String?> readCache(String key) => _storage.read(key: 'cache.$key');
-  Future<void> writeCache(String key, String value) => _storage.write(key: 'cache.$key', value: value);
+  Future<void> writeCache(String key, String value) =>
+      _storage.write(key: 'cache.$key', value: value);
 
   Map<String, String> get _headers => {
-        'Accept': 'application/json',
-        if (_token != null) 'Authorization': 'Bearer $_token',
-      };
+    'Accept': 'application/json',
+    if (_token != null) 'Authorization': 'Bearer $_token',
+  };
 
-  Future<dynamic> get(String path) => _send(() => _http.get(_uri(path), headers: _headers));
+  Future<dynamic> get(String path) =>
+      _send(() => _http.get(_uri(path), headers: _headers));
 
-  Future<dynamic> post(String path, [Map<String, dynamic>? body]) => _send(() => _http.post(
-        _uri(path),
-        headers: {..._headers, 'Content-Type': 'application/json'},
-        body: jsonEncode(body ?? {}),
-      ));
+  Future<dynamic> post(String path, [Map<String, dynamic>? body]) => _send(
+    () => _http.post(
+      _uri(path),
+      headers: {..._headers, 'Content-Type': 'application/json'},
+      body: jsonEncode(body ?? {}),
+    ),
+  );
 
-  Future<dynamic> patch(String path, Map<String, dynamic> body) => _send(() => _http.patch(
-        _uri(path),
-        headers: {..._headers, 'Content-Type': 'application/json'},
-        body: jsonEncode(body),
-      ));
+  Future<dynamic> patch(String path, Map<String, dynamic> body) => _send(
+    () => _http.patch(
+      _uri(path),
+      headers: {..._headers, 'Content-Type': 'application/json'},
+      body: jsonEncode(body),
+    ),
+  );
 
-  Future<dynamic> put(String path, Map<String, dynamic> body) => _send(() => _http.put(
-        _uri(path),
-        headers: {..._headers, 'Content-Type': 'application/json'},
-        body: jsonEncode(body),
-      ));
+  Future<dynamic> put(String path, Map<String, dynamic> body) => _send(
+    () => _http.put(
+      _uri(path),
+      headers: {..._headers, 'Content-Type': 'application/json'},
+      body: jsonEncode(body),
+    ),
+  );
 
-  Future<dynamic> upload(String path, String field, File file) => _send(() async {
+  Future<dynamic> upload(String path, String field, File file) =>
+      _send(() async {
         final req = http.MultipartRequest('POST', _uri(path))
           ..headers.addAll(_headers)
           ..files.add(await http.MultipartFile.fromPath(field, file.path));
@@ -80,25 +89,37 @@ class ApiClient {
       });
 
   /// Multipart form with text fields and any number of files under one field name (e.g. photos[]).
-  Future<dynamic> uploadForm(String path, Map<String, String> fields, String fileField, List<File> files) => _send(() async {
-        final req = http.MultipartRequest('POST', _uri(path))
-          ..headers.addAll(_headers)
-          ..fields.addAll(fields);
-        for (final f in files) {
-          req.files.add(await http.MultipartFile.fromPath(fileField, f.path));
-        }
-        return http.Response.fromStream(await _http.send(req));
-      });
+  Future<dynamic> uploadForm(
+    String path,
+    Map<String, String> fields,
+    String fileField,
+    List<File> files,
+  ) => _send(() async {
+    final req = http.MultipartRequest('POST', _uri(path))
+      ..headers.addAll(_headers)
+      ..fields.addAll(fields);
+    for (final f in files) {
+      req.files.add(await http.MultipartFile.fromPath(fileField, f.path));
+    }
+    return http.Response.fromStream(await _http.send(req));
+  });
 
-  Future<dynamic> delete(String path) => _send(() => _http.delete(_uri(path), headers: _headers));
+  Future<dynamic> delete(String path) =>
+      _send(() => _http.delete(_uri(path), headers: _headers));
 
   /// Full envelope (data + meta) for list screens that need counts.
   Future<Map<String, dynamic>> getWithMeta(String path) async {
-    final res = await _http.get(_uri(path), headers: _headers).timeout(const Duration(seconds: 20));
+    final res = await _http
+        .get(_uri(path), headers: _headers)
+        .timeout(const Duration(seconds: 20));
     final json = jsonDecode(res.body) as Map<String, dynamic>;
     if (json['success'] != true) {
       final e = (json['error'] as Map<String, dynamic>?) ?? {};
-      throw ApiException(e['code'] as String? ?? 'HTTP_${res.statusCode}', e['message'] as String? ?? 'Something went wrong.', status: res.statusCode);
+      throw ApiException(
+        e['code'] as String? ?? 'HTTP_${res.statusCode}',
+        e['message'] as String? ?? 'Something went wrong.',
+        status: res.statusCode,
+      );
     }
     return json;
   }
@@ -110,9 +131,15 @@ class ApiClient {
     try {
       res = await call().timeout(const Duration(seconds: 20));
     } on SocketException {
-      throw ApiException('NETWORK', 'No internet connection. Check your network and try again.');
+      throw ApiException(
+        'NETWORK',
+        'No internet connection. Check your network and try again.',
+      );
     } on Exception {
-      throw ApiException('NETWORK', 'Could not reach the server. Try again in a moment.');
+      throw ApiException(
+        'NETWORK',
+        'Could not reach the server. Try again in a moment.',
+      );
     }
 
     Map<String, dynamic>? json;
@@ -122,7 +149,9 @@ class ApiClient {
       json = null;
     }
 
-    if (res.statusCode >= 200 && res.statusCode < 300 && json?['success'] == true) {
+    if (res.statusCode >= 200 &&
+        res.statusCode < 300 &&
+        json?['success'] == true) {
       return json!['data'];
     }
 

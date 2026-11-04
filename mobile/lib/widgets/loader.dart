@@ -7,7 +7,12 @@ import 'common.dart';
 class Loader<T> extends StatefulWidget {
   const Loader({super.key, required this.load, required this.builder});
   final Future<T> Function() load;
-  final Widget Function(BuildContext context, T data, Future<void> Function() reload) builder;
+  final Widget Function(
+    BuildContext context,
+    T data,
+    Future<void> Function() reload,
+  )
+  builder;
 
   @override
   State<Loader<T>> createState() => _LoaderState<T>();
@@ -43,15 +48,23 @@ class _LoaderState<T> extends State<Loader<T>> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading && _data == null) return const Center(child: CircularProgressIndicator());
-    if (_data == null) {
-      return ListView(padding: const EdgeInsets.all(20), children: [
-        ErrorBanner(_error ?? 'Could not load.'),
-        const SizedBox(height: 12),
-        OutlinedButton(onPressed: _reload, child: const Text('Try again')),
-      ]);
+    if (_loading && _data == null) {
+      return const Center(child: CircularProgressIndicator());
     }
-    return RefreshIndicator(onRefresh: _reload, child: widget.builder(context, _data as T, _reload));
+    if (_data == null) {
+      return ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          ErrorBanner(_error ?? 'Could not load.'),
+          const SizedBox(height: 12),
+          OutlinedButton(onPressed: _reload, child: const Text('Try again')),
+        ],
+      );
+    }
+    return RefreshIndicator(
+      onRefresh: _reload,
+      child: widget.builder(context, _data as T, _reload),
+    );
   }
 }
 
@@ -61,7 +74,11 @@ class EmptyNote extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
-        child: Text(text, textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodySmall),
-      );
+    padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
+    child: Text(
+      text,
+      textAlign: TextAlign.center,
+      style: Theme.of(context).textTheme.bodySmall,
+    ),
+  );
 }

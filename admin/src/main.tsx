@@ -6,6 +6,8 @@ import Layout from './components/Layout'
 import Analytics from './pages/Analytics'
 import Approvals from './pages/Approvals'
 import Circulars from './pages/Circulars'
+import EventDetail from './pages/EventDetail'
+import Events from './pages/Events'
 import Meetings from './pages/Meetings'
 import Reports from './pages/Reports'
 import VibhagUpdates from './pages/VibhagUpdates'
@@ -33,6 +35,8 @@ function App() {
         <Route path="audit" element={<AuditLog />} />
         <Route path="analytics" element={<Analytics />} />
         <Route path="meetings" element={<Meetings />} />
+        <Route path="events" element={<Events />} />
+        <Route path="events/:id" element={<EventDetail />} />
         <Route path="circulars" element={<Circulars />} />
         <Route path="reports" element={<Reports />} />
         <Route path="updates" element={<VibhagUpdates />} />

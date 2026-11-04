@@ -57,6 +57,8 @@ return [
         'circulars.issue' => ['super_admin', 'national_admin', 'state_admin', 'district_admin', 'vibhag_admin'],
         'vibhag.post' => ['super_admin', 'national_admin', 'state_admin', 'district_admin', 'vibhag_admin'],
         'reports.view' => ['super_admin', 'national_admin', 'state_admin', 'district_admin', 'vibhag_admin'],
+        // Phase 3
+        'events.manage' => ['super_admin', 'national_admin', 'state_admin', 'district_admin', 'vibhag_admin'],
         'analytics.view' => ['super_admin', 'national_admin', 'state_admin', 'district_admin', 'vibhag_admin'],
     ],
 

@@ -25,7 +25,13 @@ class _CircularsScreenState extends State<CircularsScreen> {
         key: _key,
         load: () async => await widget.session.api.get('/circulars') as List,
         builder: (context, rows, _) => rows.isEmpty
-            ? ListView(children: const [EmptyNote('No circulars yet. Official circulars from your unit, district, state and national office appear here.')])
+            ? ListView(
+                children: const [
+                  EmptyNote(
+                    'No circulars yet. Official circulars from your unit, district, state and national office appear here.',
+                  ),
+                ],
+              )
             : ListView.separated(
                 padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
                 itemCount: rows.length,
@@ -36,12 +42,35 @@ class _CircularsScreenState extends State<CircularsScreen> {
                   return Card(
                     child: ListTile(
                       contentPadding: const EdgeInsets.fromLTRB(16, 8, 12, 8),
-                      leading: unread ? const Icon(Icons.circle, size: 10, color: AppColors.saffron) : const SizedBox(width: 10),
+                      leading: unread
+                          ? const Icon(
+                              Icons.circle,
+                              size: 10,
+                              color: AppColors.saffron,
+                            )
+                          : const SizedBox(width: 10),
                       minLeadingWidth: 10,
-                      title: Text(c['title'] as String, style: TextStyle(fontWeight: unread ? FontWeight.w800 : FontWeight.w600)),
-                      subtitle: Text('${c['from']}${c['vibhag'] != null ? ' · ${c['vibhag']}' : ''} · ${day(c['published_at'] as String)}${c['has_attachment'] == true ? ' · PDF' : ''}'),
+                      title: Text(
+                        c['title'] as String,
+                        style: TextStyle(
+                          fontWeight: unread
+                              ? FontWeight.w800
+                              : FontWeight.w600,
+                        ),
+                      ),
+                      subtitle: Text(
+                        '${c['from']}${c['vibhag'] != null ? ' · ${c['vibhag']}' : ''} · ${day(c['published_at'] as String)}${c['has_attachment'] == true ? ' · PDF' : ''}',
+                      ),
                       onTap: () async {
-                        await Navigator.push(context, MaterialPageRoute(builder: (_) => CircularScreen(session: widget.session, id: c['id'] as int)));
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => CircularScreen(
+                              session: widget.session,
+                              id: c['id'] as int,
+                            ),
+                          ),
+                        );
                         setState(() => _key = UniqueKey());
                       },
                     ),
@@ -63,25 +92,49 @@ class CircularScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Circular')),
       body: Loader<Map<String, dynamic>>(
-        load: () async => await session.api.get('/circulars/$id') as Map<String, dynamic>,
-        builder: (context, c, _) => ListView(padding: const EdgeInsets.fromLTRB(20, 4, 20, 32), children: [
-          Text('${c['from']}${c['vibhag'] != null ? ' · ${c['vibhag']}' : ''}'.toUpperCase(),
-              style: const TextStyle(color: AppColors.saffronInk, fontWeight: FontWeight.w700, letterSpacing: 1, fontSize: 12)),
-          const SizedBox(height: 6),
-          Text(c['title'] as String, style: Theme.of(context).textTheme.headlineSmall),
-          const SizedBox(height: 4),
-          Text('${day(c['published_at'] as String)}${c['issued_by'] != null ? ' · ${c['issued_by']}' : ''}', style: Theme.of(context).textTheme.bodySmall),
-          const SizedBox(height: 18),
-          SelectableText(c['body'] as String, style: const TextStyle(fontSize: 16, height: 1.5)),
-          if (c['attachment_url'] != null) ...[
-            const SizedBox(height: 20),
-            OutlinedButton.icon(
-              onPressed: () => launchUrl(Uri.parse(c['attachment_url'] as String), mode: LaunchMode.externalApplication),
-              icon: const Icon(Icons.picture_as_pdf_outlined),
-              label: const Text('Open attachment'),
+        load: () async =>
+            await session.api.get('/circulars/$id') as Map<String, dynamic>,
+        builder: (context, c, _) => ListView(
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 32),
+          children: [
+            Text(
+              '${c['from']}${c['vibhag'] != null ? ' · ${c['vibhag']}' : ''}'
+                  .toUpperCase(),
+              style: const TextStyle(
+                color: AppColors.saffronInk,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1,
+                fontSize: 12,
+              ),
             ),
+            const SizedBox(height: 6),
+            Text(
+              c['title'] as String,
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '${day(c['published_at'] as String)}${c['issued_by'] != null ? ' · ${c['issued_by']}' : ''}',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 18),
+            SelectableText(
+              c['body'] as String,
+              style: const TextStyle(fontSize: 16, height: 1.5),
+            ),
+            if (c['attachment_url'] != null) ...[
+              const SizedBox(height: 20),
+              OutlinedButton.icon(
+                onPressed: () => launchUrl(
+                  Uri.parse(c['attachment_url'] as String),
+                  mode: LaunchMode.externalApplication,
+                ),
+                icon: const Icon(Icons.picture_as_pdf_outlined),
+                label: const Text('Open attachment'),
+              ),
+            ],
           ],
-        ]),
+        ),
       ),
     );
   }

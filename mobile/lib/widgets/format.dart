@@ -8,7 +8,8 @@ String dayTime(String iso) {
   return '${_day.format(d)}, ${_time.format(d)}';
 }
 
-String day(String iso) => DateFormat('d MMM yyyy').format(DateTime.parse(iso).toLocal());
+String day(String iso) =>
+    DateFormat('d MMM yyyy').format(DateTime.parse(iso).toLocal());
 
 String ago(String iso) {
   final diff = DateTime.now().difference(DateTime.parse(iso).toLocal());
@@ -34,7 +35,9 @@ String? providerFor(String url) {
   if (host.isEmpty) return null;
   if (host.endsWith('meet.google.com')) return 'google_meet';
   if (host.endsWith('zoom.us') || host.endsWith('zoom.com')) return 'zoom';
-  if (host.contains('teams.microsoft.com') || host.contains('teams.live.com')) return 'teams';
+  if (host.contains('teams.microsoft.com') || host.contains('teams.live.com')) {
+    return 'teams';
+  }
   if (host.endsWith('meet.jit.si')) return 'jitsi';
   if (host.endsWith('youtube.com') || host == 'youtu.be') return 'youtube';
   return 'link';

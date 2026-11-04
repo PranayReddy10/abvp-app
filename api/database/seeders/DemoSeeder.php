@@ -5,6 +5,9 @@ namespace Database\Seeders;
 use App\Models\ActivityReport;
 use App\Models\ApplicationEvent;
 use App\Models\Circular;
+use App\Models\Event;
+use App\Models\EventRegistration;
+use App\Models\EventStaff;
 use App\Models\CircularRead;
 use App\Models\MemberProfile;
 use App\Models\MembershipApplication;
@@ -123,6 +126,8 @@ class DemoSeeder extends Seeder
             }
         }
 
+        $this->events($state, $members, $admin);
+
         // Activity reports. Some units go quiet so the analysis has something to flag.
         $types = array_keys(ActivityReport::TYPES);
         $titles = ['seva' => 'Lake clean-up drive', 'campus_contact' => 'Campus contact programme', 'seminar' => 'Talk on National Education Policy', 'training' => 'Prathmik Abhyas Varg', 'agitation' => 'Hostel fee protest', 'membership_drive' => 'Sadasyata Abhiyan', 'cultural' => 'Swami Vivekananda Jayanti', 'sports' => 'Inter-college kabaddi', 'meeting' => 'Ikai Baithak', 'other' => 'Blood donation camp'];
@@ -169,5 +174,49 @@ class DemoSeeder extends Seeder
         $e = new ApplicationEvent(['membership_application_id' => $app->id, 'actor_id' => $actor?->id, 'action' => $action, 'note' => $note]);
         $e->created_at = $at;
         $e->save();
+    }
+
+    private function events(OrgUnit $state, $members, ?User $admin): void
+    {
+        $organiser = $admin?->id ?? $members->first()->id;
+        $hyd = OrgUnit::where('name', 'Hyderabad')->first();
+
+        // Happening today: arrivals spread across gates over the morning.
+        $today = Event::create(['title' => 'Telangana Pranth Adhiveshan 2026', 'category' => 'conference', 'venue' => 'Kakatiya University, Warangal',
+            'starts_at' => now()->setTime(3, 0), 'ends_at' => now()->addDay()->setTime(12, 0), 'org_unit_id' => $state->id, 'organiser_id' => $organiser,
+            'capacity' => 150, 'instructions' => 'Report at your gate by 8:30 AM. Carry your pass and college ID.', 'contact_name' => 'Srinivas Rao', 'contact_phone' => '9848000000']);
+        $today->forceFill(['status' => 'published', 'published_at' => now()->subDays(20)])->save();
+        $gates = ['Gate 1', 'Gate 1', 'Gate 2', 'Gate 3', 'Gate 3'];
+        foreach ($members->take(90) as $i => $m) {
+            $arrived = $i < 61;
+            EventRegistration::create(['event_id' => $today->id, 'user_id' => $m->id, 'kind' => 'member', 'status' => 'registered',
+                'checked_in_at' => $arrived ? now()->setTime(2, 45)->addMinutes((int) (150 * (mt_rand(0, 1000) / 1000) ** 0.7))->min(now()) : null,
+                'gate' => $arrived ? $gates[mt_rand(0, 4)] : null, 'check_in_method' => $arrived ? (mt_rand(1, 10) > 1 ? 'scan' : 'manual') : null, 'created_at' => now()->subDays(mt_rand(1, 18))]);
+        }
+        foreach ([['Prof. K. Rao', 'Osmania University', true], ['Smt. Lakshmi Devi', 'Telangana Vidya Parishad', true], ['Dr. Suresh', 'NIT Warangal', false]] as $k => [$name, $org, $came]) {
+            $g = User::create(['mobile' => '+918900000'.str_pad((string) $k, 3, '0', STR_PAD_LEFT), 'name' => $name]);
+            EventRegistration::create(['event_id' => $today->id, 'user_id' => $g->id, 'kind' => 'guest', 'status' => 'registered', 'guest_name' => $name, 'guest_organisation' => $org,
+                'invited_by' => $organiser, 'checked_in_at' => $came ? now()->setTime(4, 10 + $k) : null, 'gate' => $came ? 'Guest desk' : null, 'check_in_method' => $came ? 'manual' : null]);
+        }
+        EventStaff::create(['event_id' => $today->id, 'user_id' => $members[95]->id, 'role' => 'scanner']);
+
+        // Upcoming, nearly full, with approvals and a waitlist.
+        $soon = Event::create(['title' => 'Campus Sampark Abhiyan', 'category' => 'campaign', 'venue' => 'Arts College, Osmania University',
+            'starts_at' => now()->addDays(9)->setTime(3, 30), 'ends_at' => now()->addDays(9)->setTime(10, 30), 'org_unit_id' => $hyd->id, 'organiser_id' => $organiser,
+            'capacity' => 40, 'requires_approval' => true, 'registration_closes_at' => now()->addDays(6)]);
+        $soon->forceFill(['status' => 'published', 'published_at' => now()->subDays(4)])->save();
+        foreach ($members->slice(20, 44)->values() as $i => $m) {
+            EventRegistration::create(['event_id' => $soon->id, 'user_id' => $m->id, 'kind' => 'member', 'status' => $i < 34 ? 'registered' : ($i < 40 ? 'pending' : 'waitlisted')]);
+        }
+
+        // Finished last month.
+        $past = Event::create(['title' => 'Prathmik Abhyas Varg – Hyderabad', 'category' => 'training', 'venue' => 'Keshav Memorial, Narayanaguda',
+            'starts_at' => now()->subDays(28)->setTime(3, 30), 'ends_at' => now()->subDays(27)->setTime(11, 30), 'org_unit_id' => $hyd->id, 'organiser_id' => $organiser]);
+        $past->forceFill(['status' => 'published', 'published_at' => now()->subDays(45)])->save();
+        foreach ($members->slice(5, 50)->values() as $i => $m) {
+            $came = mt_rand(1, 100) <= 78;
+            EventRegistration::create(['event_id' => $past->id, 'user_id' => $m->id, 'kind' => 'member', 'status' => 'registered',
+                'checked_in_at' => $came ? $past->starts_at->copy()->addMinutes(mt_rand(-40, 60)) : null, 'gate' => $came ? 'Main gate' : null, 'check_in_method' => $came ? 'scan' : null]);
+        }
     }
 }

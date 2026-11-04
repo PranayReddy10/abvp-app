@@ -61,6 +61,12 @@ class AnalyticsController extends Controller
         $circulars = Circular::whereIn('org_unit_id', $unitIds)->whereBetween('published_at', [$from, $to])->withCount('reads')->get(['id', 'audience_size']);
         $audience = $circulars->sum('audience_size');
 
+        $eventRows = \App\Models\Event::whereIn('org_unit_id', $unitIds)->where('status', '!=', 'draft')->where('status', '!=', 'cancelled')
+            ->whereBetween('starts_at', [$from, $to])->pluck('id');
+        $eventRegs = \App\Models\EventRegistration::whereIn('event_id', $eventRows)->where('status', 'registered');
+        $eventRegistered = (clone $eventRegs)->count();
+        $eventArrived = (clone $eventRegs)->whereNotNull('checked_in_at')->count();
+
         $approvedCount = $decided->where('status', Application::APPROVED)->count();
         $decisionDays = $decided->map(fn ($a) => $a->submitted_at ? $a->submitted_at->diffInHours($a->decided_at) / 24 : null)->filter(fn ($d) => $d !== null)->sort()->values();
 
@@ -88,6 +94,9 @@ class AnalyticsController extends Controller
                 'circular_read_rate' => $audience ? round($circulars->sum('reads_count') / $audience * 100) : null,
                 'reports_submitted' => $periodReports->count(),
                 'participants_reached' => (int) $periodReports->sum('participants'),
+                'events_held' => $eventRows->count(),
+                'event_registrations' => $eventRegistered,
+                'event_turnout' => $eventRegistered ? round($eventArrived / $eventRegistered * 100) : null,
                 'units_total' => $leafUnits->count(),
                 'units_active_30_days' => $activeUnits,
             ],

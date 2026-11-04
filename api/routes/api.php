@@ -3,7 +3,9 @@
 use App\Http\Controllers\Api\V1\Admin;
 use App\Http\Controllers\Api\V1\ActivityReportController;
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\CheckInController;
 use App\Http\Controllers\Api\V1\CircularController;
+use App\Http\Controllers\Api\V1\EventController;
 use App\Http\Controllers\Api\V1\DirectoryController;
 use App\Http\Controllers\Api\V1\MediaController;
 use App\Http\Controllers\Api\V1\MeetingController;
@@ -77,6 +79,19 @@ Route::prefix('v1')->group(function () {
         Route::post('activity-reports', [ActivityReportController::class, 'store']);
         Route::get('me/activity-reports', [ActivityReportController::class, 'mine']);
         Route::get('notifications', [NotificationController::class, 'index']);
+
+        // Phase 3: events, passes, gate check-in
+        Route::get('events', [EventController::class, 'index']);
+        Route::get('events/{event}', [EventController::class, 'show']);
+        Route::post('events/{event}/register', [EventController::class, 'register']);
+        Route::post('events/{event}/cancel-registration', [EventController::class, 'cancel']);
+        Route::get('me/passes', [EventController::class, 'passes']);
+        Route::get('me/check-in-events', [CheckInController::class, 'myEvents']);
+        Route::get('events/{event}/roster', [CheckInController::class, 'roster']);
+        Route::get('events/{event}/check-in/search', [CheckInController::class, 'search']);
+        Route::post('events/{event}/check-in', [CheckInController::class, 'scan']);
+        Route::post('events/{event}/check-in/batch', [CheckInController::class, 'batch']);
+        Route::post('events/{event}/registrations/{registration}/check-in', [CheckInController::class, 'manual']);
         Route::post('notifications/read-all', [NotificationController::class, 'readAll']);
         Route::post('qr/verify', [DirectoryController::class, 'verifyQr']);
 
@@ -114,6 +129,20 @@ Route::prefix('v1')->group(function () {
             Route::post('circulars/{circular}/remind', [Admin\CircularController::class, 'remind']);
             Route::get('meetings', [Admin\MeetingController::class, 'index']);
             Route::get('activity-reports', [Admin\ActivityReportController::class, 'index']);
+
+            Route::get('events', [Admin\EventController::class, 'index']);
+            Route::post('events', [Admin\EventController::class, 'store']);
+            Route::get('events/{event}', [Admin\EventController::class, 'show']);
+            Route::patch('events/{event}', [Admin\EventController::class, 'update']);
+            Route::post('events/{event}/publish', [Admin\EventController::class, 'publish']);
+            Route::post('events/{event}/cancel', [Admin\EventController::class, 'cancel']);
+            Route::get('events/{event}/registrations', [Admin\EventController::class, 'registrations']);
+            Route::post('events/{event}/registrations/{registration}/decide', [Admin\EventController::class, 'decide']);
+            Route::post('events/{event}/guests', [Admin\EventController::class, 'inviteGuest']);
+            Route::get('events/{event}/staff', [Admin\EventController::class, 'staff']);
+            Route::post('events/{event}/staff', [Admin\EventController::class, 'addStaff']);
+            Route::delete('events/{event}/staff/{staff}', [Admin\EventController::class, 'removeStaff']);
+            Route::get('events/{event}/live', [Admin\EventController::class, 'live']);
         });
     });
 });

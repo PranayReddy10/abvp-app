@@ -61,14 +61,20 @@ class _ApplyScreenState extends State<ApplyScreen> {
   }
 
   Future<List<OrgUnit>> _unitsUnder(int? parentId) async {
-    final data = await api.get(parentId == null ? '/org/units' : '/org/units?parent_id=$parentId') as List;
-    return data.map((j) => OrgUnit.fromJson(j as Map<String, dynamic>)).toList();
+    final data = await api.get(
+      parentId == null ? '/org/units' : '/org/units?parent_id=$parentId',
+    ) as List;
+    return data
+        .map((j) => OrgUnit.fromJson(j as Map<String, dynamic>))
+        .toList();
   }
 
   Future<void> _loadLookups() async {
     try {
       final states = await _unitsUnder(null);
-      final vibhags = (await api.get('/vibhags') as List).map((j) => Vibhag.fromJson(j as Map<String, dynamic>)).toList();
+      final vibhags = (await api.get('/vibhags') as List)
+          .map((j) => Vibhag.fromJson(j as Map<String, dynamic>))
+          .toList();
       setState(() {
         _states = states;
         _vibhags = vibhags;
@@ -106,17 +112,31 @@ class _ApplyScreenState extends State<ApplyScreen> {
 
   Future<void> _pickPhoto(ImageSource source) async {
     // Resize on the phone so uploads stay small on slow networks and shared hosting.
-    final x = await ImagePicker().pickImage(source: source, maxWidth: 800, maxHeight: 800, imageQuality: 80);
+    final x = await ImagePicker().pickImage(
+      source: source,
+      maxWidth: 800,
+      maxHeight: 800,
+      imageQuality: 80,
+    );
     if (x != null) setState(() => _photo = File(x.path));
   }
 
   Future<void> _submit() async {
     if (!_form.currentState!.validate()) return;
-    if (_dob == null) return setState(() => _error = 'Choose your date of birth.');
-    final areaId = (_unit ?? _district)?.id ?? widget.session.me?.profile?.orgUnitId;
-    if (areaId == null) return setState(() => _error = 'Choose your state, district and unit.');
-    if (_photo == null && _existingPhoto == null) return setState(() => _error = 'Add a clear photo of your face.');
-    if (!_confirm) return setState(() => _error = 'Confirm that your details are correct.');
+    if (_dob == null) {
+      return setState(() => _error = 'Choose your date of birth.');
+    }
+    final areaId =
+        (_unit ?? _district)?.id ?? widget.session.me?.profile?.orgUnitId;
+    if (areaId == null) {
+      return setState(() => _error = 'Choose your state, district and unit.');
+    }
+    if (_photo == null && _existingPhoto == null) {
+      return setState(() => _error = 'Add a clear photo of your face.');
+    }
+    if (!_confirm) {
+      return setState(() => _error = 'Confirm that your details are correct.');
+    }
 
     setState(() {
       _busy = true;
@@ -150,27 +170,39 @@ class _ApplyScreenState extends State<ApplyScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Apply for membership'),
-        actions: [TextButton(onPressed: widget.session.signOut, child: const Text('Sign out'))],
+        actions: [
+          TextButton(
+            onPressed: widget.session.signOut,
+            child: const Text('Sign out'),
+          ),
+        ],
       ),
       body: Form(
         key: _form,
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 4, 20, 32),
           children: [
-            Text('Your application goes to the office for the area you choose. Use your real details.',
-                style: Theme.of(context).textTheme.bodySmall),
+            Text(
+              'Your application goes to the office for the area you choose. Use your real details.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
             const SizedBox(height: 20),
             _section('About you'),
             TextFormField(
               controller: _name,
               decoration: const InputDecoration(labelText: 'Full name'),
               textCapitalization: TextCapitalization.words,
-              validator: (v) => (v ?? '').trim().length < 2 ? 'Enter your full name' : null,
+              validator: (v) =>
+                  (v ?? '').trim().length < 2 ? 'Enter your full name' : null,
             ),
             const SizedBox(height: 12),
             OutlinedButton.icon(
               icon: const Icon(Icons.cake_outlined),
-              label: Text(_dob == null ? 'Date of birth' : DateFormat('d MMM yyyy').format(_dob!)),
+              label: Text(
+                _dob == null
+                    ? 'Date of birth'
+                    : DateFormat('d MMM yyyy').format(_dob!),
+              ),
               onPressed: () async {
                 final now = DateTime.now();
                 final picked = await showDatePicker(
@@ -191,83 +223,143 @@ class _ApplyScreenState extends State<ApplyScreen> {
               ],
               selected: {?_gender},
               emptySelectionAllowed: true,
-              onSelectionChanged: (s) => setState(() => _gender = s.isEmpty ? null : s.first),
+              onSelectionChanged: (s) =>
+                  setState(() => _gender = s.isEmpty ? null : s.first),
             ),
             const SizedBox(height: 24),
             _section('Your area'),
             if (existingArea != null && _state == null)
               Padding(
                 padding: const EdgeInsets.only(bottom: 10),
-                child: Text('Currently: $existingArea. Choose again only to change it.',
-                    style: Theme.of(context).textTheme.bodySmall),
+                child: Text(
+                  'Currently: $existingArea. Choose again only to change it.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
               ),
             _dropdown('State', _states, _state, _pickState),
             const SizedBox(height: 12),
             _dropdown('District', _districts, _district, _pickDistrict),
             const SizedBox(height: 12),
-            _dropdown('Unit or college', _units, _unit, (u) async => setState(() => _unit = u)),
+            _dropdown(
+              'Unit or college',
+              _units,
+              _unit,
+              (u) async => setState(() => _unit = u),
+            ),
             const SizedBox(height: 24),
             _section('Study'),
-            TextFormField(controller: _institution, decoration: const InputDecoration(labelText: 'College or institution')),
+            TextFormField(
+              controller: _institution,
+              decoration: const InputDecoration(
+                labelText: 'College or institution',
+              ),
+            ),
             const SizedBox(height: 12),
-            Row(children: [
-              Expanded(flex: 3, child: TextFormField(controller: _course, decoration: const InputDecoration(labelText: 'Course'))),
-              const SizedBox(width: 12),
-              Expanded(flex: 2, child: TextFormField(controller: _year, decoration: const InputDecoration(labelText: 'Year'))),
-            ]),
+            Row(
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: TextFormField(
+                    controller: _course,
+                    decoration: const InputDecoration(labelText: 'Course'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 2,
+                  child: TextFormField(
+                    controller: _year,
+                    decoration: const InputDecoration(labelText: 'Year'),
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 24),
             _section('Vibhags you want to join'),
             Wrap(
               spacing: 8,
               runSpacing: 8,
               children: _vibhags
-                  .map((v) => FilterChip(
-                        label: Text(v.name),
-                        selected: _chosenVibhags.contains(v.id),
-                        selectedColor: AppColors.saffronSoft,
-                        onSelected: (on) => setState(() => on ? _chosenVibhags.add(v.id) : _chosenVibhags.remove(v.id)),
-                      ))
+                  .map(
+                    (v) => FilterChip(
+                      label: Text(v.name),
+                      selected: _chosenVibhags.contains(v.id),
+                      selectedColor: AppColors.saffronSoft,
+                      onSelected: (on) => setState(
+                        () => on
+                            ? _chosenVibhags.add(v.id)
+                            : _chosenVibhags.remove(v.id),
+                      ),
+                    ),
+                  )
                   .toList(),
             ),
             const SizedBox(height: 24),
             _section('Photo'),
-            Row(children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  width: 84,
-                  height: 100,
-                  color: AppColors.line,
-                  child: _photo != null
-                      ? Image.file(_photo!, fit: BoxFit.cover)
-                      : _existingPhoto != null
-                          ? Image.network(_existingPhoto!, fit: BoxFit.cover)
-                          : const Icon(Icons.person_outline, size: 40, color: AppColors.muted),
+            Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    width: 84,
+                    height: 100,
+                    color: AppColors.line,
+                    child: _photo != null
+                        ? Image.file(_photo!, fit: BoxFit.cover)
+                        : _existingPhoto != null
+                        ? Image.network(_existingPhoto!, fit: BoxFit.cover)
+                        : const Icon(
+                            Icons.person_outline,
+                            size: 40,
+                            color: AppColors.muted,
+                          ),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                  OutlinedButton.icon(onPressed: () => _pickPhoto(ImageSource.camera), icon: const Icon(Icons.photo_camera_outlined), label: const Text('Take photo')),
-                  const SizedBox(height: 8),
-                  OutlinedButton.icon(onPressed: () => _pickPhoto(ImageSource.gallery), icon: const Icon(Icons.image_outlined), label: const Text('Choose from gallery')),
-                ]),
-              ),
-            ]),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: () => _pickPhoto(ImageSource.camera),
+                        icon: const Icon(Icons.photo_camera_outlined),
+                        label: const Text('Take photo'),
+                      ),
+                      const SizedBox(height: 8),
+                      OutlinedButton.icon(
+                        onPressed: () => _pickPhoto(ImageSource.gallery),
+                        icon: const Icon(Icons.image_outlined),
+                        label: const Text('Choose from gallery'),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 6),
-            Text('A clear, front-facing photo. Only you and reviewing officers can see it before approval.',
-                style: Theme.of(context).textTheme.bodySmall),
+            Text(
+              'A clear, front-facing photo. Only you and reviewing officers can see it before approval.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
             const SizedBox(height: 20),
             CheckboxListTile(
               value: _confirm,
               onChanged: (v) => setState(() => _confirm = v ?? false),
               contentPadding: EdgeInsets.zero,
               controlAffinity: ListTileControlAffinity.leading,
-              title: const Text('My details are correct and the photo is of me.'),
+              title: const Text(
+                'My details are correct and the photo is of me.',
+              ),
             ),
-            if (_error != null) ...[const SizedBox(height: 8), ErrorBanner(_error!)],
+            if (_error != null) ...[
+              const SizedBox(height: 8),
+              ErrorBanner(_error!),
+            ],
             const SizedBox(height: 16),
-            FilledButton(onPressed: _busy ? null : _submit, child: Text(_busy ? 'Submitting…' : 'Submit application')),
+            FilledButton(
+              onPressed: _busy ? null : _submit,
+              child: Text(_busy ? 'Submitting…' : 'Submit application'),
+            ),
           ],
         ),
       ),
@@ -275,16 +367,23 @@ class _ApplyScreenState extends State<ApplyScreen> {
   }
 
   Widget _section(String title) => Padding(
-        padding: const EdgeInsets.only(bottom: 10),
-        child: Text(title, style: Theme.of(context).textTheme.titleMedium),
-      );
+    padding: const EdgeInsets.only(bottom: 10),
+    child: Text(title, style: Theme.of(context).textTheme.titleMedium),
+  );
 
-  Widget _dropdown(String label, List<OrgUnit> items, OrgUnit? value, Future<void> Function(OrgUnit?) onChanged) {
+  Widget _dropdown(
+    String label,
+    List<OrgUnit> items,
+    OrgUnit? value,
+    Future<void> Function(OrgUnit?) onChanged,
+  ) {
     return DropdownButtonFormField<OrgUnit>(
       initialValue: value,
       isExpanded: true,
       decoration: InputDecoration(labelText: label),
-      items: items.map((u) => DropdownMenuItem(value: u, child: Text(u.name))).toList(),
+      items: items
+          .map((u) => DropdownMenuItem(value: u, child: Text(u.name)))
+          .toList(),
       onChanged: items.isEmpty ? null : (u) => onChanged(u),
     );
   }

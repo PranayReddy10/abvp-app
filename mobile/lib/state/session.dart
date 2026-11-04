@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../api/api_client.dart';
 import '../models.dart';
 
-enum SessionStage { loading, signedOut, applying, waiting, member }
+enum SessionStage { loading, signedOut, applying, waiting, member, guest }
 
 /// Who is signed in and where they are in the membership journey.
 class Session extends ChangeNotifier {
@@ -19,6 +19,10 @@ class Session extends ChangeNotifier {
     final m = me;
     if (m == null) return SessionStage.signedOut;
     if (m.isMember) return SessionStage.member;
+    // Invited guests who have not applied see only their invitations and passes.
+    if (m.isGuest && m.application == null && !editingApplication) {
+      return SessionStage.guest;
+    }
     final app = m.application;
     if (app == null || editingApplication) return SessionStage.applying;
     return SessionStage.waiting;
@@ -42,7 +46,11 @@ class Session extends ChangeNotifier {
   }
 
   Future<void> verifyOtp(String mobile, String code) async {
-    final data = await api.post('/auth/verify-otp', {'mobile': mobile, 'code': code, 'device_name': 'mobile'});
+    final data = await api.post('/auth/verify-otp', {
+      'mobile': mobile,
+      'code': code,
+      'device_name': 'mobile',
+    });
     await api.saveToken(data['token'] as String);
     me = Me(data['user'] as Map<String, dynamic>);
     notifyListeners();

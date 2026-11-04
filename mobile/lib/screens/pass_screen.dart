@@ -7,8 +7,10 @@ import '../api/api_client.dart';
 import '../state/session.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
+import '../widgets/format.dart';
 
-/// Daily-rotating member pass. Cached on the phone so it works with no signal.
+/// Event passes first (today's on top), then the member pass. Everything is saved
+/// on the phone so the gate works without signal.
 class PassScreen extends StatefulWidget {
   const PassScreen({super.key, required this.session});
   final Session session;
@@ -18,10 +20,11 @@ class PassScreen extends StatefulWidget {
 }
 
 class _PassScreenState extends State<PassScreen> {
-  String? _token;
-  DateTime? _validUntil;
+  List<Map<String, dynamic>> _events = [];
+  Map<String, dynamic>? _member;
   bool _offline = false;
   String? _error;
+  bool _loaded = false;
 
   ApiClient get api => widget.session.api;
 
@@ -33,68 +36,138 @@ class _PassScreenState extends State<PassScreen> {
 
   Future<void> _load() async {
     try {
-      final data = await api.get('/me/qr') as Map<String, dynamic>;
-      await api.writeCache('pass', jsonEncode(data));
-      _apply(data, offline: false);
+      final events = (await api.get('/me/passes') as List)
+          .cast<Map<String, dynamic>>();
+      Map<String, dynamic>? member;
+      if (widget.session.me?.isMember == true) {
+        member = await api.get('/me/qr') as Map<String, dynamic>;
+      }
+      await api.writeCache(
+        'passes',
+        jsonEncode({'events': events, 'member': member}),
+      );
+      _apply(events, member, offline: false);
     } on ApiException catch (e) {
-      final cached = await api.readCache('pass');
+      final cached = await api.readCache('passes');
       if (cached != null) {
         final data = jsonDecode(cached) as Map<String, dynamic>;
-        if (DateTime.parse(data['valid_until'] as String).isAfter(DateTime.now())) {
-          return _apply(data, offline: true);
+        var member = data['member'] as Map<String, dynamic>?;
+        // Member codes rotate daily; an old one would be refused at the gate.
+        if (member != null &&
+            DateTime.parse(member['valid_until'] as String)
+                .isBefore(DateTime.now())) {
+          member = null;
         }
+        return _apply(
+          (data['events'] as List).cast<Map<String, dynamic>>(),
+          member,
+          offline: true,
+        );
       }
-      if (mounted) setState(() => _error = e.message);
+      if (mounted) {
+        setState(() {
+          _error = e.message;
+          _loaded = true;
+        });
+      }
     }
   }
 
-  void _apply(Map<String, dynamic> data, {required bool offline}) {
+  void _apply(
+    List<Map<String, dynamic>> events,
+    Map<String, dynamic>? member, {
+    required bool offline,
+  }) {
     if (!mounted) return;
     setState(() {
-      _token = data['token'] as String;
-      _validUntil = DateTime.parse(data['valid_until'] as String).toLocal();
+      _events = events;
+      _member = member;
       _offline = offline;
       _error = null;
+      _loaded = true;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final p = widget.session.me!.profile!;
+    final p = widget.session.me?.profile;
+    final now = DateTime.now();
+    bool isToday(Map<String, dynamic> e) {
+      final s = DateTime.parse(e['event']['starts_at'] as String).toLocal();
+      final end = DateTime.parse(e['event']['ends_at'] as String).toLocal();
+      return now.isAfter(DateTime(s.year, s.month, s.day)) && now.isBefore(end);
+    }
+
+    final today = _events
+        .where((e) => isToday(e) && e['token'] != null)
+        .toList();
+    final later = _events.where((e) => !today.contains(e)).toList();
+
     return SafeArea(
       child: RefreshIndicator(
         onRefresh: _load,
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
           children: [
-            Row(children: [
-              Expanded(child: Text('My pass', style: Theme.of(context).textTheme.headlineSmall)),
-              if (_token != null)
-                StatusPill(_offline ? 'Saved on phone' : 'Valid today',
-                    color: AppColors.ok, background: AppColors.okSoft),
-            ]),
-            const SizedBox(height: 20),
-            if (_error != null) ErrorBanner(_error!),
-            if (_token != null)
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(22), border: Border.all(color: AppColors.line)),
-                child: Column(children: [
-                  QrImageView(
-                    data: _token!,
-                    size: 240,
-                    eyeStyle: const QrEyeStyle(eyeShape: QrEyeShape.square, color: AppColors.ink),
-                    dataModuleStyle: const QrDataModuleStyle(dataModuleShape: QrDataModuleShape.square, color: AppColors.ink),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'My pass',
+                    style: Theme.of(context).textTheme.headlineSmall,
                   ),
-                  const SizedBox(height: 10),
-                  Text(p.memberId ?? '', style: const TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.w700, color: AppColors.ink)),
-                  Text(p.fullName, style: const TextStyle(color: AppColors.muted)),
-                ]),
-              ),
+                ),
+                if (_loaded && _error == null)
+                  StatusPill(
+                    _offline ? 'Saved on phone' : 'Up to date',
+                    color: AppColors.ok,
+                    background: AppColors.okSoft,
+                  ),
+              ],
+            ),
             const SizedBox(height: 16),
+            if (!_loaded)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(40),
+                  child: CircularProgressIndicator(),
+                ),
+              ),
+            if (_error != null) ErrorBanner(_error!),
+            ...today.map(
+              (e) => Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: EventPassCard(pass: e, highlight: true),
+              ),
+            ),
+            if (_member != null && p != null) ...[
+              if (today.isNotEmpty)
+                Text(
+                  'Member pass',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              if (today.isNotEmpty) const SizedBox(height: 8),
+              _QrCard(
+                token: _member!['token'] as String,
+                line1: p.memberId ?? '',
+                line2: p.fullName,
+                caption: 'Member · changes every day',
+              ),
+            ],
+            if (later.isNotEmpty) ...[
+              const SizedBox(height: 20),
+              Text('Coming up', style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 8),
+              ...later.map(
+                (e) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: EventPassCard(pass: e),
+                ),
+              ),
+            ],
+            const SizedBox(height: 12),
             Text(
-              'Show this at the entry desk. The code changes every day, so an old screenshot will not work.'
-              '${_validUntil != null ? ' Valid until midnight.' : ''}',
+              'Show the code at the entry desk. Turn your screen brightness up.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall,
             ),
@@ -103,4 +176,178 @@ class _PassScreenState extends State<PassScreen> {
       ),
     );
   }
+}
+
+class EventPassCard extends StatelessWidget {
+  const EventPassCard({super.key, required this.pass, this.highlight = false});
+  final Map<String, dynamic> pass;
+  final bool highlight;
+
+  @override
+  Widget build(BuildContext context) {
+    final event = pass['event'] as Map<String, dynamic>;
+    final status = pass['status'] as String;
+    final arrived = pass['checked_in_at'] != null;
+    final guest = pass['kind'] == 'guest';
+
+    if (pass['token'] == null) {
+      return Card(
+        child: ListTile(
+          title: Text(
+            event['title'] as String,
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+          subtitle: Text(
+            '${dayTime(event['starts_at'] as String)}\n${status == 'waitlisted' ? 'On the waitlist – no pass yet' : 'Waiting for approval – no pass yet'}',
+          ),
+          isThreeLine: true,
+        ),
+      );
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: highlight ? AppColors.saffron : AppColors.line,
+          width: highlight ? 2 : 1,
+        ),
+      ),
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      highlight
+                          ? 'TODAY'
+                          : dayTime(event['starts_at'] as String).toUpperCase(),
+                      style: const TextStyle(
+                        color: AppColors.saffronInk,
+                        fontSize: 11,
+                        letterSpacing: 1.2,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    Text(
+                      event['title'] as String,
+                      style: const TextStyle(
+                        color: AppColors.ink,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    Text(
+                      event['venue'] as String,
+                      style: const TextStyle(color: AppColors.muted),
+                    ),
+                  ],
+                ),
+              ),
+              StatusPill(
+                guest ? 'Guest' : 'Member',
+                color: guest ? const Color(0xFF2E55C9) : AppColors.saffronInk,
+                background: guest
+                    ? const Color(0xFFE6ECFB)
+                    : AppColors.saffronSoft,
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          QrImageView(
+            data: pass['token'] as String,
+            size: highlight ? 230 : 160,
+            eyeStyle: const QrEyeStyle(
+              eyeShape: QrEyeShape.square,
+              color: AppColors.ink,
+            ),
+            dataModuleStyle: const QrDataModuleStyle(
+              dataModuleShape: QrDataModuleShape.square,
+              color: AppColors.ink,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            pass['name'] as String,
+            style: const TextStyle(
+              color: AppColors.ink,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          if (arrived) ...[
+            const SizedBox(height: 8),
+            StatusPill(
+              'Checked in ${dayTime(pass['checked_in_at'] as String)}',
+              color: AppColors.ok,
+              background: AppColors.okSoft,
+            ),
+          ],
+          if (highlight && event['instructions'] != null) ...[
+            const SizedBox(height: 10),
+            Text(
+              event['instructions'] as String,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: AppColors.muted),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _QrCard extends StatelessWidget {
+  const _QrCard({
+    required this.token,
+    required this.line1,
+    required this.line2,
+    required this.caption,
+  });
+  final String token, line1, line2, caption;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(20),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(22),
+      border: Border.all(color: AppColors.line),
+    ),
+    child: Column(
+      children: [
+        QrImageView(
+          data: token,
+          size: 200,
+          eyeStyle: const QrEyeStyle(
+            eyeShape: QrEyeShape.square,
+            color: AppColors.ink,
+          ),
+          dataModuleStyle: const QrDataModuleStyle(
+            dataModuleShape: QrDataModuleShape.square,
+            color: AppColors.ink,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          line1,
+          style: const TextStyle(
+            fontFamily: 'monospace',
+            fontWeight: FontWeight.w700,
+            color: AppColors.ink,
+          ),
+        ),
+        Text(line2, style: const TextStyle(color: AppColors.muted)),
+        const SizedBox(height: 4),
+        Text(
+          caption,
+          style: const TextStyle(color: AppColors.muted, fontSize: 12),
+        ),
+      ],
+    ),
+  );
 }

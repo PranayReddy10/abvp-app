@@ -41,10 +41,17 @@ ThemeData buildTheme() {
       foregroundColor: AppColors.ink,
       elevation: 0,
       scrolledUnderElevation: 0,
-      titleTextStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.ink),
+      titleTextStyle: TextStyle(
+        fontSize: 20,
+        fontWeight: FontWeight.w800,
+        color: AppColors.ink,
+      ),
     ),
     textTheme: const TextTheme(
-      headlineSmall: TextStyle(fontWeight: FontWeight.w800, color: AppColors.ink),
+      headlineSmall: TextStyle(
+        fontWeight: FontWeight.w800,
+        color: AppColors.ink,
+      ),
       titleMedium: TextStyle(fontWeight: FontWeight.w700, color: AppColors.ink),
       bodyMedium: TextStyle(fontSize: 15, color: AppColors.ink, height: 1.4),
       bodySmall: TextStyle(fontSize: 13, color: AppColors.muted),
@@ -54,7 +61,9 @@ ThemeData buildTheme() {
       fillColor: AppColors.surface,
       border: border,
       enabledBorder: border,
-      focusedBorder: border.copyWith(borderSide: const BorderSide(color: AppColors.saffron, width: 1.6)),
+      focusedBorder: border.copyWith(
+        borderSide: const BorderSide(color: AppColors.saffron, width: 1.6),
+      ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
     ),
     filledButtonTheme: FilledButtonThemeData(
