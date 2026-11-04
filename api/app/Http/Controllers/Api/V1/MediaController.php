@@ -26,6 +26,16 @@ class MediaController extends Controller
         return $this->stream($circular->attachment_path);
     }
 
+    public function post(\App\Models\Post $post, int $index)
+    {
+        return $this->stream($post->photos[$index] ?? null);
+    }
+
+    public function eventCover(\App\Models\Event $event)
+    {
+        return $this->stream($event->cover_path);
+    }
+
     public function report(ActivityReport $report, int $index)
     {
         return $this->stream($report->photos[$index] ?? null);

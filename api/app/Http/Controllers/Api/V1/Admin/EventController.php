@@ -384,6 +384,7 @@ class EventController extends Controller
             'instructions' => $e->instructions,
             'venue' => $e->venue,
             'venue_map_url' => $e->venue_map_url,
+            'cover_url' => $e->cover_path ? \Illuminate\Support\Facades\URL::temporarySignedRoute('media.event', now()->addDay(), ['event' => $e->id]) : null,
             'starts_at' => $e->starts_at->toIso8601String(),
             'ends_at' => $e->ends_at->toIso8601String(),
             'status' => $e->status,
@@ -406,5 +407,19 @@ class EventController extends Controller
                 'arrived' => Reg::where('event_id', $e->id)->whereNotNull('checked_in_at')->count(),
             ],
         ];
+    }
+
+    /** Cover photo shown on event cards and the event page. */
+    public function cover(Request $request, Event $event)
+    {
+        $request->validate(['cover' => ['required', 'image', 'mimes:jpeg,png,webp', 'max:4096']]);
+        $this->guard($request, $event);
+        $disk = \Illuminate\Support\Facades\Storage::disk(config('abvp.media_disk'));
+        if ($event->cover_path) {
+            $disk->delete($event->cover_path);
+        }
+        $event->forceFill(['cover_path' => $request->file('cover')->storeAs('events', \Illuminate\Support\Str::uuid().'.'.$request->file('cover')->extension(), ['disk' => config('abvp.media_disk'), 'visibility' => 'private'])])->save();
+
+        return $this->ok(['cover_url' => \Illuminate\Support\Facades\URL::temporarySignedRoute('media.event', now()->addDay(), ['event' => $event->id])]);
     }
 }

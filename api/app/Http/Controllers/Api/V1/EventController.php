@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Services\EventService;
 use App\Support\ApiException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\URL;
 
 /** Events as members and guests see them. */
 class EventController extends Controller
@@ -117,6 +118,7 @@ class EventController extends Controller
             'ends_at' => $e->ends_at->toIso8601String(),
             'venue' => $e->venue,
             'organised_by' => $e->orgUnit?->name,
+            'cover_url' => $e->cover_path ? URL::temporarySignedRoute('media.event', now()->addDay(), ['event' => $e->id]) : null,
             'status' => $e->status,
             'eligible' => $eligible,
             'eligibility' => $why,

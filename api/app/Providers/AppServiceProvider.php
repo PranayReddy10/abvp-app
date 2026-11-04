@@ -36,6 +36,9 @@ class AppServiceProvider extends ServiceProvider
             ];
         });
 
+        // Posting and replying: 10 every 10 minutes per member.
+        RateLimiter::for('posts', fn (Request $request) => Limit::perMinutes(10, 10)->by('posts:'.$request->user()?->id));
+
         RateLimiter::for('api', fn (Request $request) => Limit::perMinute(120)->by($request->user()?->id ?: $request->ip()));
     }
 }

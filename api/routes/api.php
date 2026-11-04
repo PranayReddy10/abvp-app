@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CheckInController;
 use App\Http\Controllers\Api\V1\CircularController;
 use App\Http\Controllers\Api\V1\EventController;
+use App\Http\Controllers\Api\V1\FeedController;
 use App\Http\Controllers\Api\V1\DirectoryController;
 use App\Http\Controllers\Api\V1\LogisticsController;
 use App\Http\Controllers\Api\V1\MediaController;
@@ -37,6 +38,10 @@ Route::prefix('v1')->group(function () {
         ->middleware('signed')->name('media.circular');
     Route::get('media/reports/{report}/{index}', [MediaController::class, 'report'])
         ->whereNumber('index')->middleware('signed')->name('media.report');
+    Route::get('media/posts/{post}/{index}', [MediaController::class, 'post'])
+        ->whereNumber('index')->middleware('signed')->name('media.post');
+    Route::get('media/events/{event}/cover', [MediaController::class, 'eventCover'])
+        ->middleware('signed')->name('media.event');
 
     Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         Route::get('auth/me', [AuthController::class, 'me']);
@@ -114,6 +119,19 @@ Route::prefix('v1')->group(function () {
         Route::post('location-sessions/{session}/points', [LogisticsController::class, 'point'])->middleware('throttle:20,1');
         Route::post('location-sessions/{session}/stop', [LogisticsController::class, 'stopSharing']);
         Route::get('events/{event}/team-locations', [LogisticsController::class, 'teamLocations']);
+
+        // Phase 6: community feed
+        Route::get('feed', [FeedController::class, 'feed']);
+        Route::get('feed/trending', [FeedController::class, 'trending']);
+        Route::post('posts', [FeedController::class, 'store'])->middleware('throttle:posts');
+        Route::get('posts/{id}', [FeedController::class, 'show'])->whereNumber('id');
+        Route::delete('posts/{post}', [FeedController::class, 'destroy']);
+        Route::post('posts/{id}/like', [FeedController::class, 'like'])->whereNumber('id');
+        Route::post('posts/{id}/comments', [FeedController::class, 'comment'])->whereNumber('id')->middleware('throttle:posts');
+        Route::delete('comments/{comment}', [FeedController::class, 'deleteComment']);
+        Route::post('posts/{id}/report', [FeedController::class, 'report'])->whereNumber('id');
+        Route::post('members/{memberId}/follow', [FeedController::class, 'follow']);
+        Route::get('members/{memberId}/posts', [FeedController::class, 'memberPosts']);
         Route::post('notifications/read-all', [NotificationController::class, 'readAll']);
         Route::post('qr/verify', [DirectoryController::class, 'verifyQr']);
 
@@ -178,6 +196,9 @@ Route::prefix('v1')->group(function () {
             Route::get('events/{event}/announcements', [Admin\OperationsController::class, 'announcements']);
             Route::post('events/{event}/announcements', [Admin\OperationsController::class, 'announce']);
             Route::get('events/{event}/logistics', [Admin\LogisticsController::class, 'overview']);
+            Route::post('events/{event}/cover', [Admin\EventController::class, 'cover']);
+            Route::get('moderation', [Admin\ModerationController::class, 'index']);
+            Route::post('moderation/posts/{post}', [Admin\ModerationController::class, 'act']);
             Route::post('events/{event}/stays', [Admin\LogisticsController::class, 'storeStay']);
             Route::delete('events/{event}/stays/{stay}', [Admin\LogisticsController::class, 'deleteStay']);
             Route::post('events/{event}/rooms/{room}/allocate', [Admin\LogisticsController::class, 'allocate']);

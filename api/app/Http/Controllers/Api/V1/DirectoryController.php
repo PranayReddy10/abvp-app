@@ -8,6 +8,7 @@ use App\Models\MemberProfile;
 use App\Models\User;
 use App\Services\AccessControl;
 use App\Services\QrToken;
+use App\Http\Controllers\Api\V1\FeedController;
 use App\Support\ApiException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\URL;
@@ -138,6 +139,7 @@ class DirectoryController extends Controller
             // Phone: their own privacy choice, or because you work together at a current event.
             'mobile' => $canSee('mobile') || $workContact ? $p->user->mobile : null,
             'works_with_you' => $workContact,
+            'social' => FeedController::counts($p->user, $viewer),
             'date_of_birth' => $canSee('date_of_birth') ? $p->date_of_birth?->toDateString() : null,
         ];
     }
