@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\CheckInController;
 use App\Http\Controllers\Api\V1\CircularController;
 use App\Http\Controllers\Api\V1\EventController;
 use App\Http\Controllers\Api\V1\DirectoryController;
+use App\Http\Controllers\Api\V1\LogisticsController;
 use App\Http\Controllers\Api\V1\MediaController;
 use App\Http\Controllers\Api\V1\MeetingController;
 use App\Http\Controllers\Api\V1\MembershipController;
@@ -103,6 +104,16 @@ Route::prefix('v1')->group(function () {
         Route::post('events/{event}/help', [OperationsController::class, 'raiseHelp']);
         Route::get('me/help', [OperationsController::class, 'myHelp']);
         Route::post('help/{help}/reply', [OperationsController::class, 'reply']);
+
+        // Phase 5: logistics and opt-in live location
+        Route::get('events/{event}/my-logistics', [LogisticsController::class, 'mine']);
+        Route::put('events/{event}/travel', [LogisticsController::class, 'saveTravel']);
+        Route::get('events/{event}/meal-sessions', [LogisticsController::class, 'meals']);
+        Route::post('events/{event}/meal-sessions/{meal}/serve', [LogisticsController::class, 'serve']);
+        Route::post('events/{event}/location-sessions', [LogisticsController::class, 'startSharing']);
+        Route::post('location-sessions/{session}/points', [LogisticsController::class, 'point'])->middleware('throttle:20,1');
+        Route::post('location-sessions/{session}/stop', [LogisticsController::class, 'stopSharing']);
+        Route::get('events/{event}/team-locations', [LogisticsController::class, 'teamLocations']);
         Route::post('notifications/read-all', [NotificationController::class, 'readAll']);
         Route::post('qr/verify', [DirectoryController::class, 'verifyQr']);
 
@@ -165,6 +176,19 @@ Route::prefix('v1')->group(function () {
             Route::patch('events/{event}/help/{help}', [Admin\OperationsController::class, 'updateHelp']);
             Route::get('events/{event}/announcements', [Admin\OperationsController::class, 'announcements']);
             Route::post('events/{event}/announcements', [Admin\OperationsController::class, 'announce']);
+            Route::get('events/{event}/logistics', [Admin\LogisticsController::class, 'overview']);
+            Route::post('events/{event}/stays', [Admin\LogisticsController::class, 'storeStay']);
+            Route::delete('events/{event}/stays/{stay}', [Admin\LogisticsController::class, 'deleteStay']);
+            Route::post('events/{event}/rooms/{room}/allocate', [Admin\LogisticsController::class, 'allocate']);
+            Route::post('events/{event}/stays/auto-allocate', [Admin\LogisticsController::class, 'autoAllocate']);
+            Route::post('events/{event}/allocations/{allocation}', [Admin\LogisticsController::class, 'stayAction']);
+            Route::post('events/{event}/meal-sessions', [Admin\LogisticsController::class, 'storeMeal']);
+            Route::delete('events/{event}/meal-sessions/{meal}', [Admin\LogisticsController::class, 'deleteMeal']);
+            Route::post('events/{event}/vehicles', [Admin\LogisticsController::class, 'storeVehicle']);
+            Route::delete('events/{event}/vehicles/{vehicle}', [Admin\LogisticsController::class, 'deleteVehicle']);
+            Route::get('events/{event}/arrivals', [Admin\LogisticsController::class, 'arrivals']);
+            Route::post('events/{event}/arrivals/assign', [Admin\LogisticsController::class, 'assignVehicle']);
+            Route::post('events/{event}/arrivals/{travel}/picked-up', [Admin\LogisticsController::class, 'pickedUp']);
         });
     });
 });

@@ -133,6 +133,30 @@ cd ~/domains/abvpconnect.in/abvp-app && git pull
 cd api && composer install --no-dev --optimize-autoloader && php artisan migrate --force && php artisan optimize
 ```
 
-## When to move off shared hosting
+## Privacy jobs the cron runs
 
-Before an event where more than about 5,000 people will use the app on the same day, move the API to a Hostinger VPS. The code and database stay the same.
+- `abvp:meeting-reminders` every minute.
+- `abvp:prune-locations` every hour: deletes live-location points a day after sharing ends.
+- Old OTP codes and expired sign-ins daily.
+
+If cron is not set up, location points are not deleted. Check it after every move.
+
+## Moving to a VPS
+
+Shared hosting is fine for the pilot and for district and state events. Move the API to a VPS (Hostinger KVM 2 or similar: 2 vCPU, 8 GB RAM) when any of these is true:
+
+- An event will have more than about 5,000 people using the app on the same day (gate scanning, meals and passes all hit the API at once).
+- hPanel shows the account hitting its CPU or process limits ("508 resource limit reached" errors).
+- You want push notifications sent instantly rather than by the minute.
+
+The code does not change. Steps:
+
+1. Create the VPS with Ubuntu 24.04. Install Nginx, PHP 8.3-FPM (with `pdo_mysql`, `mbstring`, `xml`, `gd`, `zip`, `intl`), MySQL 8 and Composer.
+2. Export the database from hPanel (Databases → phpMyAdmin → Export) and import it on the VPS.
+3. Clone the repository, copy `.env` from shared hosting, change `DB_HOST` to `127.0.0.1`, run `composer install --no-dev -o` and `php artisan migrate --force && php artisan optimize`.
+4. Point Nginx at `api/public` for `api.abvpconnect.in`, add HTTPS with Certbot.
+5. Add one cron line: `* * * * * cd /var/www/abvp-app/api && php artisan schedule:run`. Optionally run `php artisan queue:work` under Supervisor.
+6. Copy `storage/app` (member photos, if not on Spaces) to the VPS.
+7. Change the `api` DNS record to the VPS address. The admin panel and the app keep working because they use the same `api.abvpconnect.in` address.
+
+Keep the shared hosting running until the VPS has served one full day without errors, then switch it off.

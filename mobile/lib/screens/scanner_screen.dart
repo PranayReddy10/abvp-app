@@ -98,6 +98,8 @@ class _ScannerScreenState extends State<ScannerScreen> {
   DateTime _lastAt = DateTime(2000);
   bool _sending = false;
   int _tab = 0;
+  List<Map<String, dynamic>> _meals = [];
+  int? _meal; // null = entry gate; otherwise the meal being served
 
   ApiClient get api => widget.session.api;
   int get _id => widget.event['id'] as int;
@@ -123,6 +125,49 @@ class _ScannerScreenState extends State<ScannerScreen> {
       }
     });
     _refreshRoster();
+    _loadMeals();
+  }
+
+  Future<void> _loadMeals() async {
+    try {
+      final rows = (await api.get('/events/$_id/meal-sessions') as List)
+          .cast<Map<String, dynamic>>();
+      if (mounted) setState(() => _meals = rows);
+    } on ApiException {
+      // No meals, or offline: entry scanning still works.
+    }
+  }
+
+  Future<void> _serve(String code) async {
+    try {
+      final r = await api.post('/events/$_id/meal-sessions/$_meal/serve', {
+        'token': code,
+        'counter': _gate.text.trim(),
+      }) as Map<String, dynamic>;
+      setState(
+        () => _result = r['already'] == true
+            ? _Result(
+                _Tone.bad,
+                'Already served: ${r['name']}',
+                '${r['meal']} at ${dayTime(r['served_at'] as String)}${r['counter'] != null ? ' · ${r['counter']}' : ''}',
+              )
+            : _Result(
+                _Tone.ok,
+                'Serve ${r['name']}',
+                '${r['meal']} · ${r['kind'] == 'guest' ? 'Guest' : 'Member'}',
+              ),
+      );
+    } on ApiException catch (e) {
+      setState(
+        () => _result = _Result(
+          _Tone.bad,
+          e.code == 'NETWORK' ? 'No signal' : 'Do not serve',
+          e.code == 'NETWORK'
+              ? 'Meal scans need a connection, so the same plate is not given twice. Try again in a moment.'
+              : e.message,
+        ),
+      );
+    }
   }
 
   /// Keep the confirmed list on the phone for when the signal drops.
@@ -147,6 +192,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
     _lastCode = code;
     _lastAt = DateTime.now();
     await api.writeCache('gate', _gate.text.trim());
+    if (_meal != null) return _serve(code);
 
     try {
       final r = await api.post('/events/$_id/check-in', {
@@ -274,14 +320,42 @@ class _ScannerScreenState extends State<ScannerScreen> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
         children: [
+          if (_meals.isNotEmpty) ...[
+            DropdownButtonFormField<int?>(
+              initialValue: _meal,
+              isExpanded: true,
+              decoration: const InputDecoration(
+                labelText: 'Scanning for',
+                isDense: true,
+              ),
+              items: [
+                const DropdownMenuItem<int?>(
+                  value: null,
+                  child: Text('Entry gate'),
+                ),
+                for (final m in _meals)
+                  DropdownMenuItem<int?>(
+                    value: m['id'] as int,
+                    child: Text(
+                      '${m['name']}${m['is_now'] == true ? ' (now)' : ''} · ${m['served']} served',
+                    ),
+                  ),
+              ],
+              onChanged: (v) => setState(() {
+                _meal = v;
+                _result = null;
+              }),
+            ),
+            const SizedBox(height: 12),
+          ],
           Row(
             children: [
               Expanded(
                 child: TextField(
                   controller: _gate,
-                  decoration: const InputDecoration(
-                    labelText: 'Your gate',
-                    hintText: 'Gate 3',
+                  decoration: InputDecoration(
+                    labelText: _meal == null ? 'Your gate' : 'Your counter',
+                    hintText: _meal == null ? 'Gate 3' : 'Counter 2',
                     isDense: true,
                   ),
                 ),

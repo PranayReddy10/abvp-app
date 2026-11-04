@@ -2,14 +2,16 @@ import 'package:flutter/foundation.dart';
 
 import '../api/api_client.dart';
 import '../models.dart';
+import 'location_sharer.dart';
 
 enum SessionStage { loading, signedOut, applying, waiting, member, guest }
 
 /// Who is signed in and where they are in the membership journey.
 class Session extends ChangeNotifier {
-  Session(this.api);
+  Session(this.api) : location = LocationSharer(api);
 
   final ApiClient api;
+  final LocationSharer location;
   Me? me;
   bool _loading = true;
   bool editingApplication = false;
@@ -72,6 +74,7 @@ class Session extends ChangeNotifier {
     } catch (_) {
       // Token may already be invalid; sign out locally anyway.
     }
+    await location.stop();
     await api.clearToken();
     me = null;
     editingApplication = false;

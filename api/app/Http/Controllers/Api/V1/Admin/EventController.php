@@ -288,6 +288,17 @@ class EventController extends Controller
             'by_method' => $arrived->groupBy('check_in_method')->map->count(),
             'timeline' => $buckets,
             'duties' => \App\Models\EventDuty::where('event_id', $event->id)->selectRaw('status, count(*) n')->groupBy('status')->pluck('n', 'status'),
+            'logistics' => (function () use ($event) {
+                $meal = \App\Models\MealSession::where('event_id', $event->id)->where('starts_at', '<=', now()->addMinutes(30))->where('ends_at', '>=', now())->withCount('servings')->first();
+
+                return [
+                    'beds' => (int) \App\Models\EventRoom::whereHas('stay', fn ($q) => $q->where('event_id', $event->id))->sum('capacity'),
+                    'beds_used' => \App\Models\RoomAllocation::where('event_id', $event->id)->whereNull('checked_out_at')->count(),
+                    'pickups_pending' => \App\Models\EventTravel::where('event_id', $event->id)->where('needs_pickup', true)->where('pickup_status', '!=', 'picked_up')->count(),
+                    'meal_now' => $meal ? ['name' => $meal->name, 'served' => $meal->servings_count] : null,
+                    'sharing_location' => \App\Models\LocationSession::where('event_id', $event->id)->whereNull('stopped_at')->where('expires_at', '>', now())->count(),
+                ];
+            })(),
             'help_open' => \App\Models\HelpRequest::where('event_id', $event->id)->where('status', '!=', 'resolved')->count(),
             'help_medical_open' => \App\Models\HelpRequest::where('event_id', $event->id)->where('status', '!=', 'resolved')->where('category', 'medical')->count(),
             'recent' => $recent->map(fn (Reg $r) => [

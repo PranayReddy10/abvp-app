@@ -11,6 +11,15 @@ use App\Models\EventAnnouncement;
 use App\Models\EventDuty;
 use App\Models\EventStaff;
 use App\Models\EventTeam;
+use App\Models\EventStay;
+use App\Models\EventRoom;
+use App\Models\EventTravel;
+use App\Models\EventVehicle;
+use App\Models\LocationPoint;
+use App\Models\LocationSession;
+use App\Models\MealServing;
+use App\Models\MealSession;
+use App\Services\LogisticsService;
 use App\Models\HelpReply;
 use App\Models\HelpRequest;
 use App\Models\CircularRead;
@@ -34,7 +43,9 @@ use RuntimeException;
  */
 class DemoSeeder extends Seeder
 {
-    private const FIRST = ['Anusha', 'Ravi', 'Kiran', 'Sneha', 'Vamshi', 'Lakshmi', 'Rahul', 'Divya', 'Sai', 'Harika', 'Naveen', 'Pooja', 'Arjun', 'Keerthi', 'Manoj', 'Swathi', 'Teja', 'Bhavana', 'Srikanth', 'Meghana', 'Praveen', 'Sowmya', 'Ajay', 'Nikitha'];
+    private const WOMEN = ['Anusha', 'Sneha', 'Lakshmi', 'Divya', 'Harika', 'Pooja', 'Keerthi', 'Swathi', 'Bhavana', 'Meghana', 'Sowmya', 'Nikitha'];
+
+    private const MEN = ['Ravi', 'Kiran', 'Vamshi', 'Rahul', 'Sai', 'Naveen', 'Arjun', 'Manoj', 'Teja', 'Srikanth', 'Praveen', 'Ajay'];
 
     private const LAST = ['Reddy', 'Naidu', 'Rao', 'Sharma', 'Goud', 'Patil', 'Kumar', 'Varma', 'Yadav', 'Chary', 'Mudiraj', 'Gupta'];
 
@@ -156,12 +167,14 @@ class DemoSeeder extends Seeder
     private function person(OrgUnit $unit, Carbon $created, $vibhags, ?string $name = null): User
     {
         $this->n++;
-        $name ??= self::FIRST[mt_rand(0, count(self::FIRST) - 1)].' '.self::LAST[mt_rand(0, count(self::LAST) - 1)];
+        $woman = mt_rand(1, 100) <= 44;
+        $firsts = $woman ? self::WOMEN : self::MEN;
+        $name ??= $firsts[mt_rand(0, count($firsts) - 1)].' '.self::LAST[mt_rand(0, count(self::LAST) - 1)];
         $user = User::create(['mobile' => '+9170000'.str_pad((string) $this->n, 5, '0', STR_PAD_LEFT), 'name' => $name]);
         $user->forceFill(['created_at' => $created])->save();
         $p = new MemberProfile([
             'full_name' => $name, 'org_unit_id' => $unit->id,
-            'gender' => mt_rand(1, 100) <= 44 ? 'female' : (mt_rand(1, 100) <= 97 ? 'male' : null),
+            'gender' => mt_rand(1, 100) <= 97 ? ($woman ? 'female' : 'male') : null,
             'date_of_birth' => now()->subYears(mt_rand(17, 27))->subDays(mt_rand(0, 360))->toDateString(),
             'institution' => $unit->name, 'study_year' => ['1st', '2nd', '3rd', '4th', 'PG'][mt_rand(0, 4)],
         ]);
@@ -205,6 +218,7 @@ class DemoSeeder extends Seeder
         }
         EventStaff::create(['event_id' => $today->id, 'user_id' => $members[95]->id, 'role' => 'scanner']);
         $this->operations($today, $members, $organiser);
+        $this->logistics($today, $members);
 
         // Upcoming, nearly full, with approvals and a waitlist.
         $soon = Event::create(['title' => 'Campus Sampark Abhiyan', 'category' => 'campaign', 'venue' => 'Arts College, Osmania University',
@@ -272,6 +286,55 @@ class DemoSeeder extends Seeder
 
         foreach ([['Volunteers: briefing at 8 AM at the main stage', 'All duty holders please be there 15 minutes early.', 'team_only', 64], ['Lunch moved to 1:30 PM', 'Lunch is now at 1:30 PM in Dining hall B.', 'everyone', 157]] as [$t, $b, $aud, $n]) {
             EventAnnouncement::create(['event_id' => $event->id, 'sent_by' => $organiser, 'title' => $t, 'body' => $b, 'audience' => $aud, 'recipients' => $n]);
+        }
+    }
+
+    /** Stays, travel, meals, buses and two people sharing location for today's event. */
+    private function logistics(Event $event, $members): void
+    {
+        $people = $members->take(90)->values();
+        foreach ([['Girls Hostel 3, Kakatiya University', 'female', 'G', 10], ['Boys Hostel 1, Kakatiya University', 'male', 'B', 14]] as [$name, $g, $prefix, $rooms]) {
+            $stay = EventStay::create(['event_id' => $event->id, 'name' => $name, 'for_gender' => $g, 'address' => 'Vidyaranyapuri, Hanamkonda']);
+            for ($i = 1; $i <= $rooms; $i++) {
+                EventRoom::create(['stay_id' => $stay->id, 'name' => "$prefix $i", 'capacity' => 4]);
+            }
+        }
+
+        $modes = ['train', 'train', 'train', 'bus', 'bus', 'own'];
+        $points = ['train' => 'Warangal railway station', 'bus' => 'Hanamkonda bus stand', 'own' => null];
+        foreach ($people as $i => $m) {
+            if ($i % 7 === 6) {
+                continue; // some have not filled travel details
+            }
+            $mode = $modes[$i % 6];
+            EventTravel::create(['event_id' => $event->id, 'user_id' => $m->id, 'mode' => $mode,
+                'reference' => $mode === 'train' ? ['12723 Telangana Exp', '17201 Golconda Exp', '12759 Charminar Exp'][$i % 3] : null,
+                'arriving_at' => $event->starts_at->copy()->subHours(6)->addMinutes(($i % 12) * 20), 'arrival_point' => $points[$mode],
+                'needs_pickup' => $mode !== 'own', 'needs_stay' => $i % 5 !== 0]);
+        }
+        app(LogisticsService::class)->autoAllocate($event);
+        \App\Models\RoomAllocation::where('event_id', $event->id)->orderBy('id')->limit(48)->update(['checked_in_at' => now()->subHours(3)]);
+
+        $bus1 = EventVehicle::create(['event_id' => $event->id, 'name' => 'Bus 1', 'capacity' => 45, 'pickup_point' => 'Warangal station, exit 2', 'departs_at' => $event->starts_at->copy()->subHours(2), 'driver_name' => 'Ramesh', 'driver_phone' => '9876500001']);
+        $bus2 = EventVehicle::create(['event_id' => $event->id, 'name' => 'Bus 2', 'capacity' => 30, 'pickup_point' => 'Hanamkonda bus stand', 'departs_at' => $event->starts_at->copy()->subMinutes(90), 'driver_name' => 'Suresh', 'driver_phone' => '9876500002']);
+        $train = EventTravel::where('event_id', $event->id)->where('mode', 'train')->pluck('id');
+        $bus = EventTravel::where('event_id', $event->id)->where('mode', 'bus')->pluck('id');
+        EventTravel::whereIn('id', $train)->update(['vehicle_id' => $bus1->id, 'pickup_status' => 'picked_up', 'picked_up_at' => now()->subHours(4)]);
+        EventTravel::whereIn('id', $bus->take(14))->update(['vehicle_id' => $bus2->id, 'pickup_status' => 'picked_up', 'picked_up_at' => now()->subHours(3)]);
+
+        $day = $event->starts_at->copy();
+        $meals = [['Day 1 Breakfast', -1, 1, 0.92], ['Day 1 Lunch', 0, 2, 0.38], ['Day 1 Dinner', 9, 2, 0]];
+        foreach ($meals as [$name, $offsetH, $len, $share]) {
+            $start = now()->addHours($offsetH)->startOfHour();
+            $m = MealSession::create(['event_id' => $event->id, 'name' => $name, 'location' => 'Dining hall B', 'starts_at' => $start, 'ends_at' => $start->copy()->addHours($len)]);
+            foreach ($people->take((int) round(90 * $share)) as $p) {
+                MealServing::create(['meal_session_id' => $m->id, 'user_id' => $p->id, 'counter' => 'Counter '.(($p->id % 3) + 1), 'served_at' => $start->copy()->addMinutes($p->id % 50)->min(now())]);
+            }
+        }
+
+        foreach ([[$people[60], 'Coming late by bus, stuck near Kazipet', 17.9784, 79.5300], [$people[61], 'Bringing banners from the press', 17.9689, 79.5941]] as [$p, $why, $lat, $lng]) {
+            $sess = LocationSession::create(['user_id' => $p->id, 'event_id' => $event->id, 'shared_with' => 'coordinators', 'purpose' => $why, 'expires_at' => now()->addMinutes(50)]);
+            LocationPoint::create(['location_session_id' => $sess->id, 'lat' => $lat, 'lng' => $lng, 'accuracy_m' => 30, 'recorded_at' => now()->subMinutes(2)]);
         }
     }
 }

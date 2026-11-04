@@ -8,6 +8,7 @@ import '../widgets/common.dart';
 import '../widgets/format.dart';
 import '../widgets/loader.dart';
 import 'help_screen.dart';
+import 'logistics_screen.dart';
 
 /// Status pill for an event card, from the member's point of view.
 StatusPill eventPill(Map<String, dynamic> e) {
@@ -413,6 +414,14 @@ class _EventScreenState extends State<EventScreen> {
                       ],
                     ),
                   ),
+              ],
+              if (!cancelled && status == 'registered') ...[
+                const SizedBox(height: 18),
+                LogisticsCard(
+                  session: widget.session,
+                  eventId: widget.id,
+                  eventTitle: e['title'] as String,
+                ),
               ],
               if ((e['description'] as String?)?.isNotEmpty == true) ...[
                 const SizedBox(height: 18),
