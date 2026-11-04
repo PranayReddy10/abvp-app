@@ -46,6 +46,7 @@ return [
     'permissions' => [
         'admin.access' => ['super_admin', 'national_admin', 'state_admin', 'district_admin', 'vibhag_admin', 'verification_officer'],
         'members.view' => ['super_admin', 'national_admin', 'state_admin', 'district_admin', 'vibhag_admin', 'verification_officer'],
+        'members.verify' => ['super_admin', 'national_admin', 'state_admin', 'district_admin'],
         'members.review' => ['super_admin', 'national_admin', 'state_admin', 'district_admin', 'verification_officer'],
         'org.manage' => ['super_admin', 'national_admin', 'state_admin'],
         'vibhags.manage' => ['super_admin', 'national_admin'],

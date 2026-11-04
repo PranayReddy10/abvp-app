@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api, qs } from '../api'
 import { useAuth } from '../auth'
-import { Avatar, Empty, ErrorBox, Pill } from '../components/ui'
+import { Avatar, Empty, ErrorBox, Pill, Skeleton } from '../components/ui'
 import { ACTION_LABEL, fmtDate, fmtTime } from '../format'
 import type { ApplicationDetail, ApplicationRow } from '../types'
 import { useFetch } from '../useFetch'
@@ -86,7 +86,7 @@ function Review({ id, onDecided }: { id: number; onDecided: (message: string) =>
   }
 
   if (error) return <div className="card"><ErrorBox error={error} /></div>
-  if (!a) return <div className="card"><p className="muted">Loading…</p></div>
+  if (!a) return <div className="card"><Skeleton /></div>
   const p = a.profile
 
   return (

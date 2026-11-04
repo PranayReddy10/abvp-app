@@ -48,6 +48,7 @@ class MemberController extends Controller
                 'user_id' => $p->user_id,
                 'member_id' => $p->member_id,
                 'full_name' => $p->full_name,
+                'verified' => $p->isVerified(),
                 'mobile' => Mobile::mask($p->user->mobile),
                 'org_unit' => $p->orgUnit?->name,
                 'institution' => $p->institution,
@@ -67,6 +68,9 @@ class MemberController extends Controller
             'user_id' => $profile->user_id,
             'mobile' => $profile->user->mobile,
             'profile' => new ProfileResource($profile),
+            'verified_by' => $profile->verified_by ? \App\Models\User::find($profile->verified_by)?->profile?->full_name : null,
+            'verification_note' => $profile->verification_note,
+            'can_verify' => $this->access->canIn($request->user(), 'members.verify', $profile->orgUnit),
             'roles' => $profile->user->roleAssignments()->active()->with('orgUnit')->get()->map(fn ($r) => [
                 'id' => $r->id,
                 'role' => $r->role,
@@ -74,5 +78,28 @@ class MemberController extends Controller
                 'org_unit' => $r->orgUnit->label() ?: $r->orgUnit->name,
             ]),
         ]);
+    }
+
+    /** Mark a member's identity as checked by the office, or remove the tick. */
+    public function verify(Request $request, MemberProfile $profile)
+    {
+        $data = $request->validate(['verified' => ['required', 'boolean'], 'note' => ['nullable', 'string', 'max:300']]);
+        if (! $this->access->canIn($request->user(), 'members.verify', $profile->orgUnit)) {
+            throw new \App\Support\ApiException('FORBIDDEN_SCOPE', 'Only state or district admins of this member\'s area can verify.', 403);
+        }
+        if ($profile->membership_status !== MemberProfile::STATUS_APPROVED) {
+            throw new \App\Support\ApiException('NOT_A_MEMBER', 'Only approved members can be verified.');
+        }
+
+        $profile->forceFill($data['verified']
+            ? ['verified_at' => now(), 'verified_by' => $request->user()->id, 'verification_note' => $data['note'] ?? null]
+            : ['verified_at' => null, 'verified_by' => null, 'verification_note' => $data['note'] ?? null])->save();
+
+        \App\Services\Audit::record($data['verified'] ? 'member.verified' : 'member.unverified', $profile, null, ['note' => $data['note'] ?? null]);
+        if ($data['verified']) {
+            \App\Models\AppNotification::sendMany([$profile->user_id], 'profile_verified', 'Your profile is verified', 'A blue tick now shows next to your name.');
+        }
+
+        return $this->ok(['verified' => $profile->isVerified()]);
     }
 }

@@ -2,7 +2,8 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { api, qs } from '../api'
 import { Columns, downloadCsv, HBars, Split } from '../components/charts'
-import { Empty, ErrorBox, Pill } from '../components/ui'
+import { VerifiedBadge } from '../components/icons'
+import { Empty, ErrorBox, Pill, Skeleton } from '../components/ui'
 import { fmtDate, fmtNum, fmtTime } from '../format'
 import { useFetch } from '../useFetch'
 import EventForm, { type EventDetail as Detail } from './EventForm'
@@ -18,7 +19,7 @@ interface Live {
   duties: Record<string, number>; help_open: number; help_medical_open: number
   logistics: { beds: number; beds_used: number; pickups_pending: number; meal_now: { name: string; served: number } | null; sharing_location: number }
 }
-interface RegRow { id: number; name: string; kind: string; member_id: string | null; mobile: string | null; place: string | null; status: string; registered_at: string; checked_in_at: string | null; gate: string | null; method: string | null }
+interface RegRow { id: number; name: string; kind: string; member_id: string | null; verified?: boolean; mobile: string | null; place: string | null; status: string; registered_at: string; checked_in_at: string | null; gate: string | null; method: string | null }
 interface Staff { id: number; role: string; name: string | null; member_id: string | null }
 
 const TABS = ['Live', 'Duties', 'Logistics', 'Help desk', 'Announcements', 'Registrations', 'Guests and team', 'Details'] as const
@@ -42,7 +43,7 @@ export default function EventDetail() {
   }
 
   if (error) return <main className="content"><ErrorBox error={error} /></main>
-  if (!e) return <main className="content"><p className="muted">Loading…</p></main>
+  if (!e) return <main className="content"><Skeleton /></main>
   const st = EVENT_STATUS[e.status]
   const seats = e.counts.members + e.counts.guests + e.counts.pending
 
@@ -105,7 +106,7 @@ function LiveTab({ id }: { id: number }) {
   // Shared hosting has no live push, so poll every 15 seconds.
   useEffect(() => { const t = setInterval(reload, 15000); return () => clearInterval(t) }, [reload])
   if (error) return <ErrorBox error={error} />
-  if (!l) return <p className="muted">Loading…</p>
+  if (!l) return <Skeleton />
   const expected = l.expected.members + l.expected.guests
   const arrived = l.arrived.members + l.arrived.guests
 
@@ -185,7 +186,7 @@ function RegistrationsTab({ id, title, onChange }: { id: number; title: string; 
           <tbody>
             {data?.map((r) => (
               <tr key={r.id}>
-                <td><b>{r.name}</b>{r.kind === 'guest' && <span className="pill info" style={{ marginLeft: 6 }}>Guest</span>}<div className="mono muted" style={{ fontSize: 12 }}>{r.member_id ?? r.mobile}</div></td>
+                <td><b className="name-badge">{r.name}{r.verified && <VerifiedBadge />}</b>{r.kind === 'guest' && <span className="pill info" style={{ marginLeft: 6 }}>Guest</span>}<div className="mono muted" style={{ fontSize: 12 }}>{[r.member_id, r.mobile].filter(Boolean).join(' · ')}</div></td>
                 <td>{r.place ?? '–'}</td>
                 <td><Pill status={REG_STATUS[r.status]} label={REG_LABEL[r.status]} /></td>
                 <td>{fmtDate(r.registered_at)}</td>

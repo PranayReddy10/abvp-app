@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../api/api_client.dart';
+import '../theme.dart';
 import 'common.dart';
+import 'motion.dart';
 
 /// Loads data, shows a spinner, an error with Retry, or the content. Pull to refresh.
 class Loader<T> extends StatefulWidget {
@@ -48,9 +50,7 @@ class _LoaderState<T> extends State<Loader<T>> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading && _data == null) {
-      return const Center(child: CircularProgressIndicator());
-    }
+    if (_loading && _data == null) return const SkeletonList();
     if (_data == null) {
       return ListView(
         padding: const EdgeInsets.all(20),
@@ -62,8 +62,15 @@ class _LoaderState<T> extends State<Loader<T>> {
       );
     }
     return RefreshIndicator(
+      color: AppColors.saffron,
       onRefresh: _reload,
-      child: widget.builder(context, _data as T, _reload),
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 250),
+        child: KeyedSubtree(
+          key: ValueKey(_data.hashCode),
+          child: widget.builder(context, _data as T, _reload),
+        ),
+      ),
     );
   }
 }

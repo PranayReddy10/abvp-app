@@ -75,6 +75,16 @@ It adds about 115 example members across Telangana with six months of history. I
 - **Live location, only by choice.** A participant can share their location with event coordinators or only their team lead, for 30 minutes to 4 hours, with a reason ("coming late by bus"). It is sent about once a minute only while the app is open, stops by itself, can be stopped any time, and is deleted from the server a day after sharing ends. Coordinators see who is sharing and open the position in Google Maps. No map SDK or paid service is needed.
 - **Live board** adds beds taken, pickups pending, the meal being served now and how many people are sharing location.
 
+## Verified profiles and working contacts
+
+- **Blue tick.** State and district admins (and above) can mark a member's identity as verified from Members, with a note on how it was checked. It is recorded in the audit log and the member is notified. The tick shows next to their name in the app (profile, member card, directory, duties, teams) and in the admin panel. Only approved members can be verified, and the tick can be removed.
+- **People who work together can reach each other.** A phone number normally follows the member's own privacy choice. During a current event it is also visible to: teammates on the same duty team, the team lead, the person they report to, the event's coordinators, and admins of their area. The duty screen lists "Your team" with phone numbers and call buttons; coordinators see phone numbers in the Duties and Registrations tabs. The exception ends a day after the event.
+
+## Design
+
+- App: bundled Mukta and Anek Devanagari fonts (work offline and in Hindi), new theme, gradient member card, page transitions, list items that cascade in, press feedback, animated loading placeholders, and a new sign-in screen. Respects the phone's "reduce motion" setting.
+- Admin: sidebar with icons and an active marker, softer cards with depth and hover lift, pages and sections that fade in, bars that grow into place, shimmering loading rows, a two-panel sign-in page, and verified badges. Respects "reduce motion".
+
 All five phases in the design vision are now built. See `docs/deploy-hostinger.md` for going live, and its last section for moving to a VPS when national events need it.
 
 ## Run it on your computer

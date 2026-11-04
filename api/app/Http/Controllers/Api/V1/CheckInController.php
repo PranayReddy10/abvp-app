@@ -145,6 +145,7 @@ class CheckInController extends Controller
             'name' => $reg->displayName(),
             'kind' => $reg->kind,
             'member_id' => $reg->kind === 'member' ? $profile?->member_id : null,
+            'verified' => (bool) $profile?->isVerified(),
             'place' => $reg->kind === 'guest' ? $reg->guest_organisation : $profile?->orgUnit?->name,
             'photo_url' => $profile?->photo_path ? URL::temporarySignedRoute('media.photo', now()->addMinutes(10), ['profile' => $profile->id]) : null,
             'checked_in_at' => $reg->checked_in_at?->toIso8601String(),

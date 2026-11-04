@@ -6,6 +6,7 @@ import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/format.dart';
 import '../widgets/loader.dart';
+import '../widgets/motion.dart';
 import 'directory_screen.dart';
 
 class VibhagsScreen extends StatelessWidget {
@@ -74,11 +75,15 @@ class VibhagsScreen extends StatelessWidget {
                 const EmptyNote(
                   'You have not joined a Vibhag yet. Pick one below.',
                 ),
-              ...mine.map(
-                (v) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: tile(v),
-                ),
+              ...staggered(
+                mine
+                    .map<Widget>(
+                      (v) => Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: tile(v),
+                      ),
+                    )
+                    .toList(),
               ),
               const SizedBox(height: 16),
               Text(
@@ -86,11 +91,15 @@ class VibhagsScreen extends StatelessWidget {
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 6),
-              ...others.map(
-                (v) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: tile(v),
-                ),
+              ...staggered(
+                others
+                    .map<Widget>(
+                      (v) => Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: tile(v),
+                      ),
+                    )
+                    .toList(),
               ),
             ],
           );

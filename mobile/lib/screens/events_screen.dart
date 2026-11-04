@@ -7,6 +7,7 @@ import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/format.dart';
 import '../widgets/loader.dart';
+import '../widgets/motion.dart';
 import 'help_screen.dart';
 import 'logistics_screen.dart';
 
@@ -88,107 +89,116 @@ class EventsList extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
               itemCount: rows.length,
               separatorBuilder: (_, _) => const SizedBox(height: 8),
-              itemBuilder: (context, i) {
-                final e = rows[i] as Map<String, dynamic>;
-                final start = DateTime.parse(e['starts_at'] as String)
-                    .toLocal();
-                return Opacity(
-                  opacity: e['eligible'] == true || e['my_registration'] != null
-                      ? 1
-                      : 0.7,
-                  child: Card(
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(16),
-                      onTap: () async {
-                        await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => EventScreen(
-                              session: session,
-                              id: e['id'] as int,
+              itemBuilder: (context, i) => FadeSlideIn(
+                index: i,
+                child: Builder(
+                  builder: (context) {
+                    final e = rows[i] as Map<String, dynamic>;
+                    final start = DateTime.parse(e['starts_at'] as String)
+                        .toLocal();
+                    return Opacity(
+                      opacity:
+                          e['eligible'] == true || e['my_registration'] != null
+                          ? 1
+                          : 0.7,
+                      child: Card(
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(16),
+                          onTap: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => EventScreen(
+                                  session: session,
+                                  id: e['id'] as int,
+                                ),
+                              ),
+                            );
+                            await reload();
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.all(14),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  width: 48,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.ground,
+                                    border: Border.all(color: AppColors.line),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      Text(
+                                        '${start.day}',
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                      ),
+                                      Text(
+                                        const [
+                                          'JAN',
+                                          'FEB',
+                                          'MAR',
+                                          'APR',
+                                          'MAY',
+                                          'JUN',
+                                          'JUL',
+                                          'AUG',
+                                          'SEP',
+                                          'OCT',
+                                          'NOV',
+                                          'DEC',
+                                        ][start.month - 1],
+                                        style: const TextStyle(
+                                          fontSize: 10,
+                                          color: AppColors.muted,
+                                          letterSpacing: 0.6,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        e['title'] as String,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        '${e['venue']}',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 6),
+                                      eventPill(e),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        );
-                        await reload();
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.all(14),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              width: 48,
-                              padding: const EdgeInsets.symmetric(vertical: 6),
-                              decoration: BoxDecoration(
-                                color: AppColors.ground,
-                                border: Border.all(color: AppColors.line),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Column(
-                                children: [
-                                  Text(
-                                    '${start.day}',
-                                    style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                  ),
-                                  Text(
-                                    const [
-                                      'JAN',
-                                      'FEB',
-                                      'MAR',
-                                      'APR',
-                                      'MAY',
-                                      'JUN',
-                                      'JUL',
-                                      'AUG',
-                                      'SEP',
-                                      'OCT',
-                                      'NOV',
-                                      'DEC',
-                                    ][start.month - 1],
-                                    style: const TextStyle(
-                                      fontSize: 10,
-                                      color: AppColors.muted,
-                                      letterSpacing: 0.6,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    e['title'] as String,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    '${e['venue']}',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodySmall,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  const SizedBox(height: 6),
-                                  eventPill(e),
-                                ],
-                              ),
-                            ),
-                          ],
                         ),
                       ),
-                    ),
-                  ),
-                );
-              },
+                    );
+                  },
+                ),
+              ),
             ),
     );
   }

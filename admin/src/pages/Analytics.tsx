@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { qs } from '../api'
 import { Columns, downloadCsv, HBars, Split } from '../components/charts'
-import { ErrorBox } from '../components/ui'
+import { ErrorBox, Skeleton } from '../components/ui'
 import { fmtDate, fmtNum } from '../format'
 import { useFetch } from '../useFetch'
 
@@ -67,7 +67,7 @@ export default function Analytics() {
         </div>
       </div>
       <ErrorBox error={error} />
-      {loading && !a && <p className="muted">Loading…</p>}
+      {loading && !a && <Skeleton />}
       {a && s && (
         <>
           <div className="kpis seven">

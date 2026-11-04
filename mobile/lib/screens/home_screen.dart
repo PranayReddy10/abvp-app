@@ -6,6 +6,7 @@ import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/format.dart';
 import '../widgets/loader.dart';
+import '../widgets/motion.dart';
 import 'circulars_screen.dart';
 import 'directory_screen.dart';
 import 'duties_screen.dart';
@@ -99,7 +100,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   24;
           return ListView(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-            children: [
+            children: staggered([
               Row(
                 children: [
                   Expanded(
@@ -107,7 +108,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('नमस्ते', style: text.bodySmall),
-                        Text(p.fullName, style: text.headlineSmall),
+                        NameWithBadge(
+                          p.fullName,
+                          verified: p.verified,
+                          style: text.headlineSmall,
+                          badgeSize: 20,
+                        ),
                       ],
                     ),
                   ),
@@ -226,6 +232,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
               const SizedBox(height: 12),
               _MemberCard(
+                verified: p.verified,
                 name: p.fullName,
                 memberId: p.memberId ?? '',
                 area: p.orgUnitLabel ?? '',
@@ -317,7 +324,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                 ),
               ),
-            ],
+            ]),
           );
         },
       ),
@@ -504,70 +511,145 @@ class _MemberCard extends StatelessWidget {
     required this.memberId,
     required this.area,
     required this.vibhags,
+    this.verified = false,
   });
   final String name, memberId, area, vibhags;
+  final bool verified;
 
   @override
   Widget build(BuildContext context) {
     const label = TextStyle(
-      color: Colors.white70,
-      fontSize: 10,
-      letterSpacing: 1.2,
-      fontWeight: FontWeight.w600,
+      color: Colors.white60,
+      fontSize: 10.5,
+      letterSpacing: 1.4,
+      fontWeight: FontWeight.w700,
     );
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(18),
+    const value = TextStyle(
+      color: Colors.white,
+      fontWeight: FontWeight.w600,
+      fontSize: 14.5,
+    );
+    return Hero(
+      tag: 'member-card',
       child: Container(
-        color: AppColors.ink,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [AppColors.inkSoft, AppColors.ink],
+          ),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x33171A2E),
+              blurRadius: 24,
+              offset: Offset(0, 12),
+              spreadRadius: -8,
+            ),
+          ],
+        ),
+        clipBehavior: Clip.antiAlias,
         child: Stack(
           children: [
             Positioned(
-              right: -40,
-              top: -40,
+              right: -46,
+              top: -46,
               child: Container(
-                width: 130,
-                height: 130,
+                width: 150,
+                height: 150,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.saffron, width: 16),
+                  border: Border.all(color: AppColors.saffron, width: 18),
+                ),
+              ),
+            ),
+            Positioned(
+              right: 34,
+              bottom: -60,
+              child: Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withValues(alpha: 0.04),
                 ),
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(18),
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('MEMBER ID', style: label),
-                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.local_fire_department,
+                        color: AppColors.saffron,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 6),
+                      const Text('ABVP CONNECT · MEMBER', style: label),
+                      const Spacer(),
+                      if (verified)
+                        Container(
+                          padding: const EdgeInsets.fromLTRB(6, 2, 10, 2),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.verified,
+                                color: Color(0xFF7FC0FF),
+                                size: 16,
+                              ),
+                              SizedBox(width: 4),
+                              Text(
+                                'Verified',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    name,
+                    style: const TextStyle(
+                      fontFamily: 'Anek',
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      height: 1.1,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
                   Text(
                     memberId,
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w700,
-                      fontFamily: 'monospace',
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  const Text('AREA', style: label),
-                  Text(
-                    area,
-                    style: const TextStyle(
-                      color: Colors.white,
+                      fontSize: 15,
                       fontWeight: FontWeight.w600,
+                      fontFamily: 'monospace',
+                      letterSpacing: 0.6,
                     ),
                   ),
+                  const SizedBox(height: 16),
+                  const Text('AREA', style: label),
+                  const SizedBox(height: 2),
+                  Text(area, style: value),
                   if (vibhags.isNotEmpty) ...[
                     const SizedBox(height: 10),
                     const Text('VIBHAGS', style: label),
-                    Text(
-                      vibhags,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    const SizedBox(height: 2),
+                    Text(vibhags, style: value),
                   ],
                 ],
               ),

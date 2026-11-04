@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth'
-import { ErrorBox } from '../components/ui'
+import { ErrorBox, Skeleton } from '../components/ui'
 import { ACTION_LABEL, fmtNum, fmtTime } from '../format'
 import type { Dashboard as D } from '../types'
 import { useFetch } from '../useFetch'
@@ -18,7 +18,7 @@ export default function Dashboard() {
         <span className="muted">{d?.scope?.label}</span>
       </div>
       <ErrorBox error={error} />
-      {loading && !d && <p className="muted">Loading…</p>}
+      {loading && !d && <Skeleton />}
       {d && (
         <>
           <div className="kpis">

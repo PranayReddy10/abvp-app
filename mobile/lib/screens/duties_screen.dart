@@ -7,6 +7,7 @@ import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/format.dart';
 import '../widgets/loader.dart';
+import '../widgets/motion.dart';
 
 /// [forLead] words it for someone looking at another person's duty.
 StatusPill dutyPill(String status, {bool forLead = false}) => switch (status) {
@@ -63,10 +64,13 @@ class DutiesList extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
               itemCount: rows.length,
               separatorBuilder: (_, _) => const SizedBox(height: 8),
-              itemBuilder: (context, i) => DutyCard(
-                session: session,
-                d: rows[i] as Map<String, dynamic>,
-                onChanged: reload,
+              itemBuilder: (context, i) => FadeSlideIn(
+                index: i,
+                child: DutyCard(
+                  session: session,
+                  d: rows[i] as Map<String, dynamic>,
+                  onChanged: reload,
+                ),
               ),
             ),
     );
@@ -239,11 +243,17 @@ class _DutyScreenState extends State<DutyScreen> {
               margin: const EdgeInsets.only(top: 8),
               child: ListTile(
                 leading: Initials(report['name'] as String? ?? '?'),
-                title: Text(
+                title: NameWithBadge(
                   report['name'] as String? ?? '',
+                  verified: report['verified'] == true,
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
-                subtitle: const Text('Report to'),
+                subtitle: Text(
+                  [
+                    'Report to',
+                    report['phone'],
+                  ].whereType<String>().join(' · '),
+                ),
                 trailing: report['phone'] == null
                     ? null
                     : IconButton.filledTonal(
@@ -261,6 +271,44 @@ class _DutyScreenState extends State<DutyScreen> {
               child: Padding(
                 padding: const EdgeInsets.all(14),
                 child: Text(d['instructions'] as String),
+              ),
+            ),
+          ],
+          if ((d['team_contacts'] as List?)?.isNotEmpty == true) ...[
+            const SizedBox(height: 18),
+            Text('Your team', style: text.titleMedium),
+            const SizedBox(height: 6),
+            Card(
+              child: Column(
+                children: [
+                  for (final c
+                      in (d['team_contacts'] as List)
+                          .cast<Map<String, dynamic>>())
+                    ListTile(
+                      leading: Initials(c['name'] as String? ?? '?'),
+                      title: NameWithBadge(
+                        c['name'] as String? ?? '',
+                        verified: c['verified'] == true,
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      subtitle: Text(
+                        [
+                          c['role'],
+                          c['duty'],
+                          c['location'],
+                          c['phone'],
+                        ].whereType<String>().join(' · '),
+                      ),
+                      trailing: c['phone'] == null
+                          ? null
+                          : IconButton.filledTonal(
+                              tooltip: 'Call',
+                              icon: const Icon(Icons.call),
+                              onPressed: () =>
+                                  launchUrl(Uri.parse('tel:${c['phone']}')),
+                            ),
+                    ),
+                ],
               ),
             ),
           ],

@@ -88,7 +88,7 @@ class OperationsController extends Controller
 
         $counts = EventDuty::where('event_id', $event->id)->selectRaw('status, count(*) n')->groupBy('status')->pluck('n', 'status');
 
-        return $this->ok($duties->map(fn ($d) => DutyPresenter::present($d)), meta: ['counts' => $counts]);
+        return $this->ok($duties->map(fn ($d) => DutyPresenter::present($d) + ['assignee_phone' => $d->assignee?->mobile]), meta: ['counts' => $counts]);
     }
 
     /**

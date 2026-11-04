@@ -381,56 +381,70 @@ class _ScannerScreenState extends State<ScannerScreen> {
                 ),
               ),
             ),
-          if (_result != null)
-            Container(
-              padding: const EdgeInsets.all(14),
-              margin: const EdgeInsets.only(bottom: 12),
-              decoration: BoxDecoration(
-                color: colors[_result!.tone]!.$1,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
-                children: [
-                  if (_result!.photo != null)
-                    Padding(
-                      padding: const EdgeInsets.only(right: 12),
-                      child: CircleAvatar(
-                        radius: 28,
-                        backgroundImage: NetworkImage(_result!.photo!),
-                      ),
-                    )
-                  else
-                    Padding(
-                      padding: const EdgeInsets.only(right: 12),
-                      child: Icon(
-                        colors[_result!.tone]!.$3,
-                        color: colors[_result!.tone]!.$2,
-                        size: 36,
-                      ),
-                    ),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _result!.title,
-                          style: TextStyle(
-                            color: colors[_result!.tone]!.$2,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 17,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          _result!.sub,
-                          style: const TextStyle(color: AppColors.ink),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 250),
+            transitionBuilder: (c, an) => FadeTransition(
+              opacity: an,
+              child: ScaleTransition(
+                scale: Tween(begin: 0.96, end: 1.0).animate(an),
+                child: c,
               ),
             ),
+            child: _result == null
+                ? const SizedBox.shrink()
+                : KeyedSubtree(
+                    key: ObjectKey(_result),
+                    child: Container(
+                      padding: const EdgeInsets.all(14),
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: colors[_result!.tone]!.$1,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        children: [
+                          if (_result!.photo != null)
+                            Padding(
+                              padding: const EdgeInsets.only(right: 12),
+                              child: CircleAvatar(
+                                radius: 28,
+                                backgroundImage: NetworkImage(_result!.photo!),
+                              ),
+                            )
+                          else
+                            Padding(
+                              padding: const EdgeInsets.only(right: 12),
+                              child: Icon(
+                                colors[_result!.tone]!.$3,
+                                color: colors[_result!.tone]!.$2,
+                                size: 36,
+                              ),
+                            ),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _result!.title,
+                                  style: TextStyle(
+                                    color: colors[_result!.tone]!.$2,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 17,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  _result!.sub,
+                                  style: const TextStyle(color: AppColors.ink),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+          ),
           SegmentedButton<int>(
             segments: const [
               ButtonSegment(

@@ -5,6 +5,7 @@ import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/format.dart';
 import '../widgets/loader.dart';
+import '../widgets/motion.dart';
 import 'directory_screen.dart';
 import 'duties_screen.dart';
 import 'events_screen.dart';
@@ -136,15 +137,20 @@ class _CalendarScreenState extends State<CalendarScreen> {
                               ? 'No meetings coming up. Invitations from your Vibhag and unit will appear here.'
                               : 'No past meetings yet.',
                         ),
-                      ...meetings.cast<Map<String, dynamic>>().map(
-                        (m) => Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: MeetingTile(
-                            session: widget.session,
-                            m: m,
-                            onBack: reload,
-                          ),
-                        ),
+                      ...staggered(
+                        meetings
+                            .cast<Map<String, dynamic>>()
+                            .map<Widget>(
+                              (m) => Padding(
+                                padding: const EdgeInsets.only(bottom: 8),
+                                child: MeetingTile(
+                                  session: widget.session,
+                                  m: m,
+                                  onBack: reload,
+                                ),
+                              ),
+                            )
+                            .toList(),
                       ),
                     ],
                   );

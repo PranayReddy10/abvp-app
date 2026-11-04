@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { api, qs } from '../api'
 import { downloadCsv, HBars } from '../components/charts'
-import { Empty, ErrorBox } from '../components/ui'
+import { Empty, ErrorBox, Skeleton } from '../components/ui'
 import { fmtNum, fmtTime } from '../format'
 import { useFetch } from '../useFetch'
 
@@ -42,7 +42,7 @@ export default function LogisticsTab({ id, title, startsAt }: { id: number; titl
   }
 
   if (error) return <ErrorBox error={error} />
-  if (!o) return <p className="muted">Loading…</p>
+  if (!o) return <Skeleton />
 
   return (
     <>

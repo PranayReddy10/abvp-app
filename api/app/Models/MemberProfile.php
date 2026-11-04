@@ -24,6 +24,7 @@ class MemberProfile extends Model
         return [
             'date_of_birth' => 'date',
             'approved_at' => 'datetime',
+            'verified_at' => 'datetime',
             'languages' => 'array',
             'skills' => 'array',
             'links' => 'array',
@@ -39,6 +40,11 @@ class MemberProfile extends Model
     public function orgUnit(): BelongsTo
     {
         return $this->belongsTo(OrgUnit::class);
+    }
+
+    public function isVerified(): bool
+    {
+        return $this->verified_at !== null && $this->membership_status === self::STATUS_APPROVED;
     }
 
     public function privacyFor(string $field): string

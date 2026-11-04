@@ -1,15 +1,17 @@
 import { useState } from 'react'
+import { api } from '../api'
+import { VerifiedBadge } from '../components/icons'
 import { qs } from '../api'
-import { Avatar, Empty, ErrorBox, Pill } from '../components/ui'
+import { Avatar, Empty, ErrorBox, Pill, Skeleton } from '../components/ui'
 import { fmtDate } from '../format'
 import type { Profile } from '../types'
 import { useFetch } from '../useFetch'
 
 interface Row {
-  user_id: number; member_id: string; full_name: string; mobile: string; org_unit: string | null
+  user_id: number; member_id: string; full_name: string; verified: boolean; mobile: string; org_unit: string | null
   institution: string | null; vibhags: string[]; approved_at: string | null
 }
-interface Detail { user_id: number; mobile: string; profile: Profile; roles: { id: number; label: string; org_unit: string }[] }
+interface Detail { user_id: number; mobile: string; profile: Profile; roles: { id: number; label: string; org_unit: string }[]; verified_by: string | null; verification_note: string | null; can_verify: boolean }
 
 export default function Members() {
   const [q, setQ] = useState('')
@@ -36,7 +38,7 @@ export default function Members() {
               <tbody>
                 {data?.map((m) => (
                   <tr key={m.user_id} className="click" onClick={() => setOpen(m.user_id)}>
-                    <td><b>{m.full_name}</b><div className="muted" style={{ fontSize: 12 }}>{m.institution}</div></td>
+                    <td><b className="name-badge">{m.full_name}{m.verified && <VerifiedBadge />}</b><div className="muted" style={{ fontSize: 12 }}>{m.institution}</div></td>
                     <td className="mono">{m.member_id}</td>
                     <td>{m.org_unit}</td>
                     <td>{m.vibhags.join(', ')}</td>
@@ -46,7 +48,7 @@ export default function Members() {
               </tbody>
             </table>
             {data?.length === 0 && <Empty>No members match.</Empty>}
-            {loading && !data && <p className="muted">Loading…</p>}
+            {loading && !data && <Skeleton />}
           </div>
           <div className="pager">
             <span className="muted">{String(meta.total ?? 0)} members</span>
@@ -61,9 +63,15 @@ export default function Members() {
 }
 
 function MemberCard({ id, onClose }: { id: number; onClose: () => void }) {
-  const { data, error } = useFetch<Detail>(`/admin/members/${id}`)
+  const { data, error, reload } = useFetch<Detail>(`/admin/members/${id}`)
+  const [note, setNote] = useState('')
+  const [err, setErr] = useState<unknown>(null)
+  async function setVerified(verified: boolean) {
+    setErr(null)
+    try { await api.post(`/admin/members/${id}/verify`, { verified, note: note || null }); setNote(''); reload() } catch (x) { setErr(x) }
+  }
   if (error) return <section className="card"><ErrorBox error={error} /></section>
-  if (!data) return <section className="card"><p className="muted">Loading…</p></section>
+  if (!data) return <section className="card"><Skeleton /></section>
   const p = data.profile
 
   return (
@@ -71,11 +79,26 @@ function MemberCard({ id, onClose }: { id: number; onClose: () => void }) {
       <div className="page-head">
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
           <Avatar name={p.full_name} src={p.photo_url} size={48} />
-          <div><h2 style={{ fontSize: 18 }}>{p.full_name}</h2><span className="mono muted">{p.member_id}</span></div>
+          <div><h2 style={{ fontSize: 18 }} className="name-badge">{p.full_name}{p.verified && <VerifiedBadge size={18} />}</h2><span className="mono muted">{p.member_id}</span></div>
         </div>
         <button className="btn small" onClick={onClose}>Close</button>
       </div>
-      <Pill status={p.membership_status} />
+      <div className="toolbar">{p.verified ? <VerifiedBadge label /> : <Pill status={p.membership_status} />}</div>
+      <section className="verify-box">
+        {p.verified ? (
+          <>
+            <span>Identity verified{data.verified_by ? ` by ${data.verified_by}` : ''}{p.verified_at ? ` on ${fmtDate(p.verified_at)}` : ''}.{data.verification_note ? ` “${data.verification_note}”` : ''}</span>
+            {data.can_verify && <button className="btn small danger" onClick={() => setVerified(false)}>Remove tick</button>}
+          </>
+        ) : data.can_verify ? (
+          <>
+            <span className="muted">Checked their ID or met them in person? Give them the blue tick.</span>
+            <div className="toolbar"><input className="input" style={{ flex: 1, minWidth: 160 }} placeholder="How you checked (optional)" value={note} onChange={(e) => setNote(e.target.value)} aria-label="Verification note" />
+              <button className="btn small verify-btn" onClick={() => setVerified(true)}><VerifiedBadge size={14} />Verify identity</button></div>
+          </>
+        ) : <span className="muted">Not verified yet. State or district admins can verify.</span>}
+        <ErrorBox error={err} />
+      </section>
       <div className="dl"><span>Mobile</span><b className="mono">{data.mobile}</b></div>
       <div className="dl"><span>Unit</span><b>{p.org_unit?.label}</b></div>
       <div className="dl"><span>Institution</span><b>{[p.institution, p.course].filter(Boolean).join(' · ') || '–'}</b></div>

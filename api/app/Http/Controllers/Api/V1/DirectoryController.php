@@ -72,6 +72,7 @@ class DirectoryController extends Controller
         return $this->ok($page->getCollection()->map(fn (MemberProfile $p) => [
             'member_id' => $p->member_id,
             'full_name' => $p->full_name,
+            'verified' => $p->isVerified(),
             'place' => $p->orgUnit?->name,
             'roles' => $p->user->responsibilities->whereNull('ends_on')->map(fn ($r) => $r->title)->values(),
             'photo_url' => $p->photo_path ? URL::temporarySignedRoute('media.photo', now()->addMinutes(30), ['profile' => $p->id]) : null,
@@ -93,6 +94,7 @@ class DirectoryController extends Controller
         return $this->ok([
             'member_id' => $profile->member_id,
             'full_name' => $profile->full_name,
+            'verified' => $profile->isVerified(),
             'membership_status' => $profile->membership_status,
             'org_unit' => $profile->orgUnit?->label(),
             'photo_url' => $profile->photo_path ? URL::temporarySignedRoute('media.photo', now()->addMinutes(10), ['profile' => $profile->id]) : null,
@@ -103,6 +105,7 @@ class DirectoryController extends Controller
     {
         $viewerProfile = $viewer->profile;
         $isOfficeBearer = $isAdmin || $viewer->responsibilities()->whereNull('ends_on')->exists();
+        $workContact = $viewer->id !== $p->user_id && app(\App\Services\ContactPolicy::class)->canSeePhone($viewer, $p->user);
 
         $canSee = function (string $field) use ($p, $viewer, $viewerProfile, $isOfficeBearer) {
             if ($viewer->id === $p->user_id) {
@@ -120,6 +123,7 @@ class DirectoryController extends Controller
         return [
             'member_id' => $p->member_id,
             'full_name' => $p->full_name,
+            'verified' => $p->isVerified(),
             'photo_url' => $p->photo_path ? URL::temporarySignedRoute('media.photo', now()->addMinutes(30), ['profile' => $p->id]) : null,
             'org_unit' => $p->orgUnit?->label(),
             'bio' => $p->bio,
@@ -131,7 +135,9 @@ class DirectoryController extends Controller
             'institution' => $canSee('institution') ? $p->institution : null,
             'course' => $canSee('institution') ? $p->course : null,
             'email' => $canSee('email') ? $p->user->email : null,
-            'mobile' => $canSee('mobile') ? $p->user->mobile : null,
+            // Phone: their own privacy choice, or because you work together at a current event.
+            'mobile' => $canSee('mobile') || $workContact ? $p->user->mobile : null,
+            'works_with_you' => $workContact,
             'date_of_birth' => $canSee('date_of_birth') ? $p->date_of_birth?->toDateString() : null,
         ];
     }

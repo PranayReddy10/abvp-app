@@ -1,0 +1,39 @@
+// Small stroke icons for the sidebar and badges. 20px, currentColor.
+const P = {
+  dashboard: 'M3 13h8V3H3zM13 21h8v-8h-8zM13 3v6h8V3zM3 21h8v-4H3z',
+  chart: 'M4 20V10M10 20V4M16 20v-7M22 20H2',
+  approvals: 'M9 12l2 2 4-4M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z',
+  members: 'M16 20v-1a4 4 0 00-4-4H6a4 4 0 00-4 4v1M9 11a4 4 0 100-8 4 4 0 000 8M22 20v-1a4 4 0 00-3-3.9M16 3.1a4 4 0 010 7.8',
+  events: 'M8 2v4M16 2v4M3 9h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z',
+  meetings: 'M15 10l5-3v10l-5-3M3 6h12v12H3z',
+  circulars: 'M3 11l15-6v14L3 13zM7 12v5a2 2 0 004 0v-3',
+  reports: 'M4 4h16v16H4zM8 9h8M8 13h8M8 17h5',
+  updates: 'M4 6h16M4 12h16M4 18h10',
+  vibhags: 'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z',
+  roles: 'M12 15a3 3 0 100-6 3 3 0 000 6zM19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z',
+  audit: 'M12 8v4l3 2M21 12a9 9 0 11-9-9 9 9 0 019 9z',
+  phone: 'M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3.1 19.5 19.5 0 01-6-6A19.8 19.8 0 012.1 4.2 2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 1.9.7 2.8a2 2 0 01-.5 2.1L8 9.9a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.4c.9.3 1.8.6 2.8.7a2 2 0 011.7 2z',
+} as const
+
+export type IconName = keyof typeof P
+
+export function Icon({ name, size = 18 }: { name: IconName; size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d={P[name]} />
+    </svg>
+  )
+}
+
+/** Blue tick for profiles an office has verified. */
+export function VerifiedBadge({ size = 16, label = false }: { size?: number; label?: boolean }) {
+  const tick = (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" style={{ flex: 'none' }}>
+      <path fill="var(--verified)" d="M12 1.5l2.4 1.8 3-.1 1 2.8 2.5 1.7-.9 2.9.9 2.9-2.5 1.7-1 2.8-3-.1L12 22.5l-2.4-1.8-3 .1-1-2.8-2.5-1.7.9-2.9-.9-2.9 2.5-1.7 1-2.8 3 .1z" />
+      <path d="M8.2 12.3l2.5 2.5 5-5.2" fill="none" stroke="#fff" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+  return label
+    ? <span className="verified-pill" title="Identity verified by the office">{tick}Verified</span>
+    : <span className="verified-tick" title="Identity verified by the office" aria-label="Verified">{tick}</span>
+}

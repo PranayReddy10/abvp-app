@@ -5,6 +5,10 @@ import '../state/session.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/loader.dart';
+
+import 'package:url_launcher/url_launcher.dart';
+
+import '../widgets/motion.dart';
 import 'schedule_call_screen.dart';
 
 /// Find office bearers and members. Phone numbers never appear here.
@@ -76,37 +80,43 @@ class _DirectoryScreenState extends State<DirectoryScreen> {
                       itemBuilder: (context, i) {
                         final r = rows[i] as Map<String, dynamic>;
                         final roles = (r['roles'] as List).cast<String>();
-                        return ListTile(
-                          leading: Initials(
-                            r['full_name'] as String,
-                            photoUrl: r['photo_url'] as String?,
-                          ),
-                          title: Text(
-                            r['full_name'] as String,
-                            style: const TextStyle(fontWeight: FontWeight.w700),
-                          ),
-                          subtitle: Text(
-                            [
-                              if (roles.isNotEmpty) roles.join(', '),
-                              r['place'],
-                            ].whereType<String>().join(' · '),
-                          ),
-                          trailing: IconButton.filledTonal(
-                            tooltip: 'Schedule a call',
-                            icon: const Icon(Icons.videocam_outlined),
-                            onPressed: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => ScheduleCallScreen(
-                                  session: widget.session,
-                                  memberId: r['member_id'] as String,
-                                  name: r['full_name'] as String,
+                        return FadeSlideIn(
+                          index: i,
+                          child: ListTile(
+                            leading: Initials(
+                              r['full_name'] as String,
+                              photoUrl: r['photo_url'] as String?,
+                            ),
+                            title: NameWithBadge(
+                              r['full_name'] as String,
+                              verified: r['verified'] == true,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            subtitle: Text(
+                              [
+                                if (roles.isNotEmpty) roles.join(', '),
+                                r['place'],
+                              ].whereType<String>().join(' · '),
+                            ),
+                            trailing: IconButton.filledTonal(
+                              tooltip: 'Schedule a call',
+                              icon: const Icon(Icons.videocam_outlined),
+                              onPressed: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => ScheduleCallScreen(
+                                    session: widget.session,
+                                    memberId: r['member_id'] as String,
+                                    name: r['full_name'] as String,
+                                  ),
                                 ),
                               ),
                             ),
+                            onTap: () =>
+                                _profile(context, r['member_id'] as String),
                           ),
-                          onTap: () =>
-                              _profile(context, r['member_id'] as String),
                         );
                       },
                     ),
@@ -154,11 +164,21 @@ class _DirectoryScreenState extends State<DirectoryScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
+                        NameWithBadge(
                           p['full_name'] as String,
-                          style: Theme.of(ctx).textTheme.titleLarge
-                              ?.copyWith(fontWeight: FontWeight.w800),
+                          verified: p['verified'] == true,
+                          style: Theme.of(ctx).textTheme.titleLarge,
+                          badgeSize: 20,
                         ),
+                        if (p['works_with_you'] == true)
+                          const Padding(
+                            padding: EdgeInsets.only(top: 4),
+                            child: StatusPill(
+                              'Works with you at an event',
+                              color: AppColors.info,
+                              background: AppColors.infoSoft,
+                            ),
+                          ),
                         Text(
                           p['org_unit'] as String? ?? '',
                           style: Theme.of(ctx).textTheme.bodySmall,
@@ -183,7 +203,18 @@ class _DirectoryScreenState extends State<DirectoryScreen> {
               Fact('Vibhags', (p['vibhags'] as List).join(', ')),
               if (p['institution'] != null)
                 Fact('College', p['institution'] as String),
-              if (p['mobile'] != null) Fact('Mobile', p['mobile'] as String),
+              if (p['mobile'] != null)
+                Row(
+                  children: [
+                    Expanded(child: Fact('Mobile', p['mobile'] as String)),
+                    IconButton.filledTonal(
+                      tooltip: 'Call',
+                      icon: const Icon(Icons.call),
+                      onPressed: () =>
+                          launchUrl(Uri.parse('tel:${p['mobile']}')),
+                    ),
+                  ],
+                ),
               const SizedBox(height: 12),
               FilledButton.icon(
                 icon: const Icon(Icons.videocam_outlined),

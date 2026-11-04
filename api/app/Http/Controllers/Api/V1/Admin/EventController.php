@@ -168,7 +168,9 @@ class EventController extends Controller
             'name' => $r->displayName(),
             'kind' => $r->kind,
             'member_id' => $r->user?->profile?->member_id,
-            'mobile' => $r->user ? Mobile::mask($r->user->mobile) : null,
+            'verified' => (bool) $r->user?->profile?->isVerified(),
+            // Coordinators need to reach people on the day.
+            'mobile' => $r->user?->mobile,
             'place' => $r->kind === 'guest' ? $r->guest_organisation : $r->user?->profile?->orgUnit?->name,
             'status' => $r->status,
             'registered_at' => $r->created_at?->toIso8601String(),

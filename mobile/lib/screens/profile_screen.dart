@@ -4,6 +4,7 @@ import '../api/api_client.dart';
 import '../state/session.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
+import '../widgets/motion.dart';
 import 'duties_screen.dart';
 import 'help_screen.dart';
 import 'scanner_screen.dart';
@@ -120,27 +121,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return SafeArea(
       child: ListView(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-        children: [
+        children: staggered([
           Row(
             children: [
-              Initials(p.fullName, size: 64, photoUrl: p.photoUrl),
+              Container(
+                padding: const EdgeInsets.all(3),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: p.verified ? AppColors.verified : AppColors.saffron,
+                    width: 2.5,
+                  ),
+                ),
+                child: Initials(p.fullName, size: 68, photoUrl: p.photoUrl),
+              ),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    NameWithBadge(
                       p.fullName,
-                      style: text.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
+                      verified: p.verified,
+                      style: text.headlineSmall,
+                      badgeSize: 20,
                     ),
                     Text(
                       p.memberId ?? '',
                       style: text.bodySmall?.copyWith(fontFamily: 'monospace'),
                     ),
                     const SizedBox(height: 6),
-                    StatusPill.forStatus(p.status),
+                    p.verified
+                        ? const VerifiedBadge(label: true)
+                        : StatusPill.forStatus(p.status),
                   ],
                 ),
               ),
@@ -297,7 +310,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             style: OutlinedButton.styleFrom(foregroundColor: AppColors.bad),
             child: const Text('Sign out'),
           ),
-        ],
+        ]),
       ),
     );
   }

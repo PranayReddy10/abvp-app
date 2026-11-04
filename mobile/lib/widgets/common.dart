@@ -77,17 +77,27 @@ class ErrorBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.fromLTRB(12, 12, 14, 12),
       decoration: BoxDecoration(
         color: AppColors.badSoft,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.bad.withValues(alpha: 0.18)),
       ),
-      child: Text(
-        message,
-        style: const TextStyle(
-          color: AppColors.bad,
-          fontWeight: FontWeight.w600,
-        ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.error_outline, color: AppColors.bad, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(
+                color: AppColors.bad,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -1,60 +1,73 @@
 import { useEffect } from 'react'
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../auth'
 import { useFetch } from '../useFetch'
 import type { Dashboard } from '../types'
+import { Icon, VerifiedBadge, type IconName } from './icons'
 import { Avatar } from './ui'
+
+function Item({ to, icon, label, count, end }: { to: string; icon: IconName; label: string; count?: number; end?: boolean }) {
+  return (
+    <NavLink to={to} end={end}>
+      <span className="nav-icon"><Icon name={icon} /></span>
+      <span className="nav-label">{label}</span>
+      {count ? <span className="count">{count}</span> : null}
+    </NavLink>
+  )
+}
 
 export default function Layout() {
   const { me, can, signOut } = useAuth()
   const { data: dash, reload } = useFetch<Dashboard>('/admin/dashboard')
+  const { pathname } = useLocation()
+  const top = me?.roles[0]
 
   // Keep the Approvals badge current after a decision.
   useEffect(() => {
     window.addEventListener('abvp:queue-changed', reload)
     return () => window.removeEventListener('abvp:queue-changed', reload)
   }, [reload])
-  const top = me?.roles[0]
 
   return (
     <div className="shell">
       <aside className="side" aria-label="Main">
-        <div className="brand"><img src="/favicon.svg" alt="" />ABVP Connect</div>
-        <NavLink to="/" end>Dashboard</NavLink>
-        {can('analytics.view') && <NavLink to="/analytics">Analysis</NavLink>}
+        <div className="brand"><img src="/favicon.svg" alt="" /><span>ABVP Connect<small>Admin</small></span></div>
+        <Item to="/" end icon="dashboard" label="Dashboard" />
+        {can('analytics.view') && <Item to="/analytics" icon="chart" label="Analysis" />}
         <h6>Membership</h6>
-        {can('members.view') && (
-          <NavLink to="/approvals">
-            Approvals {dash && dash.pending_applications > 0 && <span className="count">{dash.pending_applications}</span>}
-          </NavLink>
-        )}
-        {can('members.view') && <NavLink to="/members">Members</NavLink>}
-        {can('events.manage') && <><h6>Events</h6><NavLink to="/events">Events</NavLink></>}
+        {can('members.view') && <Item to="/approvals" icon="approvals" label="Approvals" count={dash?.pending_applications} />}
+        {can('members.view') && <Item to="/members" icon="members" label="Members" />}
+        {can('events.manage') && <><h6>Events</h6><Item to="/events" icon="events" label="Events" /></>}
         <h6>Organisation work</h6>
-        {can('meetings.schedule') && <NavLink to="/meetings">Meetings</NavLink>}
-        {can('circulars.issue') && <NavLink to="/circulars">Circulars</NavLink>}
-        {can('reports.view') && <NavLink to="/reports">Activity reports</NavLink>}
-        {can('vibhag.post') && <NavLink to="/updates">Vibhag updates</NavLink>}
+        {can('meetings.schedule') && <Item to="/meetings" icon="meetings" label="Meetings" />}
+        {can('circulars.issue') && <Item to="/circulars" icon="circulars" label="Circulars" />}
+        {can('reports.view') && <Item to="/reports" icon="reports" label="Activity reports" />}
+        {can('vibhag.post') && <Item to="/updates" icon="updates" label="Vibhag updates" />}
         <h6>Setup</h6>
-        <NavLink to="/vibhags">Vibhags</NavLink>
-        {can('roles.assign') && <NavLink to="/roles">Admins and roles</NavLink>}
-        {can('audit.view') && <><h6>Insights</h6><NavLink to="/audit">Audit log</NavLink></>}
+        <Item to="/vibhags" icon="vibhags" label="Vibhags" />
+        {can('roles.assign') && <Item to="/roles" icon="roles" label="Admins and roles" />}
+        {can('audit.view') && <Item to="/audit" icon="audit" label="Audit log" />}
         <div className="grow" />
+        <div className="side-foot">
+          <Avatar name={me?.profile?.full_name ?? me?.name} src={me?.profile?.photo_url} />
+          <div style={{ minWidth: 0 }}>
+            <b className="side-name">{me?.profile?.full_name ?? me?.name}{me?.profile?.verified && <VerifiedBadge size={14} />}</b>
+            <span className="muted" style={{ fontSize: 12 }}>{top?.label}</span>
+          </div>
+        </div>
       </aside>
       <div className="main">
         <header className="topbar">
           {top && (
             <div className="scope" title="Everything on screen is limited to this area">
-              <span className="muted">Scope</span> {dash?.scope?.label ?? top.org_unit.label ?? top.org_unit.name}
+              <span className="dot" /> <span className="muted">Scope</span> {dash?.scope?.label ?? top.org_unit.label ?? top.org_unit.name}
             </div>
           )}
-          {top && <span className="pill mute">{top.label}</span>}
           <div className="grow" />
-          <span className="muted">{me?.profile?.full_name ?? me?.name}</span>
-          <Avatar name={me?.profile?.full_name ?? me?.name} src={me?.profile?.photo_url} />
-          <button className="btn small" onClick={signOut}>Sign out</button>
+          <button className="btn small ghost" onClick={signOut}>Sign out</button>
         </header>
-        <Outlet />
+        {/* Re-keyed per route so each page animates in. */}
+        <div key={pathname} className="page-enter"><Outlet /></div>
       </div>
     </div>
   )

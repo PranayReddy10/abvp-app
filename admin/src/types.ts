@@ -12,7 +12,7 @@ export interface Profile {
   photo_url: string | null; org_unit: { id: number; name: string; label: string } | null
   institution: string | null; course: string | null; study_year: string | null; bio: string | null
   languages: string[]; skills: string[]; links: { label: string; url: string }[]
-  membership_status: string; approved_at: string | null
+  membership_status: string; approved_at: string | null; verified?: boolean; verified_at?: string | null
   vibhags: { id: number; name: string; code: string }[]
   responsibilities: Responsibility[]
 }

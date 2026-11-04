@@ -177,3 +177,119 @@ tr.click { cursor: pointer } tr.click:hover td { background: var(--surface-2) }
 @media (max-width: 760px) { .chart-grid, .row2 { grid-template-columns: 1fr } }
 
 .crumbs a { color: var(--saffron-ink); font-weight: 700; text-decoration: none }
+
+/* ------------------------------------------------------------------ */
+/* Refresh: depth, motion and finish. Later rules refine earlier ones. */
+:root { --verified: #1D7BE0; --verified-soft: #E3F0FD; --ring: 0 0 0 3px rgba(227,98,12,.18);
+  --shadow-sm: 0 1px 2px rgba(23,26,46,.05), 0 2px 8px -2px rgba(23,26,46,.06);
+  --shadow-md: 0 1px 2px rgba(23,26,46,.06), 0 12px 32px -12px rgba(23,26,46,.18); --ease: cubic-bezier(.2,.7,.2,1) }
+@media (prefers-color-scheme: dark) { :root { --verified: #5AA9F5; --verified-soft: #14263C;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.4); --shadow-md: 0 1px 2px rgba(0,0,0,.4), 0 16px 36px -14px rgba(0,0,0,.6) } }
+
+body { background: radial-gradient(1200px 500px at 85% -10%, var(--saffron-soft), transparent 60%), var(--bg); background-attachment: fixed }
+
+/* Sidebar */
+.side { background: var(--surface); gap: 1px; padding: 16px 12px }
+.brand { padding: 4px 8px 18px; gap: 12px }
+.brand img { width: 34px; height: 34px; filter: drop-shadow(0 4px 10px rgba(227,98,12,.35)) }
+.brand span { display: grid; line-height: 1.1 }
+.brand small { font-family: var(--f-body); font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: .08em; text-transform: uppercase }
+.side a { position: relative; gap: 10px; justify-content: flex-start; padding: 8px 10px; color: var(--muted); transition: background .18s var(--ease), color .18s var(--ease) }
+.side a .nav-icon { display: grid; place-items: center; width: 22px; color: inherit }
+.side a .nav-label { flex: 1 }
+.side a:hover { background: var(--surface-2); color: var(--ink) }
+.side a.active { background: var(--saffron-soft); color: var(--saffron-ink); box-shadow: none; font-weight: 700 }
+.side a.active::before { content: ""; position: absolute; left: -12px; top: 8px; bottom: 8px; width: 3px; border-radius: 0 3px 3px 0; background: var(--saffron) }
+.side h6 { margin: 16px 10px 6px }
+.side-foot { display: flex; gap: 10px; align-items: center; padding: 12px 8px 4px; border-top: 1px solid var(--line); margin-top: 8px }
+.side-foot > div { display: grid }
+.side-name { display: inline-flex; gap: 4px; align-items: center; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+
+/* Top bar */
+.topbar { background: color-mix(in srgb, var(--surface) 82%, transparent); backdrop-filter: saturate(1.4) blur(10px); -webkit-backdrop-filter: saturate(1.4) blur(10px) }
+.scope { background: var(--surface); box-shadow: var(--shadow-sm) }
+.scope .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 3px var(--ok-soft) }
+.btn.ghost { border-color: transparent; background: transparent; color: var(--muted) }
+.btn.ghost:hover { background: var(--surface-2); color: var(--ink) }
+
+/* Surfaces */
+.card, .kpi { border-radius: 16px; box-shadow: var(--shadow-sm); border-color: color-mix(in srgb, var(--line) 70%, transparent) }
+.kpi { position: relative; overflow: hidden; transition: transform .25s var(--ease), box-shadow .25s var(--ease) }
+.kpi::after { content: ""; position: absolute; inset: 0 0 auto; height: 3px; background: linear-gradient(90deg, var(--saffron), transparent 70%); opacity: .55 }
+.kpi:hover { transform: translateY(-2px); box-shadow: var(--shadow-md) }
+.kpi b { letter-spacing: -.02em }
+.kpi.alert::after { background: linear-gradient(90deg, var(--warn), transparent 70%); opacity: 1 }
+.post { border-radius: 14px; transition: border-color .2s var(--ease), box-shadow .2s var(--ease) }
+.post:hover { box-shadow: var(--shadow-sm) }
+
+/* Buttons and chips */
+.btn { transition: transform .12s var(--ease), background .18s var(--ease), box-shadow .18s var(--ease), border-color .18s var(--ease) }
+.btn:active:not(:disabled) { transform: scale(.97) }
+.btn.primary { background: linear-gradient(180deg, color-mix(in srgb, var(--saffron) 88%, #fff), var(--saffron)); box-shadow: 0 6px 16px -8px rgba(227,98,12,.7) }
+.btn.primary:hover { filter: none; box-shadow: 0 8px 20px -8px rgba(227,98,12,.85) }
+.chip { transition: background .18s var(--ease), color .18s var(--ease), border-color .18s var(--ease) }
+.chip:hover:not(.on) { border-color: var(--muted) }
+.input { transition: border-color .15s var(--ease), box-shadow .15s var(--ease) }
+.input:focus { outline: none; border-color: var(--saffron); box-shadow: var(--ring) }
+
+/* Tables */
+th { position: sticky; top: 0; background: var(--surface); z-index: 1; text-transform: uppercase; letter-spacing: .05em; font-size: 11px }
+tbody tr { transition: background .15s var(--ease) }
+tbody tr:hover td { background: color-mix(in srgb, var(--surface-2) 70%, transparent) }
+
+/* Approvals queue */
+.qi { transition: background .18s var(--ease), border-color .18s var(--ease), box-shadow .18s var(--ease), transform .18s var(--ease) }
+.qi:hover { transform: translateX(2px) }
+
+/* Verified */
+.verified-tick { display: inline-flex; align-items: center; margin-left: 4px; vertical-align: -2px }
+.verified-pill { display: inline-flex; align-items: center; gap: 5px; padding: 2px 10px 2px 6px; border-radius: 999px; background: var(--verified-soft); color: var(--verified); font-size: 12px; font-weight: 700 }
+.name-badge { display: inline-flex; align-items: center; gap: 2px }
+.verify-box { display: grid; gap: 8px; padding: 12px; border-radius: 12px; background: var(--surface-2); border: 1px dashed var(--line) }
+.verify-btn { color: var(--verified); border-color: color-mix(in srgb, var(--verified) 40%, var(--line)); gap: 6px }
+.verify-btn:hover { background: var(--verified-soft) }
+
+/* Loading */
+.skeleton { display: grid; gap: 12px; padding: 4px 0 }
+.sk-row { display: flex; gap: 12px; align-items: center }
+.sk { display: block; border-radius: 10px; background: linear-gradient(90deg, var(--surface-2) 25%, color-mix(in srgb, var(--line) 60%, var(--surface)) 50%, var(--surface-2) 75%); background-size: 300% 100%; animation: sheen 1.3s linear infinite }
+.sk-avatar { width: 36px; height: 36px; border-radius: 50%; flex: none }
+.sk-line { height: 14px }
+@keyframes sheen { from { background-position: 100% 0 } to { background-position: 0 0 } }
+
+/* Motion: pages fade up; their sections follow one after another. */
+@keyframes rise { from { opacity: 0; transform: translateY(10px) } to { opacity: 1; transform: none } }
+.page-enter { animation: rise .35s var(--ease) both }
+.content > * { animation: rise .45s var(--ease) both }
+.content > *:nth-child(2) { animation-delay: .04s } .content > *:nth-child(3) { animation-delay: .08s }
+.content > *:nth-child(4) { animation-delay: .12s } .content > *:nth-child(5) { animation-delay: .16s }
+.content > *:nth-child(n+6) { animation-delay: .2s }
+.kpis > * { animation: rise .45s var(--ease) both }
+.kpis > *:nth-child(2) { animation-delay: .05s } .kpis > *:nth-child(3) { animation-delay: .1s } .kpis > *:nth-child(4) { animation-delay: .15s }
+.kpis > *:nth-child(5) { animation-delay: .2s } .kpis > *:nth-child(6) { animation-delay: .25s } .kpis > *:nth-child(7) { animation-delay: .3s }
+.notice, .error { animation: rise .3s var(--ease) both }
+.bar .t i, .hbar .t i, .inline-bar i, .colbar { transform-origin: left; animation: grow .7s var(--ease) both }
+.colbar { transform-origin: bottom; animation-name: growUp }
+@keyframes grow { from { transform: scaleX(0) } to { transform: none } }
+@keyframes growUp { from { transform: scaleY(0) } to { transform: none } }
+
+/* Sign-in */
+.login { padding: 0; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); min-height: 100% }
+.login .brand-panel { position: relative; overflow: hidden; padding: 56px; display: grid; align-content: end; gap: 14px; color: #fff;
+  background: radial-gradient(600px 400px at 90% 10%, rgba(255,255,255,.18), transparent 60%), linear-gradient(135deg, #E3620C 0%, #C24F06 35%, #171A2E 100%) }
+.login .brand-panel::after { content: ""; position: absolute; right: -120px; top: -120px; width: 360px; height: 360px; border-radius: 50%; border: 44px solid rgba(255,255,255,.12) }
+.login .brand-panel h2 { font-size: 44px; font-weight: 800; letter-spacing: -.02em; color: #fff }
+.login .brand-panel p { color: rgba(255,255,255,.8); max-width: 42ch; font-size: 16px }
+.login .form-side { display: grid; place-items: center; padding: 32px 20px }
+.login .box { animation: rise .5s var(--ease) both; border-radius: 22px; box-shadow: var(--shadow-md) }
+@media (max-width: 860px) { .login { grid-template-columns: 1fr } .login .brand-panel { padding: 32px 24px; min-height: 220px } .login .brand-panel h2 { font-size: 32px } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important }
+}
+.login { place-items: stretch; min-height: 100vh }
+.login .brand-panel { min-height: 100vh }
+@media (max-width: 860px) { .login .brand-panel { min-height: 220px } }
+td .mono, td.mono { white-space: nowrap }
+.name-badge { white-space: nowrap }
+h2.name-badge { display: flex }

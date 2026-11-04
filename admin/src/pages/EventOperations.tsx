@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { api, ApiError, qs } from '../api'
 import { downloadCsv, Split } from '../components/charts'
+import { VerifiedBadge } from '../components/icons'
 import { Empty, ErrorBox } from '../components/ui'
 import { fmtTime } from '../format'
 import { useFetch } from '../useFetch'
@@ -8,7 +9,7 @@ import { useFetch } from '../useFetch'
 interface Team { id: number; name: string; description: string | null; lead: { name: string | null; member_id: string | null } | null; duties: number; done: number; problems: number }
 interface Duty {
   id: number; title: string; location: string | null; starts_at: string; ends_at: string; status: string; status_note: string | null
-  team: { id: number; name: string } | null; assignee: { name: string | null; member_id: string | null }; report_to: { name: string } | null
+  team: { id: number; name: string } | null; assignee: { name: string | null; member_id: string | null; verified?: boolean }; assignee_phone?: string | null; report_to: { name: string } | null
 }
 interface Help {
   id: number; category: string; category_label: string; message: string; location: string | null; status: string; raised_by: string
@@ -105,7 +106,7 @@ export function DutiesTab({ id, title, startsAt }: { id: number; title: string; 
                 {duties?.map((x) => (
                   <tr key={x.id}>
                     <td><b>{x.title}</b><div className="muted" style={{ fontSize: 12 }}>{[x.team?.name, x.location].filter(Boolean).join(' · ')}</div></td>
-                    <td>{x.assignee.name}<div className="mono muted" style={{ fontSize: 12 }}>{x.assignee.member_id}</div></td>
+                    <td><span className="name-badge">{x.assignee.name}{x.assignee.verified && <VerifiedBadge />}</span><div className="mono muted" style={{ fontSize: 12 }}>{[x.assignee.member_id, x.assignee_phone].filter(Boolean).join(' · ')}</div></td>
                     <td style={{ whiteSpace: 'nowrap' }}>{fmtTime(x.starts_at)}</td>
                     <td><span className={`pill ${DUTY_STATUS[x.status]?.tone}`}>{DUTY_STATUS[x.status]?.label}</span>{x.status_note && <div className="muted" style={{ fontSize: 12, maxWidth: 220 }}>“{x.status_note}”</div>}</td>
                     <td style={{ whiteSpace: 'nowrap' }}>

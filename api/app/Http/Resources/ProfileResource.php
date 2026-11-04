@@ -36,6 +36,8 @@ class ProfileResource extends JsonResource
             'privacy' => collect(config('abvp.privacy_defaults'))->keys()
                 ->mapWithKeys(fn ($f) => [$f => $this->privacyFor($f)]),
             'membership_status' => $this->membership_status,
+            'verified' => $this->isVerified(),
+            'verified_at' => $this->verified_at?->toIso8601String(),
             'approved_at' => $this->approved_at?->toIso8601String(),
             'vibhags' => $user->vibhags->map(fn ($v) => ['id' => $v->id, 'name' => $v->name, 'code' => $v->code])->values(),
             'responsibilities' => ResponsibilityResource::collection($user->responsibilities),

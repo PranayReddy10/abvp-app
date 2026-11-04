@@ -5,6 +5,7 @@ import '../api/api_client.dart';
 import '../state/session.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
+import '../widgets/motion.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key, required this.session});
@@ -38,109 +39,201 @@ class _SignInScreenState extends State<SignInScreen> {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
+    final top = MediaQuery.paddingOf(context).top;
+
     return Scaffold(
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(24, 40, 24, 24),
-          children: [
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: AppColors.saffron,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Icon(
-                  Icons.local_fire_department,
-                  color: Colors.white,
-                  size: 30,
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'Welcome to\nABVP Connect',
-              style: text.headlineMedium?.copyWith(fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Sign in with your mobile number. New here? You can apply for membership after verifying.',
-              style: text.bodyMedium?.copyWith(color: AppColors.muted),
-            ),
-            const SizedBox(height: 28),
-            if (_error != null) ...[
-              ErrorBanner(_error!),
-              const SizedBox(height: 16),
-            ],
-            if (_sentTo == null) ...[
-              TextField(
-                controller: _mobile,
-                keyboardType: TextInputType.phone,
-                autofillHints: const [AutofillHints.telephoneNumber],
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[0-9 +]')),
+      backgroundColor: AppColors.ground,
+      body: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          // Brand band: saffron into ink, with the torch.
+          Container(
+            padding: EdgeInsets.fromLTRB(24, top + 36, 24, 44),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppColors.saffron,
+                  AppColors.saffronDeep,
+                  AppColors.ink,
                 ],
-                decoration: const InputDecoration(
-                  labelText: 'Mobile number',
-                  prefixText: '+91  ',
+                stops: [0, 0.35, 1],
+              ),
+            ),
+            child: FadeSlideIn(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 58,
+                    height: 58,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.16),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: Colors.white24),
+                    ),
+                    child: const Icon(
+                      Icons.local_fire_department,
+                      color: Colors.white,
+                      size: 32,
+                    ),
+                  ),
+                  const SizedBox(height: 22),
+                  const Text(
+                    'ABVP Connect',
+                    style: TextStyle(
+                      fontFamily: 'Anek',
+                      color: Colors.white,
+                      fontSize: 34,
+                      fontWeight: FontWeight.w800,
+                      height: 1,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'एक सदस्य · एक पहचान · हर कार्यक्रम',
+                    style: TextStyle(color: Colors.white70, fontSize: 15),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // Form sheet.
+          Container(
+            constraints: BoxConstraints(
+              minHeight: MediaQuery.sizeOf(context).height * 0.62,
+            ),
+            decoration: const BoxDecoration(
+              color: AppColors.ground,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+            ),
+            transform: Matrix4.translationValues(0, -24, 0),
+            padding: const EdgeInsets.fromLTRB(24, 30, 24, 24),
+            child: FadeSlideIn(
+              index: 2,
+              child: AnimatedSwitcher(
+                layoutBuilder: (current, previous) => Stack(alignment: Alignment.topCenter, children: [...previous, ?current]),
+                duration: const Duration(milliseconds: 280),
+                transitionBuilder: (child, a) => FadeTransition(
+                  opacity: a,
+                  child: SlideTransition(
+                    position: Tween(
+                      begin: const Offset(0.06, 0),
+                      end: Offset.zero,
+                    ).animate(a),
+                    child: child,
+                  ),
                 ),
+                child: _sentTo == null ? _mobileStep(text) : _codeStep(text),
               ),
-              const SizedBox(height: 20),
-              FilledButton(
-                onPressed: _busy
-                    ? null
-                    : () => _run(() async {
-                        final masked = await widget.session.sendOtp(
-                          _mobile.text,
-                        );
-                        setState(() => _sentTo = masked);
-                      }),
-                child: Text(_busy ? 'Sending…' : 'Send code'),
-              ),
-            ] else ...[
-              Text(
-                'Enter the 6-digit code sent to $_sentTo',
-                style: text.bodyMedium,
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _code,
-                keyboardType: TextInputType.number,
-                autofillHints: const [AutofillHints.oneTimeCode],
-                maxLength: 6,
-                autofocus: true,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 24,
-                  letterSpacing: 12,
-                  fontWeight: FontWeight.w700,
-                ),
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: const InputDecoration(counterText: ''),
-              ),
-              const SizedBox(height: 20),
-              FilledButton(
-                onPressed: _busy
-                    ? null
-                    : () => _run(
-                        () =>
-                            widget.session.verifyOtp(_mobile.text, _code.text),
-                      ),
-                child: Text(_busy ? 'Checking…' : 'Verify and continue'),
-              ),
-              TextButton(
-                onPressed: () => setState(() {
-                  _sentTo = null;
-                  _code.clear();
-                }),
-                child: const Text('Use a different number'),
-              ),
-            ],
-          ],
-        ),
+            ),
+          ),
+        ],
       ),
     );
   }
+
+  Widget _mobileStep(TextTheme text) => Column(
+    key: const ValueKey('mobile'),
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      Text('Sign in', style: text.headlineSmall),
+      const SizedBox(height: 6),
+      Text(
+        'Use your mobile number. New here? You can apply for membership after verifying.',
+        style: text.bodyMedium?.copyWith(color: AppColors.muted),
+      ),
+      const SizedBox(height: 24),
+      if (_error != null) ...[ErrorBanner(_error!), const SizedBox(height: 16)],
+      TextField(
+        controller: _mobile,
+        keyboardType: TextInputType.phone,
+        autofillHints: const [AutofillHints.telephoneNumber],
+        style: const TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.5,
+        ),
+        inputFormatters: [
+          FilteringTextInputFormatter.allow(RegExp(r'[0-9 +]')),
+        ],
+        decoration: const InputDecoration(
+          labelText: 'Mobile number',
+          prefixIcon: Icon(Icons.phone_iphone),
+          prefixText: '+91  ',
+        ),
+      ),
+      const SizedBox(height: 18),
+      FilledButton(
+        onPressed: _busy
+            ? null
+            : () => _run(() async {
+                final masked = await widget.session.sendOtp(_mobile.text);
+                setState(() => _sentTo = masked);
+              }),
+        child: Text(_busy ? 'Sending…' : 'Send code'),
+      ),
+      const SizedBox(height: 18),
+      Row(
+        children: [
+          const Icon(Icons.lock_outline, size: 16, color: AppColors.muted),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              'No passwords. A 6-digit code is sent by SMS each time.',
+              style: text.bodySmall,
+            ),
+          ),
+        ],
+      ),
+    ],
+  );
+
+  Widget _codeStep(TextTheme text) => Column(
+    key: const ValueKey('code'),
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      Text('Enter the code', style: text.headlineSmall),
+      const SizedBox(height: 6),
+      Text(
+        'Sent to $_sentTo',
+        style: text.bodyMedium?.copyWith(color: AppColors.muted),
+      ),
+      const SizedBox(height: 24),
+      if (_error != null) ...[ErrorBanner(_error!), const SizedBox(height: 16)],
+      TextField(
+        controller: _code,
+        keyboardType: TextInputType.number,
+        autofillHints: const [AutofillHints.oneTimeCode],
+        maxLength: 6,
+        autofocus: true,
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          fontSize: 28,
+          letterSpacing: 14,
+          fontWeight: FontWeight.w700,
+        ),
+        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+        decoration: const InputDecoration(counterText: '', hintText: '••••••'),
+      ),
+      const SizedBox(height: 18),
+      FilledButton(
+        onPressed: _busy
+            ? null
+            : () => _run(
+                () => widget.session.verifyOtp(_mobile.text, _code.text),
+              ),
+        child: Text(_busy ? 'Checking…' : 'Verify and continue'),
+      ),
+      TextButton(
+        onPressed: () => setState(() {
+          _sentTo = null;
+          _code.clear();
+          _error = null;
+        }),
+        child: const Text('Use a different number'),
+      ),
+    ],
+  );
 }

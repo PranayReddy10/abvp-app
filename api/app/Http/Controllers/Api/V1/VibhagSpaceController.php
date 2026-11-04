@@ -136,6 +136,7 @@ class VibhagSpaceController extends Controller
         return $this->ok($page->getCollection()->map(fn (MemberProfile $p) => [
             'member_id' => $p->member_id,
             'full_name' => $p->full_name,
+            'verified' => $p->isVerified(),
             'place' => $p->orgUnit?->name,
             'photo_url' => $p->photo_path ? URL::temporarySignedRoute('media.photo', now()->addMinutes(30), ['profile' => $p->id]) : null,
         ]), meta: ['page' => $page->currentPage(), 'last_page' => $page->lastPage(), 'area' => $area?->name]);

@@ -14,7 +14,8 @@ void main() {
   testWidgets('signed-out users see the sign-in screen', (tester) async {
     await tester.pumpWidget(AbvpConnectApp(session: _SignedOutSession()));
 
-    expect(find.text('Welcome to\nABVP Connect'), findsOneWidget);
+    expect(find.text('ABVP Connect'), findsOneWidget);
+    expect(find.text('Sign in'), findsOneWidget);
     expect(find.text('Send code'), findsOneWidget);
   });
 }

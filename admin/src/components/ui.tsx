@@ -22,3 +22,14 @@ export function ErrorBox({ error }: { error: unknown }) {
 export function Empty({ children }: { children: React.ReactNode }) {
   return <div className="empty">{children}</div>
 }
+
+/** Animated placeholder rows shown while data loads. */
+export function Skeleton({ rows = 4 }: { rows?: number }) {
+  return (
+    <div className="skeleton" aria-busy="true" aria-label="Loading">
+      {Array.from({ length: rows }, (_, i) => (
+        <div key={i} className="sk-row"><span className="sk sk-avatar" /><span className="sk sk-line" style={{ width: `${60 - (i % 3) * 12}%` }} /></div>
+      ))}
+    </div>
+  )
+}

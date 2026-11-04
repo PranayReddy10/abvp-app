@@ -68,6 +68,7 @@ class Profile {
   String? get studyYear => json['study_year'] as String?;
   String? get bio => json['bio'] as String?;
   String get status => json['membership_status'] as String? ?? 'draft';
+  bool get verified => json['verified'] == true;
   int? get orgUnitId =>
       (json['org_unit'] as Map<String, dynamic>?)?['id'] as int?;
   String? get orgUnitLabel =>

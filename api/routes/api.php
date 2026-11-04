@@ -128,6 +128,7 @@ Route::prefix('v1')->group(function () {
 
             Route::get('members', [Admin\MemberController::class, 'index']);
             Route::get('members/{profile}', [Admin\MemberController::class, 'show']);
+            Route::post('members/{profile}/verify', [Admin\MemberController::class, 'verify']);
 
             Route::get('vibhags', [Admin\VibhagController::class, 'index']);
             Route::post('vibhags', [Admin\VibhagController::class, 'store']);

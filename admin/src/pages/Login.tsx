@@ -38,6 +38,12 @@ export default function Login() {
 
   return (
     <main className="login">
+      <section className="brand-panel" aria-hidden="true">
+        <h2>ABVP Connect</h2>
+        <p>Membership, Vibhags, meetings, events and event-day operations for every office, in one place.</p>
+        <p style={{ fontSize: 14 }}>एक सदस्य · एक पहचान · हर कार्यक्रम</p>
+      </section>
+      <div className="form-side">
       <div className="box">
         <img src="/favicon.svg" alt="" width={44} height={44} />
         <div style={{ display: 'grid', gap: 4 }}>
@@ -65,6 +71,7 @@ export default function Login() {
             <button type="button" className="btn" onClick={() => { setSentTo(null); setCode('') }}>Use a different number</button>
           </form>
         )}
+      </div>
       </div>
     </main>
   )
