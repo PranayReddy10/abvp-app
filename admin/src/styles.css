@@ -306,3 +306,24 @@ h2.name-badge { display: flex }
 .cover-box { display: flex; gap: 14px; align-items: center; flex-wrap: wrap }
 .cover-box img, .cover-box .cover-ph { width: 220px; height: 124px; object-fit: cover; border-radius: 14px; border: 1px solid var(--line) }
 .cover-box .cover-ph { display: grid; place-items: center; background: linear-gradient(135deg, #f08a3c, #b8420a 45%, #2a1a12); color: #fff; font-weight: 700 }
+
+/* Settings */
+.settings-card { display: grid; gap: 14px; align-content: start; align-self: start }
+.settings-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px }
+.choice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px }
+.choice { display: grid; gap: 4px; padding: 14px; border: 1.5px solid var(--line); border-radius: 14px; cursor: pointer; transition: border-color .15s var(--ease), background .15s var(--ease) }
+.choice input { position: absolute; opacity: 0; pointer-events: none }
+.choice .muted { font-size: 13px }
+.choice:hover { border-color: var(--saffron) }
+.choice.on { border-color: var(--saffron); background: var(--saffron-soft) }
+.choice:focus-within { box-shadow: var(--ring) }
+.settings-fields { display: grid; gap: 12px }
+.settings-fields small { font-size: 12px }
+.settings-actions { display: flex; gap: 8px; justify-content: flex-end }
+.howto { background: var(--surface-2); border-radius: 12px; padding: 10px 14px; font-size: 13.5px }
+.howto summary { cursor: pointer; font-weight: 700 }
+.howto ol { margin: 8px 0 0; padding-left: 18px; display: grid; gap: 4px }
+.bad-text { color: var(--bad) }
+.progress { height: 10px; background: var(--surface-2); border-radius: 99px; overflow: hidden }
+.progress i { display: block; height: 100%; background: var(--saffron); border-radius: 99px; transition: width .3s var(--ease) }
+@media (max-width: 720px) { .choice-grid { grid-template-columns: 1fr } }

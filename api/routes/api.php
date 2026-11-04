@@ -199,6 +199,10 @@ Route::prefix('v1')->group(function () {
             Route::post('events/{event}/cover', [Admin\EventController::class, 'cover']);
             Route::get('moderation', [Admin\ModerationController::class, 'index']);
             Route::post('moderation/posts/{post}', [Admin\ModerationController::class, 'act']);
+            Route::get('settings/storage', [Admin\SettingsController::class, 'storage']);
+            Route::put('settings/storage', [Admin\SettingsController::class, 'update']);
+            Route::post('settings/storage/test', [Admin\SettingsController::class, 'test']);
+            Route::post('settings/storage/copy', [Admin\SettingsController::class, 'copyToSpaces']);
             Route::post('events/{event}/stays', [Admin\LogisticsController::class, 'storeStay']);
             Route::delete('events/{event}/stays/{stay}', [Admin\LogisticsController::class, 'deleteStay']);
             Route::post('events/{event}/rooms/{room}/allocate', [Admin\LogisticsController::class, 'allocate']);

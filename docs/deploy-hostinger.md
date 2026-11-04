@@ -120,11 +120,14 @@ Until DLT is approved, keep `SMS_DRIVER=log` on a staging copy only.
 
 ## 8. Photos on DigitalOcean Spaces (when ready)
 
-```bash
-composer require league/flysystem-aws-s3-v3
-```
+The S3 driver Spaces needs is already in `composer.json`, so there is nothing to install. Everything is done from the admin panel by a super admin:
 
-Create a private Space in the Bangalore region (`blr1`), make an access key, fill the `SPACES_*` values and set `MEDIA_DISK=spaces`. Photos are always served through short-lived signed links, never public URLs.
+1. In DigitalOcean create a **private** Space (Bangalore, `blr1`, is closest), then an access key with read/write access to it.
+2. Admin panel → **Settings** → Photo storage → **DigitalOcean Spaces**. Pick the region, enter the Space name, access key and secret.
+3. **Test connection**, then **Save**. The panel writes, reads back and deletes a small test file first and refuses to switch if that fails, so uploads never break.
+4. Press **Copy to Spaces** to copy photos saved earlier. It works 25 files at a time, so shared hosting never times out, and it can be run again safely. Files not yet copied keep loading from the server, and nothing is deleted from the server.
+
+The secret is stored encrypted with `APP_KEY` (keep that key safe; if it changes, enter the secret again). Switching back to "This server" is one click. Photos are always served through short-lived signed links, never public URLs. `MEDIA_DISK` and `SPACES_*` in `.env` still work as a fallback when nothing is saved in Settings.
 
 ## Updating
 

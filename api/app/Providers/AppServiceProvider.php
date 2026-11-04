@@ -26,6 +26,9 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Photo storage chosen in the admin panel (server disk or DigitalOcean Spaces).
+        \App\Services\MediaStorage::apply();
+
         // OTP: 3 per mobile per 10 minutes, 30 per IP per hour.
         RateLimiter::for('otp', function (Request $request) {
             $mobile = Mobile::normalize($request->input('mobile')) ?? 'invalid';

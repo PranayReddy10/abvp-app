@@ -85,8 +85,9 @@ It adds about 115 example members across Telangana with six months of history. I
 - **Post like on Twitter.** Approved members write short posts (up to 500 characters) with up to 4 photos, and choose who sees them: all members, only their district, or one of their Vibhags. #Hashtags become links, and the week's trending tags appear above the feed.
 - **Like, reply, repost, quote.** Replies notify the author. A repost shares a post as it is; a quote adds your own words on top.
 - **Follow.** Member profiles show posts, followers and following, with Follow, Schedule a call and (when allowed) Call buttons. The Following tab shows only people you follow. New followers are notified.
-- **Safe by default.** Members report posts with a reason (abusive, false information, spam, private details, other). Five reports hide a post until someone reviews it. Posting is limited to 10 a minute.
+- **Safe by default.** Members report posts with a reason (abusive, false information, spam, private details, other). Five reports hide a post until someone reviews it. Members can post or reply at most 10 times every 10 minutes.
 - **Moderation in the admin panel.** "Community" lists reported and hidden posts from members in the admin's area, with reasons and notes. Hide (the author is told why), restore, or dismiss reports; every action is in the audit log. The sidebar shows how many are waiting.
+- **Photo storage setting.** Super admins choose in Settings whether photos are kept on the Hostinger server or in DigitalOcean Spaces, with a connection test before switching, an encrypted secret, and a batch "Copy to Spaces" for earlier photos.
 - **Event cover photos.** Upload a cover in the event's Details tab; it appears on the event cards and event page in the app.
 
 ## Design
@@ -165,6 +166,7 @@ All routes start with `/api/v1`. Responses look like `{ "success": true, "data":
 | Admin logistics | `GET admin/events/{id}/logistics`, `stays` (+ `auto-allocate`), `rooms/{room}/allocate`, `allocations/{a}`, `meal-sessions`, `vehicles`, `arrivals` (+ `assign`, `picked-up`) |
 | Community | `GET feed?tab=for_you\|following&tag=&before=`, `GET feed/trending`, `POST posts` (multipart, `photos[]`), `GET/DELETE posts/{id}`, `POST posts/{id}/like\|comments\|report`, `DELETE comments/{id}`, `POST members/{memberId}/follow`, `GET members/{memberId}/posts` |
 | Admin events | `admin/events` (list, create, edit, `publish`, `cancel`, `cover`, `registrations`, `decide`, `guests`, `staff`, `live`) |
+| Admin settings | `GET/PUT admin/settings/storage`, `POST admin/settings/storage/test`, `POST admin/settings/storage/copy` (super admin) |
 | Admin moderation | `GET admin/moderation?status=reported\|hidden`, `POST admin/moderation/posts/{id}` (`hide` with reason, `restore`, `dismiss`) |
 | Admin | `GET admin/analytics?months=&unit_id=`, `admin/circulars` (+ `/remind`), `GET admin/meetings`, `GET admin/activity-reports`, `GET admin/dashboard`, `GET admin/applications`, `POST admin/applications/{id}/approve\|return\|reject`, `GET admin/members`, `admin/vibhags`, `admin/org-units`, `admin/role-assignments`, `admin/responsibilities`, `GET admin/audit-logs` |
 

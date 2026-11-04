@@ -48,6 +48,7 @@ export default function Layout() {
         <Item to="/vibhags" icon="vibhags" label="Vibhags" />
         {can('roles.assign') && <Item to="/roles" icon="roles" label="Admins and roles" />}
         {can('audit.view') && <Item to="/audit" icon="audit" label="Audit log" />}
+        {can('settings.manage') && <Item to="/settings" icon="settings" label="Settings" />}
         <div className="grow" />
         <div className="side-foot">
           <Avatar name={me?.profile?.full_name ?? me?.name} src={me?.profile?.photo_url} />
