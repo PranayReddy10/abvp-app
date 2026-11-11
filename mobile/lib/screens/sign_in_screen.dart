@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 import '../api/api_client.dart';
 import '../state/session.dart';
@@ -21,6 +22,34 @@ class _SignInScreenState extends State<SignInScreen> {
   String? _sentTo;
   String? _error;
   bool _busy = false;
+  ({String linkToken, String email})? _googleLink;
+
+  Future<void> _google() async {
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      final link = await widget.session.signInWithGoogle();
+      if (link != null && mounted) setState(() => _googleLink = link);
+    } on GoogleSignInException catch (e) {
+      if (e.code != GoogleSignInExceptionCode.canceled && mounted) {
+        setState(
+          () => _error = 'Google sign-in did not finish. Try again or use your mobile number.',
+        );
+      }
+    } on ApiException catch (e) {
+      if (mounted) setState(() => _error = e.message);
+    } catch (_) {
+      if (mounted) {
+        setState(
+          () => _error = 'Google sign-in is not available on this device. Use your mobile number.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
 
   Future<void> _run(Future<void> Function() action) async {
     setState(() {
@@ -149,6 +178,23 @@ class _SignInScreenState extends State<SignInScreen> {
       ),
       const SizedBox(height: 24),
       if (_error != null) ...[ErrorBanner(_error!), const SizedBox(height: 16)],
+      if (_googleLink != null) ...[
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppColors.okSoft,
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: Text(
+            'Google account ${_googleLink!.email} is new here. Verify your mobile number once to link it. Next time Google signs you straight in.',
+            style: const TextStyle(
+              color: AppColors.ok,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+      ],
       TextField(
         controller: _mobile,
         keyboardType: TextInputType.phone,
@@ -177,6 +223,30 @@ class _SignInScreenState extends State<SignInScreen> {
               }),
         child: Text(_busy ? 'Sending…' : 'Send code'),
       ),
+      if (_googleLink == null) ...[
+        const SizedBox(height: 18),
+        Row(
+          children: [
+            const Expanded(child: Divider()),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Text('or', style: text.bodySmall),
+            ),
+            const Expanded(child: Divider()),
+          ],
+        ),
+        const SizedBox(height: 18),
+        OutlinedButton.icon(
+          onPressed: _busy ? null : _google,
+          style: OutlinedButton.styleFrom(
+            backgroundColor: AppColors.surface,
+            foregroundColor: AppColors.ink,
+            minimumSize: const Size.fromHeight(56),
+          ),
+          icon: const _GoogleMark(),
+          label: const Text('Continue with Google'),
+        ),
+      ],
       const SizedBox(height: 18),
       Row(
         children: [
@@ -225,7 +295,11 @@ class _SignInScreenState extends State<SignInScreen> {
         onPressed: _busy
             ? null
             : () => _run(
-                () => widget.session.verifyOtp(_mobile.text, _code.text),
+                () => widget.session.verifyOtp(
+                  _mobile.text,
+                  _code.text,
+                  googleLinkToken: _googleLink?.linkToken,
+                ),
               ),
         child: Text(_busy ? 'Checking…' : 'Verify and continue'),
       ),
@@ -239,4 +313,44 @@ class _SignInScreenState extends State<SignInScreen> {
       ),
     ],
   );
+}
+
+/// Google's four-colour G, drawn so no image asset is needed.
+class _GoogleMark extends StatelessWidget {
+  const _GoogleMark();
+
+  @override
+  Widget build(BuildContext context) =>
+      SizedBox(width: 20, height: 20, child: CustomPaint(painter: _GPainter()));
+}
+
+class _GPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final r = Rect.fromLTWH(2, 2, size.width - 4, size.height - 4);
+    final w = size.width * 0.18;
+    Paint p(Color c) => Paint()
+      ..color = c
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = w;
+    const deg = 3.14159265 / 180;
+    canvas.drawArc(r, -40 * deg, -100 * deg, false, p(const Color(0xFFEA4335)));
+    canvas.drawArc(
+      r,
+      -140 * deg,
+      -100 * deg,
+      false,
+      p(const Color(0xFFFBBC05)),
+    );
+    canvas.drawArc(r, 120 * deg, -100 * deg, false, p(const Color(0xFF34A853)));
+    canvas.drawArc(r, 20 * deg, -60 * deg, false, p(const Color(0xFF4285F4)));
+    canvas.drawLine(
+      Offset(size.width / 2, size.height / 2),
+      Offset(size.width - 2, size.height / 2),
+      p(const Color(0xFF4285F4)),
+    );
+  }
+
+  @override
+  bool shouldRepaint(_GPainter old) => false;
 }

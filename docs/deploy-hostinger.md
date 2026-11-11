@@ -118,7 +118,21 @@ Indian SMS needs DLT registration. With MSG91:
 
 Until DLT is approved, keep `SMS_DRIVER=log` on a staging copy only.
 
-## 8. Photos on DigitalOcean Spaces (when ready)
+## 8. Google sign-in (optional)
+
+Members can tap **Continue with Google** in the app and the admin panel. The first time, they also verify their mobile number once; after that Google signs them straight in. Identity in ABVP Connect stays the mobile number.
+
+1. In Google Cloud Console → APIs & Services → Credentials, create OAuth client IDs:
+   - **Web application** (used by the admin panel and as the app's "server client ID"). Add `https://admin.abvpconnect.in` under Authorised JavaScript origins.
+   - **Android** with the app's package name and the SHA-1 of your Play signing key (from the Play Console).
+   - **iOS**, if you publish on iPhone.
+2. API `.env`: put every client ID, comma separated, in `GOOGLE_CLIENT_IDS`, then `php artisan config:cache`.
+3. Admin build: add `VITE_GOOGLE_CLIENT_ID=<web client ID>` to `admin/.env.production` and rebuild.
+4. App build: add `--dart-define=GOOGLE_SERVER_CLIENT_ID=<web client ID>` to the `flutter build` command. For iOS also add the iOS client's reversed ID as a URL scheme in `ios/Runner/Info.plist` (see the google_sign_in package README).
+
+Until these are set, the Google button explains that it is not switched on yet, and mobile sign-in works as before. The API checks each Google token with Google over HTTPS, which Hostinger allows.
+
+## 9. Photos on DigitalOcean Spaces (when ready)
 
 The S3 driver Spaces needs is already in `composer.json`, so there is nothing to install. Everything is done from the admin panel by a super admin:
 

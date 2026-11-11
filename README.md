@@ -90,6 +90,21 @@ It adds about 115 example members across Telangana with six months of history. I
 - **Photo storage setting.** Super admins choose in Settings whether photos are kept on the Hostinger server or in DigitalOcean Spaces, with a connection test before switching, an encrypted secret, and a batch "Copy to Spaces" for earlier photos.
 - **Event cover photos.** Upload a cover in the event's Details tab; it appears on the event cards and event page in the app.
 
+## What works now (Phase 7: conference guide and Google sign-in)
+
+For a big event such as the Rashtriya Adhiveshan in Bhagyanagar, organisers fill a **Conference guide** and every delegate with a confirmed registration sees it in the app. Everyone else, and delegates who tap Skip, use the app as usual with the community feed.
+
+- **निवास Accommodation.** Delegates pick their ABVP prant (49 listed; editable in `api/config/abvp.php`, and any name can be typed) and see where they stay: college, hostel or hotel, block and rooms, map and directions, and the Nivas lead with the team below as a tree, each with Call and WhatsApp. "Your stay" for the delegate's own prant is shown on the guide's first screen.
+- **यातायात Transport.** Every arrival point (RGI Airport, Secunderabad, Kacheguda, Cherlapally, JBS, MGBS…) with its help desk spot, how to spot the volunteers, road distance and time to the venue, numbered steps to reach, a "Route to venue" button and the desk lead. "Find the desk nearest to me" uses the phone's location.
+- **भोजन Food.** Halls and stalls by name, what is served, exactly where in the hall, a colour and landmark to spot it ("Green flag with a Bathukamma"), timings and the stall lead; filter by tags such as Veg, Jain or a state.
+- **कार्यालय Offices, बैठक Sessions, प्रदर्शनी Exhibition, परिसर Campus, पर्यटन Tourist places.** Which office handles what and where; the programme by day; a swipeable photo showcase (history of Telangana and Bhagyanagar, pictures, martyrs of ABVP); parking, washrooms, water, cloak room; places to visit with directions.
+- **आपातकाल Emergency** with a big pulsing call button and every number, and **सहायता Support** to raise a ticket the event team answers (the existing help desk).
+- **Opens by itself** from two days before the event until it ends, once per app launch, with Skip and "Continue to app". A card on Home opens it at any time.
+- **Organisers** fill it in the admin panel: event → **Guide** tab. Switch the guide on, set the helpline and venue pin, and add places per section in a side drawer: details, colour and landmark, map pin, road km, steps, contacts with a ★ lead (link a member by Member ID to use their verified badge and mobile) and up to 8 photos.
+- **Google sign-in** in the app and the admin panel. The first time, the member verifies their mobile once to link the Google account; then Google signs them in directly. A Google account can be linked to only one number. Setup: `docs/deploy-hostinger.md`, section 8.
+
+The demo data (`php artisan db:seed --class=DemoSeeder`) includes a filled guide for "Rashtriya Adhiveshan 2026 – Bhagyanagar". Names and phone numbers in it are made up; replace them with the real leads.
+
 ## Design
 
 - App (refreshed after the travel-app references): light grey background with large white rounded cards and no borders, a floating dark pill navigation bar (Home, Community, Pass, Calendar, Me) whose active tab turns saffron, round icon buttons, a "Good morning, Name 👋" greeting with the member's area, a pill search with a saffron filter button, icon chips that turn dark when selected, photo event cards with a round arrow, and event passes styled as boarding passes with a perforated edge.
@@ -151,7 +166,7 @@ All routes start with `/api/v1`. Responses look like `{ "success": true, "data":
 
 | | Route |
 |---|---|
-| Sign in | `POST auth/send-otp`, `POST auth/verify-otp`, `GET auth/me`, `POST auth/logout` |
+| Sign in | `POST auth/send-otp`, `POST auth/verify-otp` (optional `google_link_token`), `POST auth/google`, `GET auth/me`, `POST auth/logout` |
 | Lookups | `GET org/units?parent_id=`, `GET vibhags` |
 | Me | `GET/PATCH me/profile`, `PUT me/privacy`, `POST me/photo`, `GET me/qr` |
 | Membership | `POST membership/application` |
@@ -165,6 +180,8 @@ All routes start with `/api/v1`. Responses look like `{ "success": true, "data":
 | Admin operations | `admin/events/{id}/teams`, `admin/events/{id}/duties` (assign with clash check, edit/reassign, cancel), `admin/events/{id}/help`, `admin/events/{id}/announcements` |
 | Logistics | `GET events/{id}/my-logistics`, `PUT events/{id}/travel`, `GET events/{id}/meal-sessions`, `POST events/{id}/meal-sessions/{m}/serve`, `POST events/{id}/location-sessions`, `POST location-sessions/{id}/points\|stop`, `GET events/{id}/team-locations` |
 | Admin logistics | `GET admin/events/{id}/logistics`, `stays` (+ `auto-allocate`), `rooms/{room}/allocate`, `allocations/{a}`, `meal-sessions`, `vehicles`, `arrivals` (+ `assign`, `picked-up`) |
+| Conference guide | `GET me/guide-events`, `GET events/{id}/guide`, `GET events/{id}/guide/{kind}` (stay, arrival, food, office, session, exhibit, facility, tourist, emergency) |
+| Admin guide | `GET admin/events/{id}/guide`, `PUT …/guide/settings`, `POST …/guide/items`, `POST …/guide/reorder`, `PATCH/DELETE admin/guide-items/{id}`, `POST/DELETE admin/guide-items/{id}/photos` |
 | Community | `GET feed?tab=for_you\|following&tag=&before=`, `GET feed/trending`, `POST posts` (multipart, `photos[]`), `GET/DELETE posts/{id}`, `POST posts/{id}/like\|comments\|report`, `DELETE comments/{id}`, `POST members/{memberId}/follow`, `GET members/{memberId}/posts` |
 | Admin events | `admin/events` (list, create, edit, `publish`, `cancel`, `cover`, `registrations`, `decide`, `guests`, `staff`, `live`) |
 | Admin settings | `GET/PUT admin/settings/storage`, `POST admin/settings/storage/test`, `POST admin/settings/storage/copy` (super admin) |

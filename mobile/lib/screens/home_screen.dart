@@ -12,6 +12,7 @@ import 'circulars_screen.dart';
 import 'directory_screen.dart';
 import 'duties_screen.dart';
 import 'events_screen.dart';
+import 'guide/guide_hub.dart';
 import 'meeting_screen.dart';
 import 'notifications_screen.dart';
 import 'report_activity_screen.dart';
@@ -26,7 +27,9 @@ class _HomeData {
     this.duties,
     this.passes,
     this.events,
+    this.guides,
   );
+  final List<Map<String, dynamic>> guides;
   final List<Map<String, dynamic>> duties;
   final List<Map<String, dynamic>> passes;
   final List<Map<String, dynamic>> meetings;
@@ -66,6 +69,7 @@ class _HomeScreenState extends State<HomeScreen> {
       api.get('/me/duties'),
       api.get('/me/passes'),
       api.get('/events?when=upcoming'),
+      api.get('/me/guide-events').catchError((_) => <dynamic>[]),
     ]);
     await widget.session.refresh();
     return _HomeData(
@@ -85,6 +89,7 @@ class _HomeScreenState extends State<HomeScreen> {
           .cast<Map<String, dynamic>>()
           .where((e) => e['status'] != 'cancelled')
           .toList(),
+      (results[7] as List).cast<Map<String, dynamic>>(),
     );
   }
 
@@ -278,6 +283,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 const SizedBox(height: 18),
+                for (final g in d.guides) ...[
+                  GuideBanner(session: widget.session, data: g),
+                  const SizedBox(height: 16),
+                ],
                 ..._eventDay(context, d),
                 if (d.events.isNotEmpty) ...[
                   SectionTitle(

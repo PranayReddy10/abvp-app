@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../state/session.dart';
 import '../theme.dart';
 import 'events_screen.dart';
+import 'guide/guide_hub.dart';
+import 'guide/guide_widgets.dart' show Json;
 import 'notifications_screen.dart';
 import 'pass_screen.dart';
 
@@ -19,6 +21,39 @@ class _GuestShellState extends State<GuestShell> {
   int _tab = 0;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => maybeOpenGuide(context, widget.session),
+    );
+  }
+
+  Future<void> _openGuide() async {
+    final rows = (await widget.session.api.get('/me/guide-events') as List)
+        .cast<Json>();
+    if (!mounted) return;
+    if (rows.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'The conference guide opens once your invitation is confirmed.',
+          ),
+        ),
+      );
+      return;
+    }
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => GuideHub(
+          session: widget.session,
+          eventId: (rows.first['event'] as Json)['id'] as int,
+        ),
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     final name = widget.session.me?.name ?? '';
     return Scaffold(
@@ -28,6 +63,11 @@ class _GuestShellState extends State<GuestShell> {
                 'Namaste${name.isEmpty ? '' : ', ${name.split(' ').take(2).join(' ')}'}',
               ),
               actions: [
+                IconButton(
+                  tooltip: 'Conference guide',
+                  icon: const Icon(Icons.explore_outlined),
+                  onPressed: _openGuide,
+                ),
                 IconButton(
                   tooltip: 'Notifications',
                   icon: const Icon(Icons.notifications_none),

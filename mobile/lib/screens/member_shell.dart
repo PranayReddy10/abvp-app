@@ -4,6 +4,7 @@ import '../state/session.dart';
 import '../widgets/kit.dart';
 import 'calendar_screen.dart';
 import 'feed_screen.dart';
+import 'guide/guide_hub.dart';
 import 'home_screen.dart';
 import 'pass_screen.dart';
 import 'profile_screen.dart';
@@ -19,6 +20,14 @@ class MemberShell extends StatefulWidget {
 
 class _MemberShellState extends State<MemberShell> {
   int _tab = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => maybeOpenGuide(context, widget.session),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 import '../api/api_client.dart';
+import '../config.dart';
 import '../models.dart';
 import 'location_sharer.dart';
 
@@ -9,6 +11,9 @@ enum SessionStage { loading, signedOut, applying, waiting, member, guest }
 /// Who is signed in and where they are in the membership journey.
 class Session extends ChangeNotifier {
   Session(this.api) : location = LocationSharer(api);
+
+  /// The conference guide opens by itself once per app launch.
+  bool guideLandingShown = false;
 
   final ApiClient api;
   final LocationSharer location;
@@ -47,15 +52,64 @@ class Session extends ChangeNotifier {
     return data['mobile'] as String;
   }
 
-  Future<void> verifyOtp(String mobile, String code) async {
+  Future<void> verifyOtp(
+    String mobile,
+    String code, {
+    String? googleLinkToken,
+  }) async {
     final data = await api.post('/auth/verify-otp', {
       'mobile': mobile,
       'code': code,
       'device_name': 'mobile',
+      'google_link_token': ?googleLinkToken,
     });
     await api.saveToken(data['token'] as String);
     me = Me(data['user'] as Map<String, dynamic>);
     notifyListeners();
+  }
+
+  bool _googleReady = false;
+
+  /// Google sign-in. Returns null when signed in; otherwise the link token and email to
+  /// carry into the one-time mobile verification that links this Google account.
+  Future<({String linkToken, String email})?> signInWithGoogle() async {
+    final g = GoogleSignIn.instance;
+    if (!_googleReady) {
+      await g.initialize(
+        serverClientId: googleServerClientId.isEmpty
+            ? null
+            : googleServerClientId,
+      );
+      _googleReady = true;
+    }
+    if (!g.supportsAuthenticate()) {
+      throw ApiException(
+        'GOOGLE_UNSUPPORTED',
+        'Google sign-in works in the Android and iPhone app. Use your mobile number here.',
+      );
+    }
+    final account = await g.authenticate();
+    final idToken = account.authentication.idToken;
+    if (idToken == null) {
+      throw ApiException(
+        'GOOGLE_NO_TOKEN',
+        'Google did not return a sign-in token. Try again or use your mobile number.',
+      );
+    }
+    final data = await api.post('/auth/google', {
+      'id_token': idToken,
+      'device_name': 'mobile',
+    });
+    if (data['linked'] == true) {
+      await api.saveToken(data['token'] as String);
+      me = Me(data['user'] as Map<String, dynamic>);
+      notifyListeners();
+      return null;
+    }
+    return (
+      linkToken: data['link_token'] as String,
+      email: (data['email'] as String?) ?? account.email,
+    );
   }
 
   Future<void> refresh() async {
