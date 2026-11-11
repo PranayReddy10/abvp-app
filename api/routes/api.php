@@ -47,6 +47,13 @@ Route::prefix('v1')->group(function () {
     Route::get('media/guide/{item}/{index}', [MediaController::class, 'guide'])
         ->whereNumber('index')->middleware('signed')->name('media.guide');
 
+    // Conference guide: open to everyone, signed in or not (guests have no list).
+    Route::middleware('throttle:60,1')->group(function () {
+        Route::get('guide/events', [GuideController::class, 'myEvents']);
+        Route::get('events/{event}/guide', [GuideController::class, 'hub']);
+        Route::get('events/{event}/guide/{kind}', [GuideController::class, 'section']);
+    });
+
     Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         Route::get('auth/me', [AuthController::class, 'me']);
         Route::post('auth/logout', [AuthController::class, 'logout']);
@@ -126,8 +133,6 @@ Route::prefix('v1')->group(function () {
 
         // Phase 6: community feed
         Route::get('me/guide-events', [GuideController::class, 'myEvents']);
-        Route::get('events/{event}/guide', [GuideController::class, 'hub']);
-        Route::get('events/{event}/guide/{kind}', [GuideController::class, 'section']);
         Route::get('feed', [FeedController::class, 'feed']);
         Route::get('feed/trending', [FeedController::class, 'trending']);
         Route::post('posts', [FeedController::class, 'store'])->middleware('throttle:posts');

@@ -134,24 +134,37 @@ class GuideTest extends TestCase
         $this->getJson("/api/v1/events/{$event->id}/guide/nonsense")->assertNotFound();
     }
 
-    public function test_only_people_taking_part_see_the_guide_and_only_when_it_is_on(): void
+    public function test_anyone_can_open_the_guide_once_it_is_switched_on(): void
     {
         $admin = $this->admin();
         $event = $this->conference($admin);
-        $delegate = $this->member('Delegate');
-        $this->register($delegate, $event);
         $outsider = $this->member('Not registered');
 
-        Sanctum::actingAs($delegate);
-        $this->getJson("/api/v1/events/{$event->id}/guide")->assertNotFound(); // guide not switched on yet
-        $this->getJson('/api/v1/me/guide-events')->assertOk()->assertJsonCount(0, 'data');
+        // Off: hidden from everyone.
+        $this->getJson("/api/v1/events/{$event->id}/guide")->assertNotFound();
+        $this->getJson('/api/v1/guide/events')->assertOk()->assertJsonCount(0, 'data');
 
         $event->forceFill(['guide_enabled' => true])->save();
-        $this->getJson("/api/v1/events/{$event->id}/guide")->assertOk();
 
+        // A guest with no account and no registration.
+        $this->getJson('/api/v1/guide/events')->assertOk()->assertJsonPath('data.0.event.id', $event->id);
+        $this->getJson("/api/v1/events/{$event->id}/guide")->assertOk()
+            ->assertJsonPath('data.signed_in', false)
+            ->assertJsonPath('data.my_region', null)
+            ->assertJsonPath('data.open_tickets', 0);
+        $this->getJson("/api/v1/events/{$event->id}/guide/food")->assertOk();
+
+        // Signed in but not registered: sees it, gets "my prant", and can raise a support ticket.
         Sanctum::actingAs($outsider);
-        $this->getJson("/api/v1/events/{$event->id}/guide")->assertStatus(403)->assertJsonPath('error.code', 'NOT_PARTICIPANT');
-        $this->getJson("/api/v1/events/{$event->id}/guide/food")->assertStatus(403);
+        $this->getJson('/api/v1/me/guide-events')->assertOk()->assertJsonCount(1, 'data');
+        $this->getJson("/api/v1/events/{$event->id}/guide")->assertOk()->assertJsonPath('data.my_region', 'Telangana');
+        $this->postJson("/api/v1/events/{$event->id}/help", ['category' => 'venue', 'message' => 'Where is the Telangana stall?'])->assertCreated();
+        $this->getJson("/api/v1/events/{$event->id}/announcements")->assertOk();
+
+        // Drafts never show, even with the switch on.
+        $draft = Event::create(['title' => 'Draft', 'category' => 'conference', 'venue' => 'x', 'starts_at' => now()->addDay(), 'ends_at' => now()->addDays(2),
+            'org_unit_id' => $event->org_unit_id, 'organiser_id' => $admin->id, 'guide_enabled' => true]);
+        $this->getJson("/api/v1/events/{$draft->id}/guide")->assertNotFound();
 
         // Organisers outside the event's area cannot edit it.
         $other = $this->member('Delhi admin');

@@ -7,6 +7,7 @@ import '../state/session.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/motion.dart';
+import 'guide/guide_hub.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key, required this.session});
@@ -23,6 +24,15 @@ class _SignInScreenState extends State<SignInScreen> {
   String? _error;
   bool _busy = false;
   ({String linkToken, String email})? _googleLink;
+
+  @override
+  void initState() {
+    super.initState();
+    // Guests have no account: near a conference the guide opens straight away.
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => maybeOpenGuide(context, widget.session),
+    );
+  }
 
   Future<void> _google() async {
     setState(() {
@@ -170,6 +180,10 @@ class _SignInScreenState extends State<SignInScreen> {
     key: const ValueKey('mobile'),
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
+      GuideEntry(
+        session: widget.session,
+        padding: const EdgeInsets.only(bottom: 22),
+      ),
       Text('Sign in', style: text.headlineSmall),
       const SizedBox(height: 6),
       Text(

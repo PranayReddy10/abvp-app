@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../state/session.dart';
 import '../theme.dart';
+import 'guide/guide_hub.dart';
 import '../widgets/common.dart';
 
 /// Where the application stands, who has it, and what to fix.
@@ -37,6 +38,10 @@ class StatusScreen extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 4, 20, 32),
           children: [
+            GuideEntry(
+              session: session,
+              padding: const EdgeInsets.only(bottom: 16),
+            ),
             Align(
               alignment: Alignment.centerLeft,
               child: StatusPill.forStatus(app.status),

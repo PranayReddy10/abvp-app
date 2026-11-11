@@ -83,6 +83,52 @@ class _GuideHubState extends State<GuideHub> {
 
   void _openSection(Json s) {
     final hub = _hub!;
+    if (s['kind'] == 'support' && hub['signed_in'] != true) {
+      final helpline = (hub['event'] as Json)['helpline'] as String?;
+      showModalBottomSheet(
+        context: context,
+        showDragHandle: true,
+        builder: (ctx) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Need help?',
+                  style: TextStyle(
+                    fontFamily: 'Anek',
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Call the helpline now, or sign in with your mobile number to raise a ticket and get replies here.',
+                  style: TextStyle(color: AppColors.muted, fontSize: 15),
+                ),
+                const SizedBox(height: 18),
+                if (helpline != null) ...[
+                  FilledButton.icon(
+                    onPressed: () => callNumber(helpline),
+                    icon: const Icon(Icons.call_rounded),
+                    label: Text('Call helpline $helpline'),
+                  ),
+                  const SizedBox(height: 10),
+                ],
+                OutlinedButton(
+                  onPressed: () =>
+                      Navigator.of(context).popUntil((r) => r.isFirst),
+                  child: const Text('Sign in to raise a ticket'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      return;
+    }
     if (s['kind'] == 'support') {
       Navigator.push(
         context,
@@ -914,4 +960,50 @@ Future<void> maybeOpenGuide(BuildContext context, Session session) async {
   } on ApiException {
     // No guide today; the usual app is fine.
   }
+}
+
+/// Guide cards for whoever is looking, signed in or not. Shows nothing when no guide is on.
+class GuideEntry extends StatefulWidget {
+  const GuideEntry({
+    super.key,
+    required this.session,
+    this.padding = EdgeInsets.zero,
+  });
+  final Session session;
+  final EdgeInsets padding;
+
+  @override
+  State<GuideEntry> createState() => _GuideEntryState();
+}
+
+class _GuideEntryState extends State<GuideEntry> {
+  List<Json> _rows = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    widget.session.api
+        .get('/guide/events')
+        .then((r) {
+          if (mounted) setState(() => _rows = (r as List).cast<Json>());
+        })
+        .catchError((_) {});
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedSize(
+    duration: const Duration(milliseconds: 350),
+    curve: Curves.easeOutCubic,
+    child: Column(
+      children: [
+        for (final g in _rows)
+          Padding(
+            padding: widget.padding,
+            child: FadeSlideIn(
+              child: GuideBanner(session: widget.session, data: g),
+            ),
+          ),
+      ],
+    ),
+  );
 }

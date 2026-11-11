@@ -104,7 +104,9 @@ class OperationsController extends Controller
 
     public function announcements(Request $request, Event $event)
     {
-        $this->guardParticipant($request->user(), $event);
+        if (! $event->guide_enabled) {
+            $this->guardParticipant($request->user(), $event);
+        }
 
         return $this->ok(EventAnnouncement::where('event_id', $event->id)->latest('id')->limit(30)->get()->map(fn ($a) => [
             'id' => $a->id, 'title' => $a->title, 'body' => $a->body, 'at' => $a->created_at->toIso8601String(),
@@ -118,7 +120,10 @@ class OperationsController extends Controller
             'message' => ['required', 'string', 'min:5', 'max:1000'],
             'location' => ['nullable', 'string', 'max:160'],
         ]);
-        $this->guardParticipant($request->user(), $event);
+        // With the conference guide on, anyone signed in can ask for help (guests have no list).
+        if (! $event->guide_enabled) {
+            $this->guardParticipant($request->user(), $event);
+        }
 
         $help = HelpRequest::create($data + ['event_id' => $event->id, 'raised_by' => $request->user()->id, 'status' => 'open']);
 

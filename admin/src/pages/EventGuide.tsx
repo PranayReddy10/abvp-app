@@ -128,7 +128,7 @@ function Settings({ guide, id, onSaved }: { guide: Guide; id: number; onSaved: (
     setErr(null)
     try {
       await api.put(`/admin/events/${id}/guide/settings`, { guide_enabled: enabled, venue_lat: s.venue_lat || null, venue_lng: s.venue_lng || null, helpline_phone: s.helpline_phone || null })
-      onSaved(enabled ? 'Guide is on. Registered delegates see it in the app.' : 'Guide saved. It stays hidden from delegates until you switch it on.')
+      onSaved(enabled ? 'Guide is on. Everyone who opens the app sees it.' : 'Guide saved. It stays hidden from delegates until you switch it on.')
     } catch (x) { setErr(x) } finally { setBusy(false) }
   }
   return (
@@ -136,7 +136,7 @@ function Settings({ guide, id, onSaved }: { guide: Guide; id: number; onSaved: (
       <div className="gs-switch">
         <button type="button" role="switch" aria-checked={s.guide_enabled} className={`switch ${s.guide_enabled ? 'on' : ''}`} disabled={busy}
           onClick={() => { const v = !s.guide_enabled; setS({ ...s, guide_enabled: v }); save(undefined, v) }}><i /></button>
-        <div><b>Conference guide {s.guide_enabled ? 'is on' : 'is off'}</b><span className="muted">{s.guide_enabled ? 'Delegates with a confirmed registration see it in the app.' : 'Fill it in first; switch on when ready.'}</span></div>
+        <div><b>Conference guide {s.guide_enabled ? 'is on' : 'is off'}</b><span className="muted">{s.guide_enabled ? 'Everyone who opens the app sees it – no sign-in needed.' : 'Fill it in first; switch on when ready.'}</span></div>
       </div>
       <div className="field"><label htmlFor="g-hl">Helpline</label><input id="g-hl" className="input" placeholder="24x7 number" value={s.helpline_phone} onChange={(e) => setS({ ...s, helpline_phone: e.target.value })} /></div>
       <div className="field"><label htmlFor="g-lat">Venue latitude</label><input id="g-lat" className="input" inputMode="decimal" placeholder="17.385" value={s.venue_lat} onChange={(e) => setS({ ...s, venue_lat: e.target.value })} /></div>
@@ -271,7 +271,7 @@ function Editor({ eventId, kinds, prants, item, initial, onClose, onSaved }: {
               </div>
             ))}
             <button type="button" className="btn small" onClick={() => set({ contacts: [...d.contacts, { name: '', role: 'Team', phone: '', is_lead: false, member_id: '' }] })}>+ Add person</button>
-            <small className="muted">★ marks the lead, shown first. Add a Member ID to link someone; their verified badge and mobile are used.</small>
+            <small className="muted">★ marks the lead, shown first. These numbers are public: anyone who opens the guide can call them. Add a Member ID to link someone; their verified badge and mobile are used.</small>
           </fieldset>
 
           {item && (

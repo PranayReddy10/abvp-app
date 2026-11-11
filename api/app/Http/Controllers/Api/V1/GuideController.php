@@ -4,32 +4,20 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Event;
-use App\Models\EventDuty;
-use App\Models\EventRegistration;
-use App\Models\EventStaff;
 use App\Models\GuideItem;
 use App\Models\HelpRequest;
 use App\Models\User;
-use App\Services\EventService;
 use App\Services\GuidePresenter;
-use App\Support\ApiException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\URL;
 
-/** The conference guide delegates see: stay, transport, food, offices and more, with whom to call. */
+/** The conference guide: stay, transport, food, offices and more, with whom to call. Public. */
 class GuideController extends Controller
 {
-    public function __construct(private EventService $events) {}
-
-    /** Events with a guide that I take part in and that have not ended. */
+    /** Events whose guide is switched on and that have not ended. Open to everyone. */
     public function myEvents(Request $request)
     {
-        $user = $request->user();
-        $ids = EventRegistration::where('user_id', $user->id)->where('status', 'registered')->pluck('event_id')
-            ->merge(EventStaff::where('user_id', $user->id)->pluck('event_id'))
-            ->merge(EventDuty::where('assignee_id', $user->id)->pluck('event_id'))->unique();
-
-        $rows = Event::whereIn('id', $ids)->where('guide_enabled', true)->where('status', 'published')
+        $rows = Event::where('guide_enabled', true)->where('status', 'published')
             ->where('ends_at', '>', now())->orderBy('starts_at')->get();
 
         return $this->ok($rows->map(fn (Event $e) => $this->summary($e)));
@@ -37,19 +25,20 @@ class GuideController extends Controller
 
     public function hub(Request $request, Event $event)
     {
-        $user = $request->user();
-        $this->guard($user, $event);
+        $user = $request->user('sanctum'); // optional: guests open the guide without an account
+        $this->guard($event);
         $counts = GuideItem::where('event_id', $event->id)->selectRaw('kind, count(*) n')->groupBy('kind')->pluck('n', 'kind');
-        $myRegion = $this->myRegion($user);
+        $myRegion = $user ? $this->myRegion($user) : null;
 
         return $this->ok($this->summary($event) + [
             'sections' => collect(GuidePresenter::kinds())->map(fn ($k) => $k + ['count' => (int) ($counts[$k['kind']] ?? 0)])->values(),
             'my_region' => $myRegion,
+            'signed_in' => $user !== null,
             'my_stays' => $myRegion
                 ? GuideItem::where('event_id', $event->id)->where('kind', 'stay')->where('region', $myRegion)->with('contacts.user.profile')->orderBy('sort')->get()
                     ->map(fn ($i) => GuidePresenter::item($i, $event))->values()
                 : [],
-            'open_tickets' => HelpRequest::where('event_id', $event->id)->where('raised_by', $user->id)->whereNotIn('status', ['resolved', 'closed'])->count(),
+            'open_tickets' => $user ? HelpRequest::where('event_id', $event->id)->where('raised_by', $user->id)->whereNotIn('status', ['resolved', 'closed'])->count() : 0,
             'help_categories' => collect(HelpRequest::CATEGORIES)->map(fn ($label, $key) => ['key' => $key, 'label' => $label])->values(),
         ]);
     }
@@ -57,7 +46,7 @@ class GuideController extends Controller
     public function section(Request $request, Event $event, string $kind)
     {
         abort_unless(array_key_exists($kind, config('abvp.guide_kinds')), 404);
-        $this->guard($request->user(), $event);
+        $this->guard($event);
         $items = GuideItem::where('event_id', $event->id)->where('kind', $kind)
             ->with('contacts.user.profile')->orderBy('sort')->orderBy('id')->get();
 
@@ -100,15 +89,9 @@ class GuideController extends Controller
         return $state?->name;
     }
 
-    private function guard(User $user, Event $event): void
+    /** Anyone can open a guide once the organiser switches it on; contacts there are help desks. */
+    private function guard(Event $event): void
     {
         abort_unless($event->guide_enabled && $event->status === 'published', 404);
-        $in = EventRegistration::where('event_id', $event->id)->where('user_id', $user->id)->where('status', 'registered')->exists()
-            || EventStaff::where('event_id', $event->id)->where('user_id', $user->id)->exists()
-            || EventDuty::where('event_id', $event->id)->where('assignee_id', $user->id)->exists()
-            || $this->events->canCoordinate($user, $event);
-        if (! $in) {
-            throw new ApiException('NOT_PARTICIPANT', 'The conference guide opens once your registration is confirmed.', 403);
-        }
     }
 }
