@@ -8,6 +8,7 @@ import { fmtDate, fmtNum, fmtTime } from '../format'
 import { useFetch } from '../useFetch'
 import EventForm, { type EventDetail as Detail } from './EventForm'
 import LogisticsTab from './EventLogistics'
+import GuideTab from './EventGuide'
 import { AnnouncementsTab, DutiesTab, DutySummary, HelpTab } from './EventOperations'
 import { EVENT_STATUS } from './Events'
 
@@ -22,7 +23,7 @@ interface Live {
 interface RegRow { id: number; name: string; kind: string; member_id: string | null; verified?: boolean; mobile: string | null; place: string | null; status: string; registered_at: string; checked_in_at: string | null; gate: string | null; method: string | null }
 interface Staff { id: number; role: string; name: string | null; member_id: string | null }
 
-const TABS = ['Live', 'Duties', 'Logistics', 'Help desk', 'Announcements', 'Registrations', 'Guests and team', 'Details'] as const
+const TABS = ['Live', 'Guide', 'Duties', 'Logistics', 'Help desk', 'Announcements', 'Registrations', 'Guests and team', 'Details'] as const
 const REG_STATUS: Record<string, string> = { registered: 'approved', waitlisted: 'submitted', pending: 'submitted', cancelled: 'draft', rejected: 'rejected' }
 const REG_LABEL: Record<string, string> = { registered: 'Confirmed', waitlisted: 'Waitlist', pending: 'To approve', cancelled: 'Cancelled', rejected: 'Not approved' }
 const time = new Intl.DateTimeFormat('en-IN', { hour: 'numeric', minute: '2-digit' })
@@ -77,6 +78,7 @@ export default function EventDetail() {
       {tab === 'Duties' && <DutiesTab id={e.id} title={e.title} startsAt={e.starts_at} />}
       {tab === 'Logistics' && <LogisticsTab id={e.id} title={e.title} startsAt={e.starts_at} />}
       {tab === 'Help desk' && <HelpTab id={e.id} />}
+      {tab === 'Guide' && <GuideTab id={e.id} />}
       {tab === 'Announcements' && <AnnouncementsTab id={e.id} />}
       {tab === 'Registrations' && <RegistrationsTab id={e.id} title={e.title} onChange={reload} />}
       {tab === 'Guests and team' && <PeopleTab id={e.id} onChange={reload} />}

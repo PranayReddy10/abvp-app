@@ -30,6 +30,8 @@ use App\Models\MeetingInvitee;
 use App\Models\OrgUnit;
 use App\Models\Responsibility;
 use App\Models\RoleAssignment;
+use App\Models\GuideContact;
+use App\Models\GuideItem;
 use App\Models\Post;
 use App\Models\PostComment;
 use App\Models\User;
@@ -149,6 +151,7 @@ class DemoSeeder extends Seeder
 
         $this->events($state, $members, $admin);
         $this->feed($members);
+        $this->conference($members, $admin);
 
         // Activity reports. Some units go quiet so the analysis has something to flag.
         $types = array_keys(ActivityReport::TYPES);
@@ -168,6 +171,199 @@ class DemoSeeder extends Seeder
                 ActivityReport::create(['org_unit_id' => $unit->id, 'vibhag_id' => mt_rand(0, 2) ? $vibhags->random()->id : null, 'submitted_by' => $submitter->id, 'title' => $titles[$type], 'programme_type' => $type, 'held_on' => $held->toDateString(), 'place' => $unit->name, 'participants' => mt_rand(15, 220), 'institutions' => mt_rand(1, 6), 'created_at' => $held, 'updated_at' => $held]);
             }
         }
+    }
+
+    /** A national conference in Hyderabad with the delegate guide filled in. */
+    private function conference($members, ?User $admin): void
+    {
+        $state = OrgUnit::where('name', 'Telangana')->first();
+        $start = Carbon::create(2026, 12, 26, 3, 30); // 9 AM IST
+        $event = Event::create([
+            'title' => 'Rashtriya Adhiveshan 2026 – Bhagyanagar', 'category' => 'conference',
+            'description' => 'The national conference of ABVP. Delegates from every prant meet in Bhagyanagar for three days of sessions, the exhibition and the shobha yatra.',
+            'venue' => 'Adhiveshan Nagar, Hyderabad (demo venue)', 'starts_at' => $start, 'ends_at' => $start->copy()->addDays(3)->setTime(12, 30),
+            'org_unit_id' => $state->id, 'organiser_id' => $admin?->id ?? $members->first()->id, 'capacity' => 10000,
+            'instructions' => 'Carry your pass and a photo ID. Your stay and help desks are in the Conference guide.',
+            'contact_name' => 'Adhiveshan Karyalay', 'contact_phone' => '9000090000',
+            'guide_enabled' => true, 'venue_lat' => 17.3850, 'venue_lng' => 78.4867, 'helpline_phone' => '9000090000',
+        ]);
+        $event->forceFill(['status' => 'published', 'published_at' => now()->subDays(30)])->save();
+        $event->forceFill(['cover_path' => $this->art('events/covers', 77)])->save();
+        foreach ($members->take(70) as $m) {
+            EventRegistration::create(['event_id' => $event->id, 'user_id' => $m->id, 'kind' => 'member', 'status' => 'registered']);
+        }
+
+        $first = ['Akhil', 'Saicharan', 'Ravi', 'Sneha', 'Arjun', 'Pooja', 'Vikram', 'Divya', 'Rohit', 'Anusha', 'Karthik', 'Meghana', 'Suresh', 'Lavanya', 'Naveen', 'Harika', 'Manoj', 'Bhavana', 'Rakesh', 'Swathi'];
+        $last = ['Reddy', 'Rao', 'Goud', 'Sharma', 'Naidu', 'Varma', 'Patil', 'Yadav'];
+        $n = 0;
+        $person = function (?string $name = null) use (&$n, $first, $last) {
+            $n++;
+
+            return [$name ?? $first[$n % count($first)].' '.$last[$n % count($last)], '90000'.str_pad((string) (10000 + $n * 37), 5, '0', STR_PAD_LEFT)];
+        };
+        $add = function (string $kind, array $data, array $contacts = [], int $photos = 0) use ($event) {
+            static $sort = [];
+            $sort[$kind] = ($sort[$kind] ?? 0) + 1;
+            $item = GuideItem::create($data + ['event_id' => $event->id, 'kind' => $kind, 'sort' => $sort[$kind]]);
+            if ($photos) {
+                $item->forceFill(['photos' => collect(range(1, $photos))->map(fn ($k) => $this->art('guide/'.$event->id, $item->id * 10 + $k))->all()])->save();
+            }
+            foreach ($contacts as $i => [$name, $phone, $role, $lead]) {
+                GuideContact::create(['guide_item_id' => $item->id, 'name' => $name, 'phone' => $phone, 'role' => $role, 'is_lead' => $lead, 'sort' => $i]);
+            }
+        };
+
+        // Yatayat: one desk and lead at every arrival point.
+        $arrivals = [
+            ['RGI Airport, Shamshabad', 'Arrivals hall, Gate 4', 17.2403, 78.4294, 32, '50 min by shuttle', 'Pushpak bus or the Adhiveshan shuttle every 30 minutes', 'Akhil'],
+            ['Secunderabad Railway Station', 'Platform 1 exit, near the clock tower', 17.4337, 78.5016, 8, '25 min', 'Shuttle from the Platform 1 parking, every 20 minutes', null],
+            ['Kacheguda Railway Station', 'Main entrance, booking office side', 17.3896, 78.5005, 4, '15 min', 'Shuttle every 30 minutes from the main gate', null],
+            ['Cherlapally Railway Terminal', 'New terminal, exit gate 2', 17.4600, 78.6000, 17, '40 min', 'Shuttle every 45 minutes, or MMTS to Secunderabad', null],
+            ['JBS Bus Station, Secunderabad', 'Platform 6, enquiry counter', 17.4486, 78.4983, 9, '25 min', 'Shuttle every 30 minutes from Gate 2', null],
+            ['MGBS Bus Station', 'Main concourse, near the police outpost', 17.3780, 78.4820, 2, '10 min', 'Shuttle every 20 minutes, or walk with a volunteer', null],
+        ];
+        foreach ($arrivals as [$title, $desk, $lat, $lng, $km, $time, $how, $leadName]) {
+            [$ln, $lp] = $person($leadName ? $leadName.' Kumar' : null);
+            [$vn, $vp] = $person();
+            [$wn, $wp] = $person();
+            $add('arrival', [
+                'title' => $title, 'subtitle' => 'Help desk: '.$desk, 'location' => $desk, 'landmark' => 'Saffron ABVP banner and volunteers in saffron scarves',
+                'lat' => $lat, 'lng' => $lng, 'distance_km' => $km, 'travel_time' => $time, 'timings' => 'Open 24 hours, 24–29 December', 'tags' => ['24x7', 'Shuttle'],
+                'steps' => ["Come out at: {$desk}", 'Look for the saffron ABVP Swagat banner', 'Show your pass QR to the desk volunteer', $how, 'Get off at Adhiveshan Nagar, Gate 1 – the registration desk is on your left'],
+            ], [[$ln, $lp, 'Desk lead', true], [$vn, $vp, 'Volunteer', false], [$wn, $wp, 'Volunteer (night)', false]]);
+        }
+
+        // Nivas: stays per prant, each with a lead and a small team.
+        $places = ['SVIT Engineering College', 'Keshav Memorial Hostel', 'Govt. Degree College Hostel', 'Saffron Residency (hotel)', 'Vidya Bharati School Campus', 'Nagar Bhavan Dormitory'];
+        foreach (config('abvp.prants') as $i => $prant) {
+            $place = $prant === 'Konkan (Mumbai)' ? 'SVIT Engineering College' : $places[$i % count($places)];
+            $team = [[...$person($prant === 'Konkan (Mumbai)' ? 'Saicharan Reddy' : null), 'Nivas lead', true], [...$person(), 'Team', false]];
+            if ($i % 3 === 0) {
+                $team[] = [...$person(), 'Team', false];
+            }
+            $girls = $i % 4 === 1;
+            $add('stay', [
+                'title' => $place, 'region' => $prant, 'subtitle' => $girls ? 'Girls block' : 'Boys block',
+                'location' => ($girls ? 'Block G' : 'Block '.chr(65 + $i % 6)).', rooms '.(100 + $i * 4).'–'.(103 + $i * 4),
+                'tags' => [$girls ? 'Girls' : 'Boys', 'Hot water'], 'timings' => 'Check-in from 24 Dec, 6 AM',
+                'lat' => 17.38 + ($i % 7) * 0.012, 'lng' => 78.45 + ($i % 5) * 0.015, 'travel_time' => (5 + $i % 4 * 5).' min by shuttle',
+            ], $team);
+        }
+
+        // Bhojan: halls and state stalls, each with a colour and landmark to spot it.
+        $food = [
+            ['Annapurna Bhojanalaya – Hall A', 'Main dining hall: breakfast, lunch and dinner', 'Hall A, behind the main stage', 'Big saffron arch with a kalash', '#E3620C', ['Veg', 'Main meals'], '7–9 AM · 12–3 PM · 7–10 PM'],
+            ['Telangana Ruchulu', 'Pulihora, sakinalu, bobbatlu', 'Food court, Hall B, Stall 3', 'Green flag with a Bathukamma', '#2E8B57', ['Veg', 'Telangana'], '11 AM – 10 PM'],
+            ['Andhra Vantillu', 'Pesarattu, gongura and more', 'Food court, Hall B, Stall 4', 'Yellow board with a mango leaf toran', '#D4A017', ['Veg', 'Andhra'], '11 AM – 10 PM'],
+            ['Rajasthani Rasoi', 'Dal baati churma, ghevar', 'Food court, Hall B, Stall 8', 'Pink umbrella', '#D6336C', ['Veg', 'Rajasthan'], '11 AM – 10 PM'],
+            ['Bengal Mishti Ghar', 'Rasgulla, sandesh, mishti doi', 'Food court, Hall B, Stall 11', 'White and red board', '#C92A2A', ['Sweets', 'Bengal'], '12 – 9 PM'],
+            ['Jain Rasoi', 'No onion, no garlic meals', 'Hall A, counter 9', 'Blue Jain Rasoi board', '#1971C2', ['Jain'], '7–9 AM · 12–3 PM · 7–9 PM'],
+            ['Chai & Snacks Kendra', 'Tea, coffee, biscuits, water', 'Near Gate 2 and next to the exhibition', 'Tea-cup cut-out', '#8B5E34', ['Snacks', '24x7'], 'Open 24 hours'],
+        ];
+        foreach ($food as $k => [$title, $sub, $where, $mark, $color, $tags, $time]) {
+            $add('food', ['title' => $title, 'subtitle' => $sub, 'location' => $where, 'landmark' => $mark, 'color' => $color, 'tags' => $tags, 'timings' => $time,
+                'description' => 'Show your pass at the counter. Please keep the hall clean – plates go in the green bins.'], [[...$person(), 'Stall lead', true]], $k < 3 ? 1 : 0);
+        }
+
+        // Karyalay.
+        $offices = [
+            ['Adhiveshan Karyalay', 'Central office: passes, changes, anything you cannot find', 'Gate 1, first tent on the right'],
+            ['Panjikaran (Registration)', 'Collect your kit and badge', 'Gate 1, left side'],
+            ['Suchana Sahayata (Information)', 'Where is what, session times, lost and found', 'Next to the main stage, and at Gate 2'],
+            ['Pratham Sahayata (First aid)', 'Doctor and nurses on duty, medicines', 'Behind Hall A, red cross flag'],
+            ['Mahila Sahayata (Help for girls)', 'Women volunteers for any concern', 'Block G entrance and near the main stage'],
+            ['Media Kendra', 'Press, photos and social media team', 'Hall C, first floor'],
+        ];
+        foreach ($offices as [$title, $sub, $where]) {
+            $add('office', ['title' => $title, 'subtitle' => $sub, 'location' => $where, 'timings' => '24–29 Dec, 7 AM – 11 PM'], [[...$person(), 'In charge', true], [...$person(), 'Team', false]]);
+        }
+
+        // Baithak: the programme.
+        $sessions = [
+            ['Udghatan Satra', 'Inauguration', 'Main stage', 0, '10:00 AM – 12:30 PM'],
+            ['Pratinidhi Sabha', 'Delegates meeting by prant', 'Halls C and D', 0, '3:00 – 6:00 PM'],
+            ['Khula Adhiveshan', 'Open session and resolutions', 'Main stage', 1, '10:00 AM – 1:00 PM'],
+            ['Shobha Yatra', 'Procession through the city', 'Starts at Gate 3', 1, '3:30 – 6:30 PM'],
+            ['Samapan Satra', 'Closing session', 'Main stage', 2, '10:00 AM – 12:30 PM'],
+        ];
+        foreach ($sessions as [$title, $sub, $where, $day, $time]) {
+            $add('session', ['title' => $title, 'subtitle' => $sub, 'location' => $where, 'timings' => 'Day '.($day + 1).', '.$start->copy()->addDays($day)->format('j M').' · '.$time]);
+        }
+
+        // Pradarshini: digital showcase.
+        $exhibits = [
+            ['History of Telangana', 'From the Kakatiyas to statehood', 'Stories, maps and photographs of Telangana through the centuries. The full panels and captions are added by the Pradarshini team.'],
+            ['History of Bhagyanagar', 'The city that hosts us', 'Old photographs and stories of Bhagyanagar (Hyderabad). The Pradarshini team adds the panels here.'],
+            ['Display of pictures', 'ABVP through the years', 'Pictures from campaigns, conferences and seva work across the country.'],
+            ['Martyrs of ABVP', 'Remembering those who gave their lives', 'Names, photographs and the stories of karyakartas we remember. Added by the Pradarshini team after verification.'],
+        ];
+        foreach ($exhibits as [$title, $sub, $desc]) {
+            $add('exhibit', ['title' => $title, 'subtitle' => $sub, 'description' => $desc, 'location' => 'Pradarshini, Hall E', 'timings' => '9 AM – 9 PM'], [[...$person(), 'Pradarshini lead', true]], 3);
+        }
+
+        // Parisar: campus facilities.
+        $facilities = [
+            ['Bus parking', 'For buses coming from other states', 'Ground 2, enter by Gate 4', ['Buses']],
+            ['Two-wheeler and car parking', 'Volunteers guide you to a slot', 'Next to Gate 3', ['Bikes', 'Cars']],
+            ['Washrooms – men', 'Cleaned every 2 hours', 'Behind Halls A and C', ['Men']],
+            ['Washrooms – women', 'Women volunteers on duty', 'Next to Block G and behind Hall B', ['Women']],
+            ['Drinking water', 'RO water points', 'Every hall entrance and near the food court', ['24x7']],
+            ['Cloak room and mobile charging', 'Leave bags safely; charge your phone', 'Gate 1, next to the Karyalay', ['Charging']],
+        ];
+        foreach ($facilities as [$title, $sub, $where, $tags]) {
+            $add('facility', ['title' => $title, 'subtitle' => $sub, 'location' => $where, 'tags' => $tags], [[...$person(), 'Parisar volunteer', true]]);
+        }
+
+        // Paryatan: places to visit around Hyderabad.
+        $tourist = [
+            ['Bhagyalakshmi Temple, Charminar', 'Temple beside the Charminar, in the old city', 17.3616, 78.4747, 'Best visited early morning'],
+            ['Birla Mandir', 'White marble temple of Sri Venkateswara on Naubat Pahad', 17.4062, 78.4691, 'Open 7 AM – 12 PM, 2 – 9 PM'],
+            ['Yadadri Sri Lakshmi Narasimha Swamy Temple', 'Hill temple at Yadagirigutta, about 60 km away', 17.5891, 78.9437, 'Plan half a day'],
+            ['Golconda Fort', 'Hill fort with a sound and light show', 17.3833, 78.4011, '9 AM – 5:30 PM'],
+            ['Salar Jung Museum', 'One of India\'s largest museums', 17.3713, 78.4804, 'Closed on Fridays'],
+        ];
+        foreach ($tourist as $k => [$title, $sub, $lat, $lng, $time]) {
+            $add('tourist', ['title' => $title, 'subtitle' => $sub, 'lat' => $lat, 'lng' => $lng, 'timings' => $time,
+                'description' => 'Go in a group and tell your Nivas lead before you leave. Be back before the evening session.'], [], 2);
+        }
+
+        // Apatkal.
+        $emergency = [
+            ['Ambulance', 'National emergency ambulance', '108', 'Call first in any medical emergency'],
+            ['Police / any emergency', 'All-in-one emergency number', '112', null],
+            ['Women helpline', 'Women in distress', '181', null],
+            ['Adhiveshan medical room', 'Doctor on duty, behind Hall A', null, 'Red cross flag'],
+            ['Lost person / lost child', 'Suchana Sahayata desk at the main stage', null, 'Announcements are made from here'],
+        ];
+        foreach ($emergency as [$title, $sub, $number, $mark]) {
+            $add('emergency', ['title' => $title, 'subtitle' => $sub, 'landmark' => $mark, 'color' => '#C92A2A'],
+                $number ? [[$title, $number, 'Call', true]] : [[...$person(), 'On duty', true], [...$person(), 'Backup', false]]);
+        }
+    }
+
+    private function art(string $dir, int $seed): string
+    {
+        $palettes = [[[240, 138, 60], [120, 40, 10]], [[59, 74, 140], [15, 18, 38]], [[47, 143, 107], [11, 36, 28]], [[156, 79, 184], [30, 14, 38]], [[227, 98, 12], [40, 26, 18]], [[33, 150, 183], [10, 40, 60]]];
+        [$a, $b] = $palettes[$seed % count($palettes)];
+        $w = 1200;
+        $h = 800;
+        $img = imagecreatetruecolor($w, $h);
+        for ($y = 0; $y < $h; $y++) {
+            $t = $y / $h;
+            imageline($img, 0, $y, $w, $y, imagecolorallocate($img, (int) ($a[0] + ($b[0] - $a[0]) * $t), (int) ($a[1] + ($b[1] - $a[1]) * $t), (int) ($a[2] + ($b[2] - $a[2]) * $t)));
+        }
+        mt_srand($seed * 7919);
+        for ($i = 0; $i < 7; $i++) {
+            $r = mt_rand(80, 420);
+            imagefilledellipse($img, mt_rand(0, $w), mt_rand(0, $h), $r, $r, imagecolorallocatealpha($img, 255, 255, 255, mt_rand(96, 120)));
+        }
+        ob_start();
+        imagejpeg($img, null, 82);
+        $path = $dir.'/'.Str::uuid().'.jpg';
+        Storage::disk(config('abvp.media_disk'))->put($path, ob_get_clean());
+        imagedestroy($img);
+
+        return $path;
     }
 
     /** Community posts with photos, hashtags, likes, replies, follows, and one reported post; covers for events. */
