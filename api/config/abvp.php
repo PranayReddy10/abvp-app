@@ -75,4 +75,28 @@ return [
         'institution' => 'members',
         'date_of_birth' => 'nobody',
     ],
+
+    // Conference guide sections, in the order delegates see them.
+    'guide_kinds' => [
+        'stay' => ['title' => 'Accommodation', 'hindi' => 'निवास', 'icon' => 'bed'],
+        'arrival' => ['title' => 'Transport', 'hindi' => 'यातायात', 'icon' => 'bus'],
+        'food' => ['title' => 'Food', 'hindi' => 'भोजन', 'icon' => 'food'],
+        'office' => ['title' => 'Offices', 'hindi' => 'कार्यालय', 'icon' => 'office'],
+        'session' => ['title' => 'Sessions', 'hindi' => 'बैठक', 'icon' => 'session'],
+        'exhibit' => ['title' => 'Exhibition', 'hindi' => 'प्रदर्शनी', 'icon' => 'exhibit'],
+        'facility' => ['title' => 'Campus', 'hindi' => 'परिसर', 'icon' => 'parking'],
+        'tourist' => ['title' => 'Tourist places', 'hindi' => 'पर्यटन', 'icon' => 'tourist'],
+        'emergency' => ['title' => 'Emergency', 'hindi' => 'आपातकाल', 'icon' => 'emergency'],
+    ],
+
+    // ABVP prants (organisational states) offered when adding accommodation. Edit to match the
+    // national office's current list; any other name typed in the admin panel is accepted too.
+    'prants' => [
+        'Andaman & Nicobar', 'Andhra Pradesh', 'Arunachal Pradesh', 'Uttar Assam', 'Dakshin Assam', 'Dakshin Bihar', 'Uttar Bihar',
+        'Chhattisgarh', 'Delhi', 'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jammu Kashmir', 'Ladakh', 'Jharkhand',
+        'Karnataka Uttar', 'Karnataka Dakshin', 'Kerala', 'Madhya Bharat', 'Mahakoshal', 'Malwa', 'Konkan (Mumbai)',
+        'Paschim Maharashtra', 'Devgiri', 'Vidarbha', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab',
+        'Jaipur', 'Jodhpur', 'Chittor', 'Sikkim', 'Uttar Tamil Nadu', 'Dakshin Tamil Nadu', 'Telangana', 'Tripura',
+        'Uttarakhand', 'Meerut', 'Braj', 'Kanpur', 'Awadh', 'Kashi', 'Gorakshprant', 'Uttar Banga', 'Dakshin Banga',
+    ],
 ];

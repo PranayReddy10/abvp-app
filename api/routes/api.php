@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\CheckInController;
 use App\Http\Controllers\Api\V1\CircularController;
 use App\Http\Controllers\Api\V1\EventController;
 use App\Http\Controllers\Api\V1\FeedController;
+use App\Http\Controllers\Api\V1\GuideController;
 use App\Http\Controllers\Api\V1\DirectoryController;
 use App\Http\Controllers\Api\V1\LogisticsController;
 use App\Http\Controllers\Api\V1\MediaController;
@@ -26,6 +27,7 @@ Route::prefix('v1')->group(function () {
         Route::post('auth/send-otp', [AuthController::class, 'sendOtp']);
         Route::post('auth/verify-otp', [AuthController::class, 'verifyOtp']);
     });
+    Route::post('auth/google', [AuthController::class, 'google'])->middleware('throttle:20,1');
 
     // Lookups for the application form
     Route::get('org/units', [OrganisationController::class, 'units']);
@@ -42,6 +44,8 @@ Route::prefix('v1')->group(function () {
         ->whereNumber('index')->middleware('signed')->name('media.post');
     Route::get('media/events/{event}/cover', [MediaController::class, 'eventCover'])
         ->middleware('signed')->name('media.event');
+    Route::get('media/guide/{item}/{index}', [MediaController::class, 'guide'])
+        ->whereNumber('index')->middleware('signed')->name('media.guide');
 
     Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         Route::get('auth/me', [AuthController::class, 'me']);
@@ -121,6 +125,9 @@ Route::prefix('v1')->group(function () {
         Route::get('events/{event}/team-locations', [LogisticsController::class, 'teamLocations']);
 
         // Phase 6: community feed
+        Route::get('me/guide-events', [GuideController::class, 'myEvents']);
+        Route::get('events/{event}/guide', [GuideController::class, 'hub']);
+        Route::get('events/{event}/guide/{kind}', [GuideController::class, 'section']);
         Route::get('feed', [FeedController::class, 'feed']);
         Route::get('feed/trending', [FeedController::class, 'trending']);
         Route::post('posts', [FeedController::class, 'store'])->middleware('throttle:posts');
@@ -197,6 +204,14 @@ Route::prefix('v1')->group(function () {
             Route::post('events/{event}/announcements', [Admin\OperationsController::class, 'announce']);
             Route::get('events/{event}/logistics', [Admin\LogisticsController::class, 'overview']);
             Route::post('events/{event}/cover', [Admin\EventController::class, 'cover']);
+            Route::get('events/{event}/guide', [Admin\GuideController::class, 'index']);
+            Route::put('events/{event}/guide/settings', [Admin\GuideController::class, 'settings']);
+            Route::post('events/{event}/guide/items', [Admin\GuideController::class, 'store']);
+            Route::post('events/{event}/guide/reorder', [Admin\GuideController::class, 'reorder']);
+            Route::patch('guide-items/{item}', [Admin\GuideController::class, 'update']);
+            Route::delete('guide-items/{item}', [Admin\GuideController::class, 'destroy']);
+            Route::post('guide-items/{item}/photos', [Admin\GuideController::class, 'addPhoto']);
+            Route::delete('guide-items/{item}/photos/{index}', [Admin\GuideController::class, 'removePhoto'])->whereNumber('index');
             Route::get('moderation', [Admin\ModerationController::class, 'index']);
             Route::post('moderation/posts/{post}', [Admin\ModerationController::class, 'act']);
             Route::get('settings/storage', [Admin\SettingsController::class, 'storage']);

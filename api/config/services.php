@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+
+    // Google sign-in: OAuth client IDs allowed as the token audience (web, Android, iOS), comma separated.
+    'google' => [
+        'client_ids' => env('GOOGLE_CLIENT_IDS'),
+    ],
 ];

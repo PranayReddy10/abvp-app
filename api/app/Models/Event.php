@@ -22,11 +22,13 @@ class Event extends Model
         'title', 'description', 'category', 'instructions', 'venue', 'venue_map_url', 'starts_at', 'ends_at',
         'org_unit_id', 'organiser_id', 'registration_opens_at', 'registration_closes_at', 'capacity',
         'requires_approval', 'waitlist_enabled', 'contact_name', 'contact_phone',
+        'guide_enabled', 'venue_lat', 'venue_lng', 'helpline_phone',
     ];
 
     protected function casts(): array
     {
         return [
+            'guide_enabled' => 'boolean', 'venue_lat' => 'float', 'venue_lng' => 'float',
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',
             'registration_opens_at' => 'datetime',

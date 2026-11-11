@@ -33,6 +33,11 @@ class MediaController extends Controller
         return $this->stream($event->cover_path);
     }
 
+    public function guide(\App\Models\GuideItem $item, int $index)
+    {
+        return $this->stream($item->photos[$index] ?? null);
+    }
+
     public function report(ActivityReport $report, int $index)
     {
         return $this->stream($report->photos[$index] ?? null);
