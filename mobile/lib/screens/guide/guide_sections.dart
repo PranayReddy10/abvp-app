@@ -1501,14 +1501,31 @@ class _GuideItemScreenState extends State<GuideItemScreen> {
                   ),
                   if (photos.isEmpty) ...[
                     const FloatingOrbs(),
-                    Positioned(
-                      right: 24,
-                      top: MediaQuery.paddingOf(context).top + 56,
-                      child: Icon(
-                        k.icon,
-                        size: 64,
-                        color: Colors.white.withValues(alpha: 0.9),
-                      ),
+                    // Fades out as the header collapses so it never sits under the title.
+                    Builder(
+                      builder: (context) {
+                        final bar = context
+                            .dependOnInheritedWidgetOfExactType<
+                              FlexibleSpaceBarSettings
+                            >();
+                        final t = bar == null
+                            ? 1.0
+                            : ((bar.currentExtent - bar.minExtent) /
+                                      (bar.maxExtent - bar.minExtent))
+                                  .clamp(0.0, 1.0);
+                        return Positioned(
+                          right: 24,
+                          top: MediaQuery.paddingOf(context).top + 56,
+                          child: Opacity(
+                            opacity: ((t - 0.45) / 0.4).clamp(0.0, 1.0),
+                            child: Icon(
+                              k.icon,
+                              size: 64,
+                              color: Colors.white.withValues(alpha: 0.9),
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ] else
                     PageView.builder(

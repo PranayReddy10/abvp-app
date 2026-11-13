@@ -1,0 +1,568 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ABVP Connect – Conference guide for leads</title>
+<style>
+@font-face { font-family: Mukta; src: url("../../mobile/assets/fonts/Mukta-Regular.ttf"); font-weight: 400; }
+@font-face { font-family: Mukta; src: url("../../mobile/assets/fonts/Mukta-Medium.ttf"); font-weight: 500; }
+@font-face { font-family: Mukta; src: url("../../mobile/assets/fonts/Mukta-SemiBold.ttf"); font-weight: 600; }
+@font-face { font-family: Mukta; src: url("../../mobile/assets/fonts/Mukta-Bold.ttf"); font-weight: 700; }
+@font-face { font-family: Mukta; src: url("../../mobile/assets/fonts/Mukta-ExtraBold.ttf"); font-weight: 800; }
+@font-face { font-family: AnekTelugu; src: url("../../mobile/assets/fonts/AnekTelugu.ttf"); font-weight: 100 900; }
+@font-face { font-family: Anek; src: url("../../mobile/assets/fonts/AnekDevanagari.ttf"); font-weight: 100 900; }
+
+@page { size: A4; margin: 0 }
+:root { --saffron: #E3620C; --deep: #B84C04; --soft: #FFEFE2; --ink: #14161F; --muted: #5F6476; --line: #E6E7EE; --bg: #F4F5F8; --ok: #1C7F55; --okSoft: #E3F4EC; --red: #C81E1E; --redSoft: #FFF1F1 }
+* { box-sizing: border-box }
+html, body { margin: 0; padding: 0 }
+body { font-family: Mukta, AnekTelugu, sans-serif; color: var(--ink); font-size: 11.6pt; line-height: 1.5; -webkit-print-color-adjust: exact; print-color-adjust: exact }
+h1, h2, h3 { font-family: Anek, Mukta, AnekTelugu, sans-serif; margin: 0; letter-spacing: -0.01em; line-height: 1.1 }
+p { margin: 0 0 8px }
+.page { width: 210mm; height: 297mm; position: relative; overflow: hidden; page-break-after: always; padding: 16mm 16mm 18mm; background: #fff }
+.page:last-child { page-break-after: auto }
+.foot { position: absolute; left: 16mm; right: 16mm; bottom: 8mm; display: flex; justify-content: space-between; font-size: 8.8pt; color: #9A9EAE; border-top: 1px solid var(--line); padding-top: 3mm }
+
+/* Section heading */
+.kicker { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; font-size: 10pt; letter-spacing: .08em; text-transform: uppercase; color: var(--deep) }
+.kicker i { display: inline-block; width: 22px; height: 3px; background: var(--saffron); border-radius: 3px }
+.title { font-size: 30pt; font-weight: 800; margin: 3mm 0 1mm }
+.hindi { font-family: Anek, sans-serif; font-size: 16pt; color: var(--muted); font-weight: 600 }
+.lead { font-size: 13pt; color: #3B3F4E; margin: 4mm 0 5mm; max-width: 165mm }
+
+/* Phones */
+.row { display: flex; gap: 8mm; align-items: flex-start }
+.phone { width: 62mm; flex: none; border-radius: 9mm; padding: 2.2mm; background: #15161c; box-shadow: 0 6mm 12mm -6mm rgba(20,22,31,.45) }
+.phone img { width: 100%; display: block; border-radius: 7mm }
+.phone.sm { width: 52mm }
+.cap { text-align: center; font-size: 9.5pt; color: var(--muted); margin-top: 2.5mm; font-weight: 600 }
+.desk { border-radius: 4mm; overflow: hidden; border: 1px solid var(--line); box-shadow: 0 5mm 12mm -7mm rgba(20,22,31,.4) }
+.desk img { width: 100%; display: block }
+
+/* Phones on top, text in two columns below */
+.duo { display: flex; justify-content: center; gap: 12mm; margin-bottom: 5mm }
+.duo .phone { width: 56mm }
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 8mm; align-items: start }
+.cols .box { margin-top: 0 }
+.trio { display: flex; justify-content: space-between; gap: 6mm }
+.trio .phone { width: 54mm }
+
+/* Text blocks */
+.points { flex: 1; min-width: 0 }
+.points h3 { font-size: 13.5pt; margin: 0 0 2mm; font-weight: 800 }
+ul.ticks { list-style: none; padding: 0; margin: 0 0 4mm }
+ul.ticks li { position: relative; padding-left: 7mm; margin-bottom: 2.2mm }
+ul.ticks li::before { content: ""; position: absolute; left: 0; top: 2.2mm; width: 3.4mm; height: 3.4mm; border-radius: 50%; background: var(--soft); box-shadow: inset 0 0 0 1.2mm var(--saffron) }
+.box { border-radius: 5mm; padding: 4mm 5mm; margin-top: 3mm }
+.box h4 { margin: 0 0 1.5mm; font-size: 11.5pt; font-family: Anek, Mukta, sans-serif }
+.box.lead-box { background: var(--soft); border-left: 1.4mm solid var(--saffron) }
+.box.tip { background: #EEF3FD; border-left: 1.4mm solid #2E55C9 }
+.box.red { background: var(--redSoft); border-left: 1.4mm solid var(--red) }
+.box.green { background: var(--okSoft); border-left: 1.4mm solid var(--ok) }
+.box ul { margin: 0; padding-left: 5mm }
+.box li { margin-bottom: 1mm }
+
+/* Cover */
+.cover { padding: 0; color: #fff; background: linear-gradient(140deg, #F08A3C 0%, #E3620C 32%, #9A3A06 62%, #14161F 100%) }
+.cover .orb { position: absolute; border-radius: 50%; background: rgba(255,255,255,.08) }
+.cover .ring { position: absolute; border-radius: 50%; border: 9mm solid rgba(255,255,255,.10) }
+.cover .inner { position: absolute; left: 18mm; right: 18mm; top: 22mm; bottom: 18mm; display: flex; flex-direction: column }
+.cover .logo { width: 18mm; height: 18mm; border-radius: 6mm; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.3); display: grid; place-items: center; font-size: 26pt }
+.cover h1 { font-size: 44pt; font-weight: 800; margin-top: 12mm }
+.cover .sub { font-size: 16pt; opacity: .92; margin-top: 3mm; max-width: 140mm }
+.cover .hi { font-family: Anek; font-size: 15pt; opacity: .85; margin-top: 2mm }
+.cover .phones { position: absolute; right: -6mm; bottom: 30mm; display: flex; gap: 5mm; transform: rotate(-6deg) }
+.cover .phones .phone { width: 52mm; background: #0d0e12; box-shadow: 0 10mm 20mm -6mm rgba(0,0,0,.6) }
+.cover .phones .phone:nth-child(2) { margin-top: 14mm }
+.cover .bottom { margin-top: auto; font-size: 11pt; opacity: .9 }
+.cover .pill { display: inline-block; padding: 1.5mm 4mm; border-radius: 99px; background: rgba(255,255,255,.16); font-weight: 700; margin-right: 2mm; font-size: 10.5pt }
+
+/* Journey */
+.journey { display: grid; grid-template-columns: 1fr; gap: 3.2mm; margin-top: 2mm }
+.step { display: flex; gap: 4mm; align-items: flex-start; background: var(--bg); border-radius: 5mm; padding: 3.5mm 4.5mm }
+.step .n { flex: none; width: 10mm; height: 10mm; border-radius: 50%; background: var(--saffron); color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 13pt }
+.step b { font-size: 12pt }
+.step p { margin: .5mm 0 0; color: #3B3F4E; font-size: 10.8pt }
+
+/* Tiles grid */
+.tiles { display: grid; grid-template-columns: repeat(2, 1fr); gap: 3mm }
+.tile { display: flex; gap: 3mm; align-items: flex-start; padding: 3mm 3.5mm; border-radius: 4mm; background: var(--bg) }
+.tile .ic { flex: none; width: 10mm; height: 10mm; border-radius: 3.5mm; display: grid; place-items: center; color: #fff; font-size: 13pt }
+.tile b { display: block; font-size: 11pt }
+.tile span { font-size: 9.8pt; color: var(--muted); line-height: 1.35; display: block }
+
+/* Checklist */
+.check { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm 6mm }
+.check div { display: flex; gap: 3mm; align-items: flex-start; font-size: 10.8pt }
+.check .bx { flex: none; width: 5mm; height: 5mm; border: 1.5px solid var(--saffron); border-radius: 1.4mm; margin-top: 1mm }
+.check b { display: block }
+
+/* FAQ */
+.faq h4 { margin: 4mm 0 1mm; font-size: 12pt; font-family: Anek, Mukta, sans-serif }
+.faq p { color: #3B3F4E }
+.toc { columns: 2; column-gap: 10mm; margin-top: 3mm }
+.toc div { break-inside: avoid; display: flex; justify-content: space-between; border-bottom: 1px dashed var(--line); padding: 1.4mm 0; font-size: 11pt }
+.toc div span:last-child { color: var(--muted) }
+.note { font-size: 9.5pt; color: var(--muted) }
+</style>
+</head>
+<body>
+
+<!-- 1. Cover -->
+<section class="page cover">
+  <div class="orb" style="width:120mm;height:120mm;right:-40mm;top:-40mm"></div>
+  <div class="ring" style="width:90mm;height:90mm;left:-30mm;bottom:40mm"></div>
+  <div class="orb" style="width:60mm;height:60mm;left:70mm;top:120mm"></div>
+  <div class="inner">
+    <div class="logo">🔥</div>
+    <h1>ABVP Connect</h1>
+    <div class="sub">The app for our national conference – a simple guide for leads</div>
+    <div class="hi">एक सदस्य · एक पहचान · हर कार्यक्रम</div>
+    <div style="margin-top:8mm">
+      <span class="pill">What the app does</span><span class="pill">How delegates use it</span><span class="pill">What leads do</span>
+    </div>
+    <div class="bottom">
+      Rashtriya Adhiveshan 2026 · Bhagyanagar<br>
+      <span class="note" style="color:rgba(255,255,255,.75)">Screenshots use sample data. Names, phone numbers, venue and photos are examples only.</span>
+    </div>
+  </div>
+  <div class="phones">
+    <div class="phone"><img src="img/hub.jpg"></div>
+    <div class="phone"><img src="img/emergency-halls.jpg"></div>
+  </div>
+</section>
+
+<!-- 2. What it is -->
+<section class="page">
+  <span class="kicker"><i></i>Introduction</span>
+  <h2 class="title">One app, everything a delegate needs</h2>
+  <p class="lead">Thousands of karyakartas will reach Bhagyanagar from every prant. Most have never been to the city. ABVP Connect puts their stay, transport, food, help desks and emergency contacts in their pocket – with a real person to call for each one.</p>
+
+  <div class="row" style="gap:10mm">
+    <div class="points">
+      <h3>Why this matters</h3>
+      <ul class="ticks">
+        <li><b>No more calling around.</b> A delegate landing at the airport at midnight sees exactly who to call at that desk.</li>
+        <li><b>Every lead is one tap away.</b> Each place in the guide shows its lead and team with Call and WhatsApp buttons.</li>
+        <li><b>Open to everyone.</b> Guests do not need to register or sign in to see the guide. We do not need a list of guests.</li>
+        <li><b>In their language.</b> English, हिन्दी and తెలుగు, switched with one tap.</li>
+        <li><b>Help that reaches the right team.</b> Delegates can chat with the help desk or raise a ticket; the team replies from the office.</li>
+      </ul>
+      <div class="box tip">
+        <h4>Two parts</h4>
+        <p style="margin:0"><b>The app</b> – what delegates and members use on their phones.<br><b>The admin panel</b> – a website where our office team fills in the guide and answers help requests.</p>
+      </div>
+    </div>
+    <div>
+      <div class="phone"><img src="img/hub.jpg"></div>
+      <div class="cap">The conference guide</div>
+    </div>
+  </div>
+
+  <h3 style="margin-top:6mm;font-size:14pt">In this booklet</h3>
+  <div class="toc">
+    <div><span>A delegate's journey</span><span>3</span></div>
+    <div><span>Opening the app · languages</span><span>4</span></div>
+    <div><span>The guide home</span><span>5</span></div>
+    <div><span>निवास Accommodation</span><span>6</span></div>
+    <div><span>यातायात Transport</span><span>7</span></div>
+    <div><span>भोजन Food · कार्यालय Offices</span><span>8</span></div>
+    <div><span>बैठक Sessions · प्रदर्शनी Exhibition</span><span>9</span></div>
+    <div><span>पर्यटन Tourist places · परिसर Campus</span><span>10</span></div>
+    <div><span>आपातकाल Emergency</span><span>11</span></div>
+    <div><span>सहायता Support: chat and tickets</span><span>12</span></div>
+    <div><span>For members, all year</span><span>13</span></div>
+    <div><span>Behind the scenes: admin panel</span><span>14</span></div>
+    <div><span>What leads need to do</span><span>15</span></div>
+    <div><span>Questions people ask</span><span>16</span></div>
+  </div>
+  <div class="foot"><span>ABVP Connect · Guide for leads</span><span>2</span></div>
+</section>
+
+<!-- 3. Journey -->
+<section class="page">
+  <span class="kicker"><i></i>The big picture</span>
+  <h2 class="title">A delegate's journey</h2>
+  <p class="lead">Rahul is coming from Delhi. Here is how the app helps him from the train to the closing session.</p>
+  <div class="row" style="gap:9mm">
+    <div class="journey" style="flex:1">
+      <div class="step"><div class="n">1</div><div><b>Before he leaves</b><p>He installs ABVP Connect. The conference guide is on the first screen – no sign-in needed. He picks Hindi.</p></div></div>
+      <div class="step"><div class="n">2</div><div><b>He gets off at Secunderabad</b><p>Transport → "Find the desk nearest to me". He sees the help desk spot, how to recognise our volunteers, and the desk lead's number.</p></div></div>
+      <div class="step"><div class="n">3</div><div><b>He reaches the venue</b><p>Numbered steps and a "Route to venue" button show the way: which shuttle, which gate.</p></div></div>
+      <div class="step"><div class="n">4</div><div><b>He finds his stay</b><p>Accommodation → Delhi prant → his hostel, block and rooms, with the Nivas lead and team to call.</p></div></div>
+      <div class="step"><div class="n">5</div><div><b>Lunch, sessions, exhibition</b><p>Food shows each stall and how to spot it. Sessions shows the programme day by day. The exhibition tells our story.</p></div></div>
+      <div class="step"><div class="n">6</div><div><b>Something goes wrong</b><p>Emergency: one big button for 108 and the emergency lead of every hall. For smaller things he chats with the help desk.</p></div></div>
+    </div>
+    <div>
+      <div class="phone sm"><img src="img/transport.jpg"></div>
+      <div class="cap">Transport desks</div>
+      <div class="phone sm" style="margin-top:6mm"><img src="img/support-chat.jpg"></div>
+      <div class="cap">Chat with the help desk</div>
+    </div>
+  </div>
+  <div class="foot"><span>ABVP Connect · Guide for leads</span><span>3</span></div>
+</section>
+
+<!-- 4. Opening the app -->
+<section class="page">
+  <span class="kicker"><i></i>Getting started</span>
+  <h2 class="title">Opening the app</h2>
+  <p class="lead">Anyone can open the conference guide straight away. Signing in is only needed to chat with the help desk and to use member features.</p>
+  <div class="trio">
+    <div><div class="phone"><img src="img/signin.jpg"></div><div class="cap">Guide card on the first screen</div></div>
+    <div><div class="phone"><img src="img/language.jpg"></div><div class="cap">Choose a language</div></div>
+    <div><div class="phone"><img src="img/signin-telugu.jpg"></div><div class="cap">The same screen in Telugu</div></div>
+  </div>
+  <div class="row" style="margin-top:6mm;gap:8mm">
+    <div class="points">
+      <h3>What delegates see</h3>
+      <ul class="ticks">
+        <li><b>The guide card</b> sits at the top of the first screen. Tap it – no account needed.</li>
+        <li><b>Near the event</b> (from two days before), the guide opens by itself when the app starts. "Skip" goes to the normal app.</li>
+        <li><b>Signing in</b> uses the mobile number and a 6-digit SMS code – no passwords. "Continue with Google" also works.</li>
+      </ul>
+    </div>
+    <div class="points">
+      <h3>Languages</h3>
+      <ul class="ticks">
+        <li>Tap the <b>translate button</b> (top right) and choose English, हिन्दी or తెలుగు. Also under <b>Me → Language</b>.</li>
+        <li>The app remembers the choice. The first time, it follows the phone's language.</li>
+        <li>Names and details typed by organisers appear as written – write important ones in two languages.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="foot"><span>ABVP Connect · Guide for leads</span><span>4</span></div>
+</section>
+
+<!-- 5. Guide home -->
+<section class="page">
+  <span class="kicker"><i></i>The conference guide</span>
+  <h2 class="title">The guide home <span class="hindi">· अधिवेशन मार्गदर्शिका</span></h2>
+  <p class="lead">One screen with everything: a countdown to the event, the helpline, "Your stay" for the delegate's own prant, and ten sections.</p>
+  <div class="row">
+    <div><div class="phone"><img src="img/hub.jpg"></div><div class="cap">Top: countdown, helpline, your stay</div></div>
+    <div class="points">
+      <div class="tiles">
+        <div class="tile"><div class="ic" style="background:#6A57E6">🛏</div><div><b>निवास Accommodation</b><span>Where each prant stays, with leads</span></div></div>
+        <div class="tile"><div class="ic" style="background:#2F7BEA">🚌</div><div><b>यातायात Transport</b><span>Airport, station and bus-stand desks</span></div></div>
+        <div class="tile"><div class="ic" style="background:#F07A1E">🍛</div><div><b>भोजन Food</b><span>Halls and stalls, how to spot them</span></div></div>
+        <div class="tile"><div class="ic" style="background:#13A493">🏢</div><div><b>कार्यालय Offices</b><span>Which office does what, where</span></div></div>
+        <div class="tile"><div class="ic" style="background:#5160E0">🎤</div><div><b>बैठक Sessions</b><span>The programme, day by day</span></div></div>
+        <div class="tile"><div class="ic" style="background:#D6488F">🖼</div><div><b>प्रदर्शनी Exhibition</b><span>Digital showcase of our history</span></div></div>
+        <div class="tile"><div class="ic" style="background:#55627A">🅿</div><div><b>परिसर Campus</b><span>Parking, washrooms, water</span></div></div>
+        <div class="tile"><div class="ic" style="background:#D99A10">🛕</div><div><b>पर्यटन Tourist places</b><span>Places to visit, with directions</span></div></div>
+        <div class="tile"><div class="ic" style="background:#E23B3B">✚</div><div><b>आपातकाल Emergency</b><span>108 and every hall's lead</span></div></div>
+        <div class="tile"><div class="ic" style="background:#1FA562">🎧</div><div><b>सहायता Support</b><span>Chat or raise a ticket</span></div></div>
+      </div>
+      <div class="box green">
+        <h4>Always one tap from a person</h4>
+        <p style="margin:0">Every place in the guide can show a lead (★) and a team, each with <b>Call</b> and <b>WhatsApp</b> buttons. The orange <b>Helpline</b> button at the top is always there.</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>ABVP Connect · Guide for leads</span><span>5</span></div>
+</section>
+
+<!-- 6. Accommodation -->
+<section class="page">
+  <span class="kicker"><i></i>Guide section</span>
+  <h2 class="title">Accommodation <span class="hindi">· निवास</span></h2>
+  <p class="lead">Delegates pick their prant and see exactly where they stay and who looks after them.</p>
+  <div class="duo"><div><div class="phone"><img src="img/stay-prants.jpg"></div><div class="cap">All prants – yours first</div></div><div><div class="phone"><img src="img/stay-detail.jpg"></div><div class="cap">The stay and its team</div></div></div>
+  <div class="cols">
+    <div class="points">
+      <h3>What delegates get</h3>
+      <ul class="ticks">
+        <li>A search box and a card for every prant (Konkan, Delhi, Kerala…). Their own prant is highlighted.</li>
+        <li>The college, hostel or hotel, block and rooms, check-in time, and tags like Boys, Girls, Hot water.</li>
+        <li>Distance from the venue and a <b>Directions</b> button for Google Maps.</li>
+        <li><b>The Nivas lead</b> on top, the team below like a family tree – each with Call and WhatsApp.</li>
+      </ul>
+      </div>
+    <div><div class="box lead-box">
+        <h4>Leads: what we need from you</h4>
+        <ul><li>For each prant: the place, block and rooms.</li><li>One lead and 1–3 team members with phone numbers.</li><li>Keep your phone on and answer calls during the conference.</li></ul>
+      </div></div>
+  </div>
+  <div class="foot"><span>ABVP Connect · Guide for leads</span><span>6</span></div>
+</section>
+
+<!-- 7. Transport -->
+<section class="page">
+  <span class="kicker"><i></i>Guide section</span>
+  <h2 class="title">Transport <span class="hindi">· यातायात</span></h2>
+  <p class="lead">A help desk with a named lead at every arrival point: RGI Airport, Secunderabad, Kacheguda, Cherlapally, JBS and MGBS.</p>
+  <div class="duo"><div><div class="phone"><img src="img/transport.jpg"></div><div class="cap">Desks, distance and the desk lead</div></div><div><div class="phone"><img src="img/transport-route.jpg"></div><div class="cap">Step-by-step route to the venue</div></div></div>
+  <div class="cols">
+    <div class="points">
+      <h3>What delegates get</h3>
+      <ul class="ticks">
+        <li><b>"Find the desk nearest to me"</b> – the phone's location picks the closest desk.</li>
+        <li>Exactly where the desk is ("Arrivals hall, Gate 4") and how to spot it ("saffron banner, volunteers in saffron scarves").</li>
+        <li>Kilometres and time to the venue, the shuttle details and numbered steps.</li>
+        <li><b>"Route to venue"</b> opens Google Maps with public transport directions.</li>
+      </ul>
+      </div>
+    <div><div class="box lead-box">
+        <h4>Leads: what we need from you</h4>
+        <ul><li>Desk spot, hours and the shuttle plan for each arrival point.</li><li>Desk lead plus day and night volunteers with phone numbers.</li></ul>
+      </div></div>
+  </div>
+  <div class="foot"><span>ABVP Connect · Guide for leads</span><span>7</span></div>
+</section>
+
+<!-- 8. Food + Offices -->
+<section class="page">
+  <span class="kicker"><i></i>Guide sections</span>
+  <h2 class="title">Food <span class="hindi">· भोजन</span> &amp; Offices <span class="hindi">· कार्यालय</span></h2>
+  <p class="lead">Every hall and stall by name, with a colour and a landmark so nobody gets lost – and every office with what it handles.</p>
+  <div class="duo">
+    <div><div class="phone"><img src="img/food.jpg"></div><div class="cap">Stalls: where, how to spot, lead</div></div>
+    <div><div class="phone"><img src="img/offices.jpg"></div><div class="cap">Offices and who is in charge</div></div>
+  </div>
+  <div class="cols">
+    <div class="points">
+      <h3>Food</h3>
+      <ul class="ticks">
+        <li>Main dining halls and state stalls – "Telangana Ruchulu: Hall B, Stall 3".</li>
+        <li><b>"Look for"</b> tells them what to watch for: "Green flag with a Bathukamma".</li>
+        <li>Timings, tags (Veg, Jain, Sweets) and filters at the top.</li>
+      </ul>
+    </div>
+    <div class="points">
+      <h3>Offices</h3>
+      <ul class="ticks">
+        <li>Adhiveshan Karyalay, Registration, Information, First aid, Mahila Sahayata, Media Kendra.</li>
+        <li>What each one handles, where it is, hours and the person in charge.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="box lead-box" style="margin-top:2mm">
+    <h4>Leads: what we need from you</h4>
+    <ul><li>Food team: stall names, what they serve, exact place, a colour or flag to spot them, timings, stall lead.</li><li>Office team: each office's job, location, hours and in-charge.</li></ul>
+  </div>
+  <div class="foot"><span>ABVP Connect · Guide for leads</span><span>8</span></div>
+</section>
+
+<!-- 9. Sessions + Exhibition -->
+<section class="page">
+  <span class="kicker"><i></i>Guide sections</span>
+  <h2 class="title">Sessions <span class="hindi">· बैठक</span> &amp; Exhibition <span class="hindi">· प्रदर्शनी</span></h2>
+  <p class="lead">The full programme in a clean day-by-day timeline, and a digital exhibition delegates can swipe through.</p>
+  <div class="duo"><div><div class="phone"><img src="img/sessions.jpg"></div><div class="cap">Programme by day</div></div><div><div class="phone"><img src="img/exhibition.jpg"></div><div class="cap">Swipe through the exhibition</div></div></div>
+  <div class="cols">
+    <div class="points">
+      <h3>Sessions</h3>
+      <ul class="ticks">
+        <li>Udghatan Satra, Pratinidhi Sabha, Khula Adhiveshan, Shobha Yatra, Samapan Satra – with time and place.</li>
+      </ul>
+      <h3>Exhibition</h3>
+      <ul class="ticks">
+        <li>Big photo cards: History of Telangana, History of Bhagyanagar, our journey in pictures, and the martyrs of ABVP.</li>
+        <li>Each opens to a story with up to 8 photos.</li>
+      </ul>
+      </div>
+    <div><div class="box lead-box">
+        <h4>Pradarshini team</h4>
+        <ul><li>Send photos and short stories for each panel.</li><li>Names and stories of martyrs only after verification.</li></ul>
+      </div></div>
+  </div>
+  <div class="foot"><span>ABVP Connect · Guide for leads</span><span>9</span></div>
+</section>
+
+<!-- 10. Tourist + Campus -->
+<section class="page">
+  <span class="kicker"><i></i>Guide sections</span>
+  <h2 class="title">Tourist places <span class="hindi">· पर्यटन</span> &amp; Campus <span class="hindi">· परिसर</span></h2>
+  <p class="lead">Places worth visiting in and around Bhagyanagar, and everything practical on the campus.</p>
+  <div class="row">
+    <div><div class="phone"><img src="img/tourist.jpg"></div><div class="cap">Places to visit</div></div>
+    <div class="points">
+      <h3>Tourist places</h3>
+      <ul class="ticks">
+        <li>Bhagyalakshmi Temple at Charminar, Birla Mandir, Yadadri, Golconda Fort, Salar Jung Museum.</li>
+        <li>Photos, timings, distance from the venue and a Directions button.</li>
+        <li>A reminder to go in a group and tell their Nivas lead.</li>
+      </ul>
+      <h3 style="margin-top:4mm">Campus</h3>
+      <ul class="ticks">
+        <li>Bus parking, bike and car parking, washrooms for men and women, drinking water, cloak room and mobile charging.</li>
+        <li>Each with its exact location and a volunteer to call.</li>
+      </ul>
+      <div class="box tip">
+        <h4>Good to know</h4>
+        <p style="margin:0">The sample screenshots use placeholder pictures. Real photos of each place are added from the admin panel.</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>ABVP Connect · Guide for leads</span><span>10</span></div>
+</section>
+
+<!-- 11. Emergency -->
+<section class="page">
+  <span class="kicker"><i></i>Guide section</span>
+  <h2 class="title">Emergency <span class="hindi">· आपातकाल</span></h2>
+  <p class="lead">In an emergency nobody should have to search. One big button calls the ambulance, and every hall has its own emergency leads.</p>
+  <div class="duo"><div><div class="phone"><img src="img/emergency.jpg"></div><div class="cap">Big call button and numbers</div></div><div><div class="phone"><img src="img/emergency-halls.jpg"></div><div class="cap">Emergency leads by hall</div></div></div>
+  <div class="cols">
+    <div class="points">
+      <h3>What delegates see</h3>
+      <ul class="ticks">
+        <li>A large pulsing <b>108</b> button – one tap calls the ambulance.</li>
+        <li>A row of numbers: <b>108</b> ambulance, <b>112</b> police / any emergency, <b>181</b> women helpline.</li>
+        <li><b>Emergency leads by hall:</b> Medical room, Hall A, Food court, Halls C and D, Exhibition, Nivas blocks, Mahila Sahayata – each with its lead and team to call.</li>
+        <li>A note for each hall, e.g. "Doctor on duty day and night; ambulance waits at Gate 4".</li>
+      </ul>
+      </div>
+    <div><div class="box red">
+        <h4>Emergency leads</h4>
+        <ul><li>Give one lead and a deputy for each hall.</li><li>Phones on and charged at all times.</li><li>Know where the medical room and ambulance are.</li></ul>
+      </div></div>
+  </div>
+  <div class="foot"><span>ABVP Connect · Guide for leads</span><span>11</span></div>
+</section>
+
+<!-- 12. Support -->
+<section class="page">
+  <span class="kicker"><i></i>Guide section</span>
+  <h2 class="title">Support <span class="hindi">· सहायता</span></h2>
+  <p class="lead">For everything that is not an emergency: a question, a problem with the room, something lost. Delegates can chat or raise a ticket.</p>
+  <div class="duo"><div><div class="phone"><img src="img/support.jpg"></div><div class="cap">Chat or raise a ticket</div></div><div><div class="phone"><img src="img/support-chat.jpg"></div><div class="cap">A reply from the help desk</div></div></div>
+  <div class="cols">
+    <div class="points">
+      <h3>How it works</h3>
+      <ul class="ticks">
+        <li><b>Chat with the help desk</b> – type a question; the reply appears in a few seconds, like a messaging app.</li>
+        <li><b>Raise a ticket</b> – choose stay, food, transport, lost and found, medical… and say where you are.</li>
+        <li>"My conversations" shows every chat with its status: New, Being handled, Resolved.</li>
+        <li>Delegates get a notification when the team replies.</li>
+        <li>Without signing in, Support shows the helpline number instead.</li>
+      </ul>
+      </div>
+    <div><div class="box lead-box">
+        <h4>Help desk team</h4>
+        <ul><li>Answer from the admin panel's Help desk – it updates by itself.</li><li>Mark a conversation Resolved when done.</li></ul>
+      </div></div>
+  </div>
+  <div class="foot"><span>ABVP Connect · Guide for leads</span><span>12</span></div>
+</section>
+
+<!-- 13. Members all year -->
+<section class="page">
+  <span class="kicker"><i></i>Beyond the conference</span>
+  <h2 class="title">For members, all year</h2>
+  <p class="lead">The conference guide is one part of ABVP Connect. Approved members also use the app every day.</p>
+  <div class="trio">
+    <div><div class="phone"><img src="img/home.jpg"></div><div class="cap">Home</div></div>
+    <div><div class="phone"><img src="img/community.jpg"></div><div class="cap">Community feed</div></div>
+    <div><div class="phone"><img src="img/pass.jpg"></div><div class="cap">Event pass</div></div>
+  </div>
+  <div class="row" style="margin-top:6mm;gap:8mm">
+    <div class="points">
+      <ul class="ticks">
+        <li><b>Home</b> – greeting, upcoming events, today's duty, the next meeting and the member card.</li>
+        <li><b>Community</b> – share work from your unit with photos and #hashtags; like, reply and follow.</li>
+        <li><b>Pass</b> – a QR pass for each event, scanned at the gate; it works without internet.</li>
+      </ul>
+    </div>
+    <div class="points">
+      <ul class="ticks">
+        <li><b>Calendar</b> – meetings and calls (Google Meet or any link), events and duties.</li>
+        <li><b>Duties and teams</b> – event-day tasks with the team's phone numbers.</li>
+        <li><b>Membership</b> – apply in the app; offices approve, members get a verified badge.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="foot"><span>ABVP Connect · Guide for leads</span><span>13</span></div>
+</section>
+
+<!-- 14. Admin panel -->
+<section class="page">
+  <span class="kicker"><i></i>Behind the scenes</span>
+  <h2 class="title">The admin panel</h2>
+  <p class="lead">Our office team uses a website to fill in the guide and answer help requests. No technical knowledge is needed.</p>
+  <div class="desk"><img src="img/admin-guide.jpg"></div>
+  <div class="cap">Event → Guide: switch the guide on, then add places in each section</div>
+  <div class="row" style="margin-top:5mm;gap:6mm">
+    <div style="flex:1"><div class="desk"><img src="img/admin-editor.jpg"></div><div class="cap">Adding a place: details, map, steps, contacts, photos</div></div>
+    <div style="flex:1"><div class="desk"><img src="img/admin-helpdesk.jpg"></div><div class="cap">Help desk: replying to a delegate's chat</div></div>
+  </div>
+  <div class="box tip" style="margin-top:5mm">
+    <h4>Who does what in the panel</h4>
+    <p style="margin:0">The organising office fills the guide (or a lead sends details to them). The help desk team answers chats and tickets. Changes appear in the app straight away.</p>
+  </div>
+  <div class="foot"><span>ABVP Connect · Guide for leads</span><span>14</span></div>
+</section>
+
+<!-- 15. Leads checklist -->
+<section class="page">
+  <span class="kicker"><i></i>Action</span>
+  <h2 class="title">What leads need to do</h2>
+  <p class="lead">The app is only as good as the details in it. Please send these to the organising office, and keep them up to date.</p>
+  <h3 style="font-size:14pt;margin-bottom:3mm">Checklist before December</h3>
+  <div class="check">
+    <div><span class="bx"></span><span><b>Helpline number</b>A 24×7 number that is always answered.</span></div>
+    <div><span class="bx"></span><span><b>Venue location</b>The exact map pin of the venue.</span></div>
+    <div><span class="bx"></span><span><b>Nivas (stay)</b>For every prant: place, block, rooms, lead and team phones.</span></div>
+    <div><span class="bx"></span><span><b>Yatayat (transport)</b>Each arrival desk: spot, hours, shuttle plan, lead and volunteers.</span></div>
+    <div><span class="bx"></span><span><b>Bhojan (food)</b>Halls and stalls: name, place, colour/flag, timings, lead.</span></div>
+    <div><span class="bx"></span><span><b>Karyalay (offices)</b>What each office does, where, hours, in-charge.</span></div>
+    <div><span class="bx"></span><span><b>Baithak (sessions)</b>Final programme with times and halls.</span></div>
+    <div><span class="bx"></span><span><b>Pradarshini</b>Photos and short stories for each panel.</span></div>
+    <div><span class="bx"></span><span><b>Parisar (campus)</b>Parking, washrooms, water, cloak room locations.</span></div>
+    <div><span class="bx"></span><span><b>Apatkal (emergency)</b>Lead and deputy for every hall; medical room details.</span></div>
+    <div><span class="bx"></span><span><b>Help desk team</b>Who answers chats, in which shifts.</span></div>
+    <div><span class="bx"></span><span><b>Two languages</b>Important names in English and Hindi or Telugu.</span></div>
+  </div>
+  <div class="row" style="margin-top:7mm;gap:6mm">
+    <div class="box lead-box" style="flex:1;margin:0">
+      <h4>During the conference</h4>
+      <ul><li>Keep your phone on, charged and on loud.</li><li>Answer calls and WhatsApp from delegates politely.</li><li>If you hand over to someone, tell the office so the app is updated.</li></ul>
+    </div>
+    <div class="box red" style="flex:1;margin:0">
+      <h4>Please note</h4>
+      <ul><li>Numbers in the guide are visible to everyone who opens it.</li><li>If you prefer, give a desk or helpline number instead of your personal one.</li></ul>
+    </div>
+  </div>
+  <div class="foot"><span>ABVP Connect · Guide for leads</span><span>15</span></div>
+</section>
+
+<!-- 16. FAQ -->
+<section class="page">
+  <span class="kicker"><i></i>Help</span>
+  <h2 class="title">Questions people ask</h2>
+  <div class="row" style="gap:10mm;margin-top:4mm">
+    <div class="faq" style="flex:1">
+      <h4>Does a guest need to register or sign in?</h4>
+      <p>No. The conference guide opens for anyone who installs the app. Signing in is only needed to chat with the help desk.</p>
+      <h4>Do we need a list of guests?</h4>
+      <p>No. The guide is open to all. Our own team members are assigned duties separately.</p>
+      <h4>Which languages?</h4>
+      <p>English, हिन्दी and తెలుగు. Choose with the translate button. More languages can be added later.</p>
+      <h4>Does it need internet?</h4>
+      <p>Yes, to load the guide and to chat. The event pass works without internet once it has been opened.</p>
+      <h4>What if someone has no smartphone?</h4>
+      <p>Arrival desks and offices still help in person. The helpline works from any phone.</p>
+    </div>
+    <div class="faq" style="flex:1">
+      <h4>How fast does the help desk reply?</h4>
+      <p>Messages reach the help desk at once. Replies appear on the delegate's phone within a few seconds.</p>
+      <h4>Who can change the guide?</h4>
+      <p>Organisers with access to the admin panel. Changes show in the app immediately.</p>
+      <h4>Is my phone number public?</h4>
+      <p>Numbers you give for the guide can be seen by anyone who opens it. You may give a desk number instead.</p>
+      <h4>Can I sign in with Google?</h4>
+      <p>Yes. The first time, you also confirm your mobile number once; after that Google signs you in.</p>
+      <h4>Something is wrong in the app?</h4>
+      <p>Tell the organising office or raise a ticket under Support → Raise a ticket.</p>
+    </div>
+  </div>
+  <div class="box green" style="margin-top:10mm">
+    <h4>In one line</h4>
+    <p style="margin:0;font-size:13pt">Every delegate should always know <b>where to go</b> and <b>whom to call</b>. With your help, ABVP Connect makes that true for the Rashtriya Adhiveshan.</p>
+  </div>
+  <div class="foot"><span>ABVP Connect · Guide for leads</span><span>16</span></div>
+</section>
+
+</body>
+</html>
