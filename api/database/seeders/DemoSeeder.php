@@ -234,7 +234,7 @@ class DemoSeeder extends Seeder
         }
 
         // Nivas: stays per prant, each with a lead and a small team.
-        $places = ['SVIT Engineering College', 'Keshav Memorial Hostel', 'Govt. Degree College Hostel', 'Saffron Residency (hotel)', 'Vidya Bharati School Campus', 'Nagar Bhavan Dormitory'];
+        $places = ['SVIT Engineering College', 'Keshav Memorial Hostel', 'Bhagyanagar Grand Hotel', 'Saffron Residency (hotel)', 'Vidya Bharati School Campus', 'Nagar Bhavan Dormitory'];
         foreach (config('abvp.prants') as $i => $prant) {
             $place = $prant === 'Konkan (Mumbai)' ? 'SVIT Engineering College' : $places[$i % count($places)];
             $team = [[...$person($prant === 'Konkan (Mumbai)' ? 'Saicharan Reddy' : null), 'Nivas lead', true], [...$person(), 'Team', false]];
