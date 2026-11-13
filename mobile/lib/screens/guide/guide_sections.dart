@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 
 import '../../api/api_client.dart';
+import '../../l10n.dart';
 import '../../state/session.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
@@ -89,13 +90,8 @@ class _GuideSectionScreenState extends State<GuideSectionScreen> {
       if (mounted) setState(() => _here = p);
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Could not get your location. Allow location, or pick your station below.',
-            ),
-          ),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(tr('sec.locFail'))));
       }
     } finally {
       if (mounted) setState(() => _locating = false);
@@ -199,7 +195,7 @@ class _GuideSectionScreenState extends State<GuideSectionScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            widget.hindi,
+                            appLang.value == 'en' ? widget.hindi : widget.title,
                             style: const TextStyle(
                               fontFamily: 'Anek',
                               color: Colors.white70,
@@ -208,7 +204,7 @@ class _GuideSectionScreenState extends State<GuideSectionScreen> {
                             ),
                           ),
                           Text(
-                            widget.region ?? widget.title,
+                            widget.region ?? tr('kind.${widget.kind}'),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
@@ -222,8 +218,11 @@ class _GuideSectionScreenState extends State<GuideSectionScreen> {
                           if (count != null)
                             Text(
                               widget.kind == 'stay' && widget.region == null
-                                  ? '${_regions.length} prants · $count places'
-                                  : '$count ${count == 1 ? 'place' : 'places'}',
+                                  ? tr('sec.prantsPlaces', {
+                                      'p': _regions.length,
+                                      'n': count,
+                                    })
+                                  : tr('sec.places', {'n': count}),
                               style: const TextStyle(color: Colors.white70),
                             ),
                         ],
@@ -248,11 +247,7 @@ class _GuideSectionScreenState extends State<GuideSectionScreen> {
     final items = _items;
     if (items == null) return const [SkeletonList(rows: 4)];
     if (items.isEmpty) {
-      return const [
-        EmptyNote(
-          'The organisers have not added anything here yet. Pull down to refresh, or call the helpline.',
-        ),
-      ];
+      return [EmptyNote(tr('sec.empty'))];
     }
     return switch (widget.kind) {
       'stay' when widget.region == null => _regionsGrid(),
@@ -286,9 +281,9 @@ class _GuideSectionScreenState extends State<GuideSectionScreen> {
     return [
       TextField(
         onChanged: (v) => setState(() => _q = v),
-        decoration: const InputDecoration(
+        decoration: InputDecoration(
           prefixIcon: Icon(Icons.search_rounded),
-          hintText: 'Search your prant: Delhi, Konkan, Kerala…',
+          hintText: tr('sec.searchPrant'),
         ),
       ),
       const SizedBox(height: 16),
@@ -356,7 +351,7 @@ class _GuideSectionScreenState extends State<GuideSectionScreen> {
                         ),
                         const Spacer(),
                         if (isMine)
-                          const GuideTag('Your prant', onDark: true)
+                          GuideTag(tr('sec.yourPrant'), onDark: true)
                         else
                           Icon(Icons.north_east, size: 18, color: k.b),
                       ],
@@ -436,7 +431,9 @@ class _GuideSectionScreenState extends State<GuideSectionScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      nearest == null ? 'Just arrived?' : 'Nearest help desk',
+                      nearest == null
+                          ? tr('sec.justArrived')
+                          : tr('sec.nearestDesk'),
                       style: const TextStyle(
                         color: Colors.white70,
                         fontSize: 13,
@@ -444,8 +441,8 @@ class _GuideSectionScreenState extends State<GuideSectionScreen> {
                     ),
                     Text(
                       nearest == null
-                          ? 'Find the desk nearest to me'
-                          : '${nearest['title']} · ${_kmFromMe(nearest)!.toStringAsFixed(1)} km away',
+                          ? tr('sec.findNearest')
+                          : '${nearest['title']} · ${tr('sec.kmAway', {'km': _kmFromMe(nearest)!.toStringAsFixed(1)})}',
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w800,
@@ -501,7 +498,7 @@ class _GuideSectionScreenState extends State<GuideSectionScreen> {
           child: Row(
             children: [
               PillChip(
-                label: 'All',
+                label: tr('sec.all'),
                 selected: _tag == null,
                 onTap: () => setState(() => _tag = null),
               ),
@@ -627,32 +624,227 @@ class _GuideSectionScreenState extends State<GuideSectionScreen> {
 
   // ---- Emergency: one big button and every number ----
   List<Widget> _emergency(List<Json> items) {
-    final first = items.firstWhere(
-      (i) => (i['contacts'] as List).isNotEmpty,
-      orElse: () => items.first,
-    );
-    final phone = (first['contacts'] as List).isEmpty
+    bool isNumber(Json i) {
+      final c = (i['contacts'] as List).cast<Json>();
+      return c.isNotEmpty &&
+          c.every(
+            (x) =>
+                ((x['phone'] as String?) ?? '')
+                    .replaceAll(RegExp(r'[^0-9]'), '')
+                    .length <
+                6,
+          );
+    }
+
+    final numbers = items.where(isNumber).toList();
+    final halls = items.where((i) => !isNumber(i)).toList();
+    final sos = numbers.firstOrNull;
+    final sosPhone = sos == null
         ? null
-        : (first['contacts'] as List).first['phone'] as String?;
+        : (sos['contacts'] as List).first['phone'] as String;
+
     return [
-      if (phone != null)
+      if (sosPhone != null) ...[
         Center(
           child: SosButton(
-            label: first['title'] as String,
-            phone: phone,
-            onTap: () => callNumber(phone),
+            label: sos!['title'] as String,
+            phone: sosPhone,
+            onTap: () => callNumber(sosPhone),
           ),
         ),
-      const SizedBox(height: 8),
-      const Center(
-        child: Text(
-          'Tap to call. Then tell the nearest volunteer.',
-          style: TextStyle(color: AppColors.muted),
+        Center(
+          child: Text(
+            tr('em.tapToCall'),
+            style: const TextStyle(color: AppColors.muted),
+          ),
         ),
-      ),
-      const SizedBox(height: 20),
-      ..._cards(items),
+        const SizedBox(height: 18),
+      ],
+      if (numbers.length > 1) ...[
+        SectionTitle(tr('em.numbers')),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 96,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            clipBehavior: Clip.none,
+            itemCount: numbers.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 10),
+            itemBuilder: (_, i) {
+              final n = numbers[i];
+              final phone = (n['contacts'] as List).first['phone'] as String;
+              return PopIn(
+                index: i,
+                child: Pressable(
+                  onTap: () => callNumber(phone),
+                  child: Container(
+                    width: 132,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(22),
+                      border: Border.all(color: const Color(0x33C81E1E)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.call_rounded,
+                              color: Color(0xFFC81E1E),
+                              size: 20,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              phone,
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w900,
+                                color: Color(0xFFC81E1E),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const Spacer(),
+                        Text(
+                          n['title'] as String,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                            height: 1.2,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 22),
+      ],
+      if (halls.isNotEmpty) ...[
+        SectionTitle(tr('em.byHall')),
+        Text(
+          tr('em.byHallSub'),
+          style: const TextStyle(color: AppColors.muted),
+        ),
+        const SizedBox(height: 12),
+        for (final (i, h) in halls.indexed)
+          FadeSlideIn(
+            index: i,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 14),
+              child: _HallCard(item: h, onTap: () => _open(h)),
+            ),
+          ),
+      ],
     ];
+  }
+}
+
+/// One hall (or room) with its emergency lead members, ready to call.
+class _HallCard extends StatelessWidget {
+  const _HallCard({required this.item, required this.onTap});
+  final Json item;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final k = kindOf('emergency');
+    final contacts = (item['contacts'] as List).cast<Json>();
+    final hall = (item['location'] as String?) ?? (item['title'] as String);
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(26),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Pressable(
+            onTap: onTap,
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(16, 14, 14, 14),
+              decoration: BoxDecoration(gradient: k.gradient),
+              child: Row(
+                children: [
+                  Container(
+                    width: 46,
+                    height: 46,
+                    decoration: BoxDecoration(
+                      color: Colors.white24,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: const Icon(
+                      Icons.meeting_room_rounded,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          hall,
+                          style: const TextStyle(
+                            fontFamily: 'Anek',
+                            color: Colors.white,
+                            fontSize: 21,
+                            fontWeight: FontWeight.w800,
+                            height: 1.1,
+                          ),
+                        ),
+                        Text(
+                          [item['title'], item['subtitle']]
+                              .whereType<String>()
+                              .where((t) => t != hall)
+                              .join(' · '),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.chevron_right_rounded, color: Colors.white),
+                ],
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (item['landmark'] != null)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(4, 0, 4, 10),
+                    child: _Line(
+                      Icons.info_outline_rounded,
+                      item['landmark'] as String,
+                      color: AppColors.ink,
+                    ),
+                  ),
+                if (contacts.isEmpty)
+                  const SizedBox.shrink()
+                else
+                  ContactTree(contacts: contacts, kind: k),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -768,7 +960,7 @@ class GuideCard extends StatelessWidget {
                                   children: [
                                     PulseDot(color: accent, size: 7),
                                     Text(
-                                      'Nearest to you',
+                                      tr('sec.nearestToYou'),
                                       style: TextStyle(
                                         color: accent,
                                         fontWeight: FontWeight.w800,
@@ -806,8 +998,8 @@ class GuideCard extends StatelessWidget {
                               color: accent,
                             ),
                             if (fromMeKm != null)
-                              const Text(
-                                'from you',
+                              Text(
+                                tr('sec.fromYou'),
                                 style: TextStyle(
                                   color: AppColors.muted,
                                   fontSize: 11,
@@ -833,7 +1025,9 @@ class GuideCard extends StatelessWidget {
                           : Icons.visibility_rounded,
                       item['kind'] == 'emergency'
                           ? item['landmark'] as String
-                          : 'Look for: ${item['landmark']}',
+                          : tr('sec.lookFor', {
+                              'x': item['landmark'] as String,
+                            }),
                     ),
                   if (item['timings'] != null)
                     _Line(Icons.schedule_rounded, item['timings'] as String),
@@ -875,7 +1069,7 @@ class GuideCard extends StatelessWidget {
                             const Icon(Icons.call_rounded, color: Colors.white),
                             const SizedBox(width: 10),
                             Text(
-                              'Call ${lead['phone']}',
+                              tr('em.call', {'n': lead['phone'] as String}),
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w900,
@@ -909,7 +1103,7 @@ class GuideCard extends StatelessWidget {
                                   ),
                                 ),
                                 Text(
-                                  (lead['role'] as String?) ?? 'Lead',
+                                  (lead['role'] as String?) ?? tr('d.lead'),
                                   style: const TextStyle(
                                     color: AppColors.muted,
                                     fontSize: 12.5,
@@ -1402,14 +1596,14 @@ class _GuideItemScreenState extends State<GuideItemScreen> {
                       if (it['location'] != null)
                         _InfoRow(
                           Icons.place_rounded,
-                          'Where',
+                          tr('d.where'),
                           it['location'] as String,
                           accent,
                         ),
                       if (it['landmark'] != null)
                         _InfoRow(
                           Icons.visibility_rounded,
-                          'Look for',
+                          tr('d.lookFor'),
                           it['landmark'] as String,
                           accent,
                           swatch: it['color'] != null ? accent : null,
@@ -1417,7 +1611,7 @@ class _GuideItemScreenState extends State<GuideItemScreen> {
                       if (it['timings'] != null)
                         _InfoRow(
                           Icons.schedule_rounded,
-                          'Timings',
+                          tr('d.timings'),
                           it['timings'] as String,
                           accent,
                         ),
@@ -1425,11 +1619,11 @@ class _GuideItemScreenState extends State<GuideItemScreen> {
                         _InfoRow(
                           Icons.route_rounded,
                           it['kind'] == 'arrival'
-                              ? 'To the venue'
-                              : 'From the venue',
+                              ? tr('d.toVenue')
+                              : tr('d.fromVenue'),
                           [
                             if (km != null)
-                              '${km.toStringAsFixed(km < 10 ? 1 : 0)} km${it['distance_is_road'] == true ? '' : ' (straight line)'}',
+                              '${km.toStringAsFixed(km < 10 ? 1 : 0)} km${it['distance_is_road'] == true ? '' : ' ${tr('d.straight')}'}',
                             if (it['travel_time'] != null)
                               it['travel_time'] as String,
                           ].join(' · '),
@@ -1451,8 +1645,8 @@ class _GuideItemScreenState extends State<GuideItemScreen> {
                             icon: const Icon(Icons.navigation_rounded),
                             label: Text(
                               it['kind'] == 'arrival'
-                                  ? 'Route to venue'
-                                  : 'Directions',
+                                  ? tr('d.route')
+                                  : tr('d.directions'),
                             ),
                           ),
                         ),
@@ -1469,7 +1663,7 @@ class _GuideItemScreenState extends State<GuideItemScreen> {
                 ],
                 if (it['description'] != null) ...[
                   const SizedBox(height: 22),
-                  const SectionTitle('About'),
+                  SectionTitle(tr('d.about')),
                   const SizedBox(height: 6),
                   Text(
                     it['description'] as String,
@@ -1480,8 +1674,8 @@ class _GuideItemScreenState extends State<GuideItemScreen> {
                   const SizedBox(height: 22),
                   SectionTitle(
                     it['kind'] == 'arrival'
-                        ? 'How to reach the venue'
-                        : 'How to get there',
+                        ? tr('d.howVenue')
+                        : tr('d.howThere'),
                   ),
                   const SizedBox(height: 10),
                   StepsTimeline(steps: steps, kind: k),
@@ -1489,7 +1683,7 @@ class _GuideItemScreenState extends State<GuideItemScreen> {
                 if (contacts.isNotEmpty) ...[
                   const SizedBox(height: 22),
                   SectionTitle(
-                    it['kind'] == 'emergency' ? 'Call' : 'Who to contact',
+                    it['kind'] == 'emergency' ? tr('d.leads') : tr('d.contact'),
                   ),
                   const SizedBox(height: 10),
                   ContactTree(contacts: contacts, kind: k),

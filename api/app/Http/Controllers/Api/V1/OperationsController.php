@@ -139,7 +139,18 @@ class OperationsController extends Controller
     {
         $rows = HelpRequest::where('raised_by', $request->user()->id)->with('replies.user.profile', 'raiser.profile', 'event')->latest('id')->limit(30)->get();
 
-        return $this->ok($rows->map(fn ($h) => $this->presentHelp($h)));
+        return $this->ok($rows->map(fn ($h) => $this->presentHelp($h, $request->user()->id)));
+    }
+
+    /** One conversation, for the chat screen (it polls this every few seconds). */
+    public function showHelp(Request $request, HelpRequest $help)
+    {
+        $user = $request->user();
+        if ($help->raised_by !== $user->id && ! $this->events->canCoordinate($user, $help->event)) {
+            throw new ApiException('FORBIDDEN', 'This conversation is not yours.', 403);
+        }
+
+        return $this->ok($this->presentHelp($help->load('replies.user.profile', 'raiser.profile', 'event'), $user->id));
     }
 
     public function reply(Request $request, HelpRequest $help)
@@ -159,10 +170,10 @@ class OperationsController extends Controller
             AppNotification::sendMany([$help->handled_by], 'help_reply', 'New message on a help request', $data['body'], ['event_id' => $help->event_id, 'help_id' => $help->id]);
         }
 
-        return $this->ok($this->presentHelp($help->fresh('replies.user.profile', 'raiser.profile', 'event')));
+        return $this->ok($this->presentHelp($help->fresh('replies.user.profile', 'raiser.profile', 'event'), $user->id));
     }
 
-    public static function presentHelp(HelpRequest $h): array
+    public static function presentHelp(HelpRequest $h, ?int $viewerId = null): array
     {
         return [
             'id' => $h->id,
@@ -176,6 +187,8 @@ class OperationsController extends Controller
             'at' => $h->created_at->toIso8601String(),
             'resolved_at' => $h->resolved_at?->toIso8601String(),
             'replies' => $h->replies->map(fn ($r) => [
+                'id' => $r->id,
+                'mine' => $viewerId !== null && $r->user_id === $viewerId,
                 'by' => $r->user?->profile?->full_name ?? $r->user?->name,
                 'from_team' => $r->user_id !== $h->raised_by,
                 'body' => $r->body,

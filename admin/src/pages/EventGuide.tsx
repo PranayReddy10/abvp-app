@@ -27,7 +27,7 @@ const HINT: Record<string, string> = {
   exhibit: 'Digital showcase: history, pictures and stories.',
   facility: 'Parking, washrooms, water, cloak room.',
   tourist: 'Places to visit nearby.',
-  emergency: 'Numbers to call and where help is.',
+  emergency: 'Emergency numbers (108, 112…: put the number as the contact phone) and each hall with its emergency lead members – write the hall in “Where exactly”.',
 }
 
 type Draft = Omit<Item, 'id' | 'photo_urls' | 'distance_is_road' | 'tags' | 'steps' | 'lat' | 'lng' | 'distance_km'> & { tags: string; steps: string; lat: string; lng: string; distance_km: string }

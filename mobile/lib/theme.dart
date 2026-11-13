@@ -58,6 +58,8 @@ ThemeData buildTheme() {
     useMaterial3: true,
     colorScheme: scheme,
     fontFamily: 'Mukta',
+    // Telugu text falls back to the bundled Anek Telugu.
+    fontFamilyFallback: const ['AnekTelugu'],
     scaffoldBackgroundColor: AppColors.ground,
     splashFactory: InkSparkle.splashFactory,
     pageTransitionsTheme: const PageTransitionsTheme(

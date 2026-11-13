@@ -6,6 +6,7 @@ import '../widgets/format.dart';
 import '../widgets/loader.dart';
 import 'circulars_screen.dart';
 import 'feed_screen.dart';
+import 'guide/support_screen.dart';
 import 'meeting_screen.dart';
 
 class NotificationsScreen extends StatelessWidget {
@@ -22,6 +23,7 @@ class NotificationsScreen extends StatelessWidget {
     'post_repost' => Icons.repeat,
     'post_hidden' => Icons.visibility_off_outlined,
     'new_follower' => Icons.person_add_alt,
+    'help_reply' || 'help_request' => Icons.support_agent_rounded,
     _ => Icons.notifications_none,
   };
 
@@ -85,6 +87,18 @@ class NotificationsScreen extends StatelessWidget {
                             builder: (_) => MeetingScreen(
                               session: session,
                               id: data['meeting_id'] as int,
+                            ),
+                          ),
+                        );
+                      } else if (data['help_id'] != null &&
+                          data['event_id'] != null) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ChatScreen(
+                              session: session,
+                              eventId: data['event_id'] as int,
+                              helpId: data['help_id'] as int,
                             ),
                           ),
                         );

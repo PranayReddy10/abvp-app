@@ -8,6 +8,7 @@ import 'guide/guide_hub.dart';
 import 'home_screen.dart';
 import 'pass_screen.dart';
 import 'profile_screen.dart';
+import '../l10n.dart';
 
 /// Approved members: Home, Community, Pass, Calendar, Me in a floating pill bar.
 class MemberShell extends StatefulWidget {
@@ -50,12 +51,12 @@ class _MemberShellState extends State<MemberShell> {
       bottomNavigationBar: FloatingNavBar(
         index: _tab,
         onTap: (i) => setState(() => _tab = i),
-        items: const [
-          (Icons.home_rounded, 'Home'),
-          (Icons.forum_rounded, 'Community'),
-          (Icons.qr_code_2_rounded, 'Pass'),
-          (Icons.calendar_month_rounded, 'Calendar'),
-          (Icons.person_rounded, 'Me'),
+        items: [
+          (Icons.home_rounded, tr('nav.home')),
+          (Icons.forum_rounded, tr('nav.community')),
+          (Icons.qr_code_2_rounded, tr('nav.pass')),
+          (Icons.calendar_month_rounded, tr('nav.calendar')),
+          (Icons.person_rounded, tr('nav.me')),
         ],
       ),
     );

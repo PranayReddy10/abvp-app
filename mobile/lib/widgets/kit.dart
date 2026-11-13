@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme.dart';
 import 'motion.dart';
+import '../l10n.dart';
 
 /// Round white icon button used in top bars (back, bell, filter).
 class CircleIconButton extends StatelessWidget {
@@ -316,8 +317,8 @@ class DashedLine extends StatelessWidget {
 String greeting() {
   final h = DateTime.now().hour;
   return h < 12
-      ? 'Good morning'
+      ? tr('home.morning')
       : h < 17
-      ? 'Good afternoon'
-      : 'Good evening';
+      ? tr('home.afternoon')
+      : tr('home.evening');
 }

@@ -119,6 +119,7 @@ Route::prefix('v1')->group(function () {
         Route::get('events/{event}/announcements', [OperationsController::class, 'announcements']);
         Route::post('events/{event}/help', [OperationsController::class, 'raiseHelp']);
         Route::get('me/help', [OperationsController::class, 'myHelp']);
+        Route::get('help/{help}', [OperationsController::class, 'showHelp']);
         Route::post('help/{help}/reply', [OperationsController::class, 'reply']);
 
         // Phase 5: logistics and opt-in live location

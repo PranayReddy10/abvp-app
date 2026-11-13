@@ -30,6 +30,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -68,6 +70,9 @@ flutter:
 
   # Bundled so text looks right offline and in Hindi. SIL Open Font License (assets/fonts/OFL.txt).
   fonts:
+    - family: AnekTelugu
+      fonts:
+        - asset: assets/fonts/AnekTelugu.ttf
     - family: Mukta
       fonts:
         - asset: assets/fonts/Mukta-Regular.ttf

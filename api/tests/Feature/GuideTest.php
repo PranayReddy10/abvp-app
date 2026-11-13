@@ -199,4 +199,34 @@ class GuideTest extends TestCase
         $this->deleteJson("/api/v1/admin/guide-items/{$b}")->assertOk();
         $this->assertCount(1, $this->getJson("/api/v1/admin/events/{$event->id}/guide")->json('data.items'));
     }
+
+    public function test_support_chat_between_a_guest_and_the_help_desk(): void
+    {
+        $admin = $this->admin();
+        $event = $this->conference($admin);
+        $event->forceFill(['guide_enabled' => true])->save();
+        $guest = $this->member('Guest from Delhi');
+        $stranger = $this->member('Someone else');
+
+        Sanctum::actingAs($guest);
+        $id = $this->postJson("/api/v1/events/{$event->id}/help", ['category' => 'chat', 'message' => 'Which bus goes to Block G?'])
+            ->assertCreated()->assertJsonPath('data.category_label', 'Chat with the help desk')->json('data.id');
+
+        Sanctum::actingAs($admin);
+        $this->postJson("/api/v1/help/{$id}/reply", ['body' => 'Bus 4 from Gate 2, every 20 minutes.'])->assertOk()
+            ->assertJsonPath('data.replies.0.mine', true)
+            ->assertJsonPath('data.status', 'in_progress');
+
+        Sanctum::actingAs($guest);
+        $this->getJson("/api/v1/help/{$id}")->assertOk()
+            ->assertJsonPath('data.replies.0.from_team', true)
+            ->assertJsonPath('data.replies.0.mine', false)
+            ->assertJsonPath('data.replies.0.body', 'Bus 4 from Gate 2, every 20 minutes.');
+        $this->postJson("/api/v1/help/{$id}/reply", ['body' => 'Thank you!'])->assertOk()->assertJsonPath('data.replies.1.mine', true);
+        $this->assertDatabaseHas('app_notifications', ['user_id' => $guest->id, 'type' => 'help_reply']);
+
+        Sanctum::actingAs($stranger);
+        $this->getJson("/api/v1/help/{$id}")->assertStatus(403);
+        $this->postJson("/api/v1/help/{$id}/reply", ['body' => 'hi'])->assertStatus(403);
+    }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../state/session.dart';
+import '../l10n.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/format.dart';
@@ -202,16 +203,16 @@ class _HomeScreenState extends State<HomeScreen> {
                             color: AppColors.surface,
                             borderRadius: BorderRadius.circular(999),
                           ),
-                          child: const Row(
+                          child: Row(
                             children: [
-                              Icon(
+                              const Icon(
                                 Icons.search_rounded,
                                 color: AppColors.muted,
                               ),
-                              SizedBox(width: 10),
+                              const SizedBox(width: 10),
                               Expanded(
                                 child: Text(
-                                  'Find karyakartas, colleges…',
+                                  tr('home.search'),
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     color: AppColors.muted,
@@ -240,24 +241,24 @@ class _HomeScreenState extends State<HomeScreen> {
                   clipBehavior: Clip.none,
                   child: Row(
                     children: [
-                      const PillChip(
-                        label: 'For you',
+                      PillChip(
+                        label: tr('home.forYou'),
                         icon: Icons.auto_awesome_rounded,
                         selected: true,
                       ),
                       const SizedBox(width: 8),
                       PillChip(
-                        label: 'Community',
+                        label: tr('nav.community'),
                         icon: Icons.forum_outlined,
                         onTap: widget.onOpenFeed,
                       ),
                       const SizedBox(width: 8),
                       PillChip(
-                        label: 'Vibhags',
+                        label: tr('home.vibhags'),
                         icon: Icons.grid_view_rounded,
                         onTap: () => _open(
                           Scaffold(
-                            appBar: AppBar(title: const Text('Vibhags')),
+                            appBar: AppBar(title: Text(tr('home.vibhags'))),
                             body: VibhagsScreen(session: widget.session),
                           ),
                         ),
@@ -265,15 +266,15 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(width: 8),
                       PillChip(
                         label: d.unreadCirculars > 0
-                            ? 'Circulars · ${d.unreadCirculars}'
-                            : 'Circulars',
+                            ? '${tr('home.circulars')} · ${d.unreadCirculars}'
+                            : tr('home.circulars'),
                         icon: Icons.campaign_outlined,
                         onTap: () =>
                             _open(CircularsScreen(session: widget.session)),
                       ),
                       const SizedBox(width: 8),
                       PillChip(
-                        label: 'Report activity',
+                        label: tr('home.report'),
                         icon: Icons.add_a_photo_outlined,
                         onTap: () => _open(
                           ReportActivityScreen(session: widget.session),
@@ -290,8 +291,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 ..._eventDay(context, d),
                 if (d.events.isNotEmpty) ...[
                   SectionTitle(
-                    'Upcoming events',
-                    action: 'See all',
+                    tr('home.upcoming'),
+                    action: tr('home.seeAll'),
                     onAction: widget.onOpenCalendar,
                   ),
                   const SizedBox(height: 6),
@@ -319,7 +320,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 20),
                 ],
                 if (next != null) ...[
-                  const SectionTitle('Next up'),
+                  SectionTitle(tr('home.nextUp')),
                   const SizedBox(height: 8),
                   _NextMeeting(
                     meeting: next,
@@ -377,7 +378,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 12),
                 ],
                 const SizedBox(height: 8),
-                const SectionTitle('My card'),
+                SectionTitle(tr('home.myCard')),
                 const SizedBox(height: 8),
                 GestureDetector(
                   onTap: widget.onShowPass,
@@ -391,7 +392,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 if (p.responsibilities.isNotEmpty) ...[
                   const SizedBox(height: 20),
-                  const SectionTitle('Dayitva'),
+                  SectionTitle(tr('home.dayitva')),
                   const SizedBox(height: 8),
                   Panel(
                     child: Column(

@@ -327,17 +327,25 @@ class DemoSeeder extends Seeder
                 'description' => 'Go in a group and tell your Nivas lead before you leave. Be back before the evening session.'], [], 2);
         }
 
-        // Apatkal.
-        $emergency = [
-            ['Ambulance', 'National emergency ambulance', '108', 'Call first in any medical emergency'],
-            ['Police / any emergency', 'All-in-one emergency number', '112', null],
-            ['Women helpline', 'Women in distress', '181', null],
-            ['Adhiveshan medical room', 'Doctor on duty, behind Hall A', null, 'Red cross flag'],
-            ['Lost person / lost child', 'Suchana Sahayata desk at the main stage', null, 'Announcements are made from here'],
+        // Apatkal: the national numbers, then each hall with its emergency lead members.
+        foreach ([['Ambulance', 'National emergency ambulance', '108'], ['Police / any emergency', 'All-in-one emergency number', '112'], ['Women helpline', 'Women in distress', '181']] as [$title, $sub, $number]) {
+            $add('emergency', ['title' => $title, 'subtitle' => $sub, 'color' => '#C92A2A'], [[$title, $number, 'Call', true]]);
+        }
+        $halls = [
+            ['Medical team', 'Medical room · behind Hall A', 'Doctor and two nurses on duty day and night; the ambulance waits at Gate 4', 3],
+            ['Main stage', 'Hall A', 'First-aid kit and stretcher at the left wing of the stage', 2],
+            ['Food court', 'Hall B', 'Ask any stall lead; first-aid kit at the Chai & Snacks Kendra', 2],
+            ['Pratinidhi Sabha', 'Halls C and D', 'Volunteers in red jackets at every door', 2],
+            ['Pradarshini', 'Hall E', 'Help desk at the exhibition entrance', 2],
+            ['Nivas blocks', 'Blocks A to G', 'Night duty 10 PM – 6 AM at each block entrance', 3],
+            ['Mahila Sahayata (women)', 'Block G and near the main stage', 'Women volunteers only', 2],
         ];
-        foreach ($emergency as [$title, $sub, $number, $mark]) {
-            $add('emergency', ['title' => $title, 'subtitle' => $sub, 'landmark' => $mark, 'color' => '#C92A2A'],
-                $number ? [[$title, $number, 'Call', true]] : [[...$person(), 'On duty', true], [...$person(), 'Backup', false]]);
+        foreach ($halls as [$title, $hall, $note, $size]) {
+            $team = [[...$person(), 'Emergency lead', true]];
+            for ($k = 1; $k < $size; $k++) {
+                $team[] = [...$person(), $k === 1 ? 'Deputy' : 'First-aid volunteer', false];
+            }
+            $add('emergency', ['title' => $title, 'location' => $hall, 'landmark' => $note, 'color' => '#C92A2A'], $team);
         }
     }
 

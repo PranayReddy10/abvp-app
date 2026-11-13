@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../l10n.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
 import '../../widgets/motion.dart';
@@ -426,7 +427,7 @@ class ContactTree extends StatelessWidget {
                             const SizedBox(width: 4),
                             Flexible(
                               child: Text(
-                                (c['role'] as String?) ?? 'Lead',
+                                (c['role'] as String?) ?? tr('d.lead'),
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
                                   color: Colors.white70,

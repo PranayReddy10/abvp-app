@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class HelpRequest extends Model
 {
     public const CATEGORIES = [
+        'chat' => 'Chat with the help desk',
         'medical' => 'Medical',
         'registration' => 'Registration or pass',
         'stay' => 'Stay',

@@ -8,6 +8,7 @@ import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/motion.dart';
 import 'guide/guide_hub.dart';
+import '../l10n.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key, required this.session});
@@ -104,19 +105,28 @@ class _SignInScreenState extends State<SignInScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: 58,
-                    height: 58,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.16),
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: Colors.white24),
-                    ),
-                    child: const Icon(
-                      Icons.local_fire_department,
-                      color: Colors.white,
-                      size: 32,
-                    ),
+                  Row(
+                    children: [
+                      Container(
+                        width: 58,
+                        height: 58,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.16),
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(color: Colors.white24),
+                        ),
+                        child: const Icon(
+                          Icons.local_fire_department,
+                          color: Colors.white,
+                          size: 32,
+                        ),
+                      ),
+                      const Spacer(),
+                      LanguageButton(
+                        light: true,
+                        save: (c) => widget.session.api.writeCache('lang', c),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 22),
                   const Text(
@@ -184,10 +194,10 @@ class _SignInScreenState extends State<SignInScreen> {
         session: widget.session,
         padding: const EdgeInsets.only(bottom: 22),
       ),
-      Text('Sign in', style: text.headlineSmall),
+      Text(tr('signin.title'), style: text.headlineSmall),
       const SizedBox(height: 6),
       Text(
-        'Use your mobile number. New here? You can apply for membership after verifying.',
+        tr('signin.desc'),
         style: text.bodyMedium?.copyWith(color: AppColors.muted),
       ),
       const SizedBox(height: 24),
@@ -200,7 +210,7 @@ class _SignInScreenState extends State<SignInScreen> {
             borderRadius: BorderRadius.circular(18),
           ),
           child: Text(
-            'Google account ${_googleLink!.email} is new here. Verify your mobile number once to link it. Next time Google signs you straight in.',
+            tr('signin.googleLink', {'email': _googleLink!.email}),
             style: const TextStyle(
               color: AppColors.ok,
               fontWeight: FontWeight.w600,
@@ -221,9 +231,9 @@ class _SignInScreenState extends State<SignInScreen> {
         inputFormatters: [
           FilteringTextInputFormatter.allow(RegExp(r'[0-9 +]')),
         ],
-        decoration: const InputDecoration(
-          labelText: 'Mobile number',
-          prefixIcon: Icon(Icons.phone_iphone),
+        decoration: InputDecoration(
+          labelText: tr('signin.mobile'),
+          prefixIcon: const Icon(Icons.phone_iphone),
           prefixText: '+91  ',
         ),
       ),
@@ -235,7 +245,7 @@ class _SignInScreenState extends State<SignInScreen> {
                 final masked = await widget.session.sendOtp(_mobile.text);
                 setState(() => _sentTo = masked);
               }),
-        child: Text(_busy ? 'Sending…' : 'Send code'),
+        child: Text(_busy ? tr('signin.sending') : tr('signin.send')),
       ),
       if (_googleLink == null) ...[
         const SizedBox(height: 18),
@@ -244,7 +254,7 @@ class _SignInScreenState extends State<SignInScreen> {
             const Expanded(child: Divider()),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Text('or', style: text.bodySmall),
+              child: Text(tr('signin.or'), style: text.bodySmall),
             ),
             const Expanded(child: Divider()),
           ],
@@ -258,7 +268,7 @@ class _SignInScreenState extends State<SignInScreen> {
             minimumSize: const Size.fromHeight(56),
           ),
           icon: const _GoogleMark(),
-          label: const Text('Continue with Google'),
+          label: Text(tr('signin.google')),
         ),
       ],
       const SizedBox(height: 18),
@@ -266,12 +276,7 @@ class _SignInScreenState extends State<SignInScreen> {
         children: [
           const Icon(Icons.lock_outline, size: 16, color: AppColors.muted),
           const SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              'No passwords. A 6-digit code is sent by SMS each time.',
-              style: text.bodySmall,
-            ),
-          ),
+          Expanded(child: Text(tr('signin.nopass'), style: text.bodySmall)),
         ],
       ),
     ],
@@ -281,10 +286,10 @@ class _SignInScreenState extends State<SignInScreen> {
     key: const ValueKey('code'),
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      Text('Enter the code', style: text.headlineSmall),
+      Text(tr('signin.enter'), style: text.headlineSmall),
       const SizedBox(height: 6),
       Text(
-        'Sent to $_sentTo',
+        tr('signin.sentTo', {'to': _sentTo ?? ''}),
         style: text.bodyMedium?.copyWith(color: AppColors.muted),
       ),
       const SizedBox(height: 24),
@@ -315,7 +320,7 @@ class _SignInScreenState extends State<SignInScreen> {
                   googleLinkToken: _googleLink?.linkToken,
                 ),
               ),
-        child: Text(_busy ? 'Checking…' : 'Verify and continue'),
+        child: Text(_busy ? tr('signin.checking') : tr('signin.verify')),
       ),
       TextButton(
         onPressed: () => setState(() {
@@ -323,7 +328,7 @@ class _SignInScreenState extends State<SignInScreen> {
           _code.clear();
           _error = null;
         }),
-        child: const Text('Use a different number'),
+        child: Text(tr('signin.other')),
       ),
     ],
   );

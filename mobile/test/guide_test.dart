@@ -1,9 +1,21 @@
+import 'package:abvp_connect/l10n.dart';
 import 'package:abvp_connect/screens/guide/guide_hub.dart';
 import 'package:abvp_connect/screens/guide/guide_sections.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('every string exists in English, Hindi and Telugu, with placeholders filled', () {
+    expect(missingTranslations(), isEmpty);
+    appLang.value = 'te';
+    expect(tr('nav.home'), 'హోమ్');
+    expect(tr('sec.kmAway', {'km': '2.5'}), '2.5 కి.మీ. దూరం');
+    appLang.value = 'hi';
+    expect(tr('em.call', {'n': '108'}), '108 पर कॉल करें');
+    expect(tr('no.such.key'), 'no.such.key');
+    appLang.value = 'en';
+  });
+
   test('countdown says how far away the conference is, or that it is live', () {
     final now = DateTime.now();
     final (soon, liveSoon) = guideWhen({
@@ -21,7 +33,9 @@ void main() {
     expect(isLive, isTrue);
   });
 
-  testWidgets('a food stall shows where it is, how to spot it and its lead', (tester) async {
+  testWidgets('a food stall shows where it is, how to spot it and its lead', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
@@ -40,7 +54,12 @@ void main() {
                 'photo_urls': <String>[],
                 'distance_km': null,
                 'contacts': [
-                  {'name': 'Ravi Rao', 'role': 'Stall lead', 'phone': '9000000001', 'is_lead': true},
+                  {
+                    'name': 'Ravi Rao',
+                    'role': 'Stall lead',
+                    'phone': '9000000001',
+                    'is_lead': true,
+                  },
                 ],
               },
             ),

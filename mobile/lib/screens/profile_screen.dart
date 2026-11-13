@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../api/api_client.dart';
 import '../state/session.dart';
+import '../l10n.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/motion.dart';
@@ -302,6 +303,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   )
                   .toList(),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Card(
+            child: ListTile(
+              leading: const Icon(
+                Icons.translate_rounded,
+                color: AppColors.saffron,
+              ),
+              title: Text(
+                tr('lang.title'),
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+              subtitle: Text(
+                appLanguages.firstWhere((l) => l.code == appLang.value).native,
+              ),
+              trailing: const Icon(Icons.chevron_right_rounded),
+              onTap: () => showLanguagePicker(
+                context,
+                save: (c) => widget.session.api.writeCache('lang', c),
+              ),
             ),
           ),
           const SizedBox(height: 24),

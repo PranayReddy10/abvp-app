@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 
 import '../../api/api_client.dart';
+import '../../l10n.dart';
 import '../../state/session.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
 import '../../widgets/format.dart';
 import '../../widgets/kit.dart';
 import '../../widgets/motion.dart';
-import '../help_screen.dart';
 import 'guide_sections.dart';
+import 'support_screen.dart';
 import 'guide_widgets.dart';
 
 /// "26 Dec · Starts in 45 days" or "Day 2 · Live now".
@@ -24,7 +25,7 @@ import 'guide_widgets.dart';
           now.day,
         ).difference(DateTime(s.year, s.month, s.day)).inDays +
         1;
-    return ('Day $day · Live now', true);
+    return (tr('guide.live', {'n': day}), true);
   }
   final days = DateTime(
     s.year,
@@ -34,10 +35,10 @@ import 'guide_widgets.dart';
   final date = '${s.day} ${monthShort(s)}';
   return (
     days <= 0
-        ? '$date · Today'
+        ? '$date · ${tr('guide.today')}'
         : days == 1
-        ? '$date · Tomorrow'
-        : '$date · in $days days',
+        ? '$date · ${tr('guide.tomorrow')}'
+        : '$date · ${tr('guide.inDays', {'n': days})}',
     false,
   );
 }
@@ -95,32 +96,32 @@ class _GuideHubState extends State<GuideHub> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text(
-                  'Need help?',
-                  style: TextStyle(
+                Text(
+                  tr('support.needHelp'),
+                  style: const TextStyle(
                     fontFamily: 'Anek',
                     fontSize: 24,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
                 const SizedBox(height: 6),
-                const Text(
-                  'Call the helpline now, or sign in with your mobile number to raise a ticket and get replies here.',
-                  style: TextStyle(color: AppColors.muted, fontSize: 15),
+                Text(
+                  tr('support.signedOut'),
+                  style: const TextStyle(color: AppColors.muted, fontSize: 15),
                 ),
                 const SizedBox(height: 18),
                 if (helpline != null) ...[
                   FilledButton.icon(
                     onPressed: () => callNumber(helpline),
                     icon: const Icon(Icons.call_rounded),
-                    label: Text('Call helpline $helpline'),
+                    label: Text(tr('support.callHelpline', {'n': helpline})),
                   ),
                   const SizedBox(height: 10),
                 ],
                 OutlinedButton(
                   onPressed: () =>
                       Navigator.of(context).popUntil((r) => r.isFirst),
-                  child: const Text('Sign in to raise a ticket'),
+                  child: Text(tr('support.signIn')),
                 ),
               ],
             ),
@@ -133,7 +134,7 @@ class _GuideHubState extends State<GuideHub> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => AskHelpScreen(
+          builder: (_) => SupportScreen(
             session: widget.session,
             eventId: widget.eventId,
             eventTitle: hub['event']['title'] as String,
@@ -187,11 +188,11 @@ class _GuideHubState extends State<GuideHub> {
                       ),
                     ],
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'Continue to app',
+                        tr('guide.continue'),
                         style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w700,
@@ -242,7 +243,7 @@ class _GuideHubState extends State<GuideHub> {
       ...(hub['sections'] as List).cast<Json>(),
       {
         'kind': 'support',
-        'title': 'Support',
+        'title': tr('kind.support'),
         'hindi': 'सहायता',
         'count': hub['open_tickets'] ?? 0,
       },
@@ -315,8 +316,8 @@ class _GuideHubState extends State<GuideHub> {
                                   color: Colors.white.withValues(alpha: 0.18),
                                   borderRadius: BorderRadius.circular(999),
                                 ),
-                                child: const Text(
-                                  'Skip',
+                                child: Text(
+                                  tr('guide.skip'),
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w700,
@@ -325,9 +326,15 @@ class _GuideHubState extends State<GuideHub> {
                               ),
                             ),
                           const Spacer(),
+                          LanguageButton(
+                            light: true,
+                            save: (c) =>
+                                widget.session.api.writeCache('lang', c),
+                          ),
+                          const SizedBox(width: 8),
                           if (helpline != null)
                             Tooltip(
-                              message: 'Call the helpline $helpline',
+                              message: '${tr('guide.helpline')} $helpline',
                               child: Pressable(
                                 onTap: () => callNumber(helpline),
                                 child: Container(
@@ -341,7 +348,7 @@ class _GuideHubState extends State<GuideHub> {
                                     color: Colors.white,
                                     borderRadius: BorderRadius.circular(999),
                                   ),
-                                  child: const Row(
+                                  child: Row(
                                     children: [
                                       Icon(
                                         Icons.headset_mic_rounded,
@@ -350,7 +357,7 @@ class _GuideHubState extends State<GuideHub> {
                                       ),
                                       SizedBox(width: 6),
                                       Text(
-                                        'Helpline',
+                                        tr('guide.helpline'),
                                         style: TextStyle(
                                           fontWeight: FontWeight.w800,
                                           color: AppColors.ink,
@@ -400,8 +407,10 @@ class _GuideHubState extends State<GuideHub> {
                               ),
                             ),
                             const SizedBox(height: 12),
-                            const Text(
-                              'Conference guide · अधिवेशन मार्गदर्शिका',
+                            Text(
+                              appLang.value == 'hi'
+                                  ? tr('guide.title')
+                                  : '${tr('guide.title')} · अधिवेशन मार्गदर्शिका',
                               style: TextStyle(
                                 color: Colors.white70,
                                 fontSize: 14,
@@ -481,7 +490,7 @@ class _GuideHubState extends State<GuideHub> {
           sliver: SliverToBoxAdapter(
             child: Transform.translate(
               offset: const Offset(0, -24),
-              child: const SectionTitle('Everything you need'),
+              child: SectionTitle(tr('guide.everything')),
             ),
           ),
         ),
@@ -567,9 +576,11 @@ class _SupportCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'सहायता · Support',
-                    style: TextStyle(
+                  Text(
+                    appLang.value == 'hi'
+                        ? 'सहायता'
+                        : 'सहायता · ${tr('kind.support')}',
+                    style: const TextStyle(
                       fontFamily: 'Anek',
                       color: Colors.white,
                       fontSize: 19,
@@ -578,8 +589,8 @@ class _SupportCard extends StatelessWidget {
                   ),
                   Text(
                     open > 0
-                        ? '$open open ticket${open == 1 ? '' : 's'} · raise another or check replies'
-                        : 'Something wrong? Raise a ticket – the team replies here',
+                        ? tr('support.cardOpen', {'n': open})
+                        : tr('support.cardNone'),
                     style: const TextStyle(color: Colors.white70, fontSize: 13),
                   ),
                 ],
@@ -655,18 +666,26 @@ class _Tile extends StatelessWidget {
                 ],
               ),
               const Spacer(),
-              Text(
-                section['hindi'] as String,
-                style: const TextStyle(
-                  fontFamily: 'Anek',
-                  fontSize: 17,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.ink,
-                  height: 1.1,
+              // One line in every language: long Telugu words shrink instead of breaking.
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  tr('kind.${section['kind']}'),
+                  maxLines: 1,
+                  style: const TextStyle(
+                    fontFamily: 'Anek',
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.ink,
+                    height: 1.1,
+                  ),
                 ),
               ),
               Text(
-                section['title'] as String,
+                appLang.value == 'en'
+                    ? section['hindi'] as String
+                    : section['title'] as String,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
@@ -734,19 +753,19 @@ class _MyStay extends StatelessWidget {
                     child: Icon(k.icon, color: Colors.white),
                   ),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Where am I staying?',
+                          tr('guide.whereStay'),
                           style: TextStyle(
                             fontWeight: FontWeight.w800,
                             fontSize: 16,
                           ),
                         ),
                         Text(
-                          'Pick your prant to see your stay and its lead',
+                          tr('guide.pickPrant'),
                           style: TextStyle(
                             color: AppColors.muted,
                             fontSize: 13,
@@ -778,7 +797,7 @@ class _MyStay extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'YOUR STAY · ${(region ?? '').toUpperCase()}',
+                          '${tr('guide.yourStay')} · ${(region ?? '').toUpperCase()}',
                           style: TextStyle(
                             color: k.b,
                             fontWeight: FontWeight.w800,
@@ -798,7 +817,10 @@ class _MyStay extends StatelessWidget {
                         Text(
                           [
                             stay['location'],
-                            if (lead != null) 'Lead: ${lead['name']}',
+                            if (lead != null)
+                              tr('guide.lead', {
+                                'name': lead['name'] as String,
+                              }),
                           ].whereType<String>().join(' · '),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -879,7 +901,7 @@ class GuideBanner extends StatelessWidget {
                         ),
                       ),
                       const Spacer(),
-                      const GuideTag('Conference guide', onDark: true),
+                      GuideTag(tr('guide.title'), onDark: true),
                     ],
                   ),
                   const Spacer(),
@@ -902,8 +924,8 @@ class GuideBanner extends StatelessWidget {
                                 height: 1.1,
                               ),
                             ),
-                            const Text(
-                              'Stay · transport · food · help, all in one place',
+                            Text(
+                              tr('guide.bannerSub'),
                               style: TextStyle(
                                 color: Colors.white70,
                                 fontSize: 12.5,

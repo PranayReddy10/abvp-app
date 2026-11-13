@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { api, ApiError, qs } from '../api'
 import { downloadCsv, Split } from '../components/charts'
 import { VerifiedBadge } from '../components/icons'
@@ -175,6 +175,12 @@ export function HelpTab({ id }: { id: number }) {
   const [reply, setReply] = useState<Record<number, string>>({})
   const [err, setErr] = useState<unknown>(null)
 
+  // Chats arrive while the desk watches: refresh every 10 seconds.
+  useEffect(() => {
+    const t = window.setInterval(reload, 10000)
+    return () => window.clearInterval(t)
+  }, [reload])
+
   async function send(h: Help) {
     try { await api.post(`/help/${h.id}/reply`, { body: reply[h.id] }); setReply({ ...reply, [h.id]: '' }); reload() } catch (x) { setErr(x) }
   }
@@ -184,7 +190,7 @@ export function HelpTab({ id }: { id: number }) {
 
   return (
     <section className="card">
-      <div className="page-head"><h3>Help requests</h3>
+      <div className="page-head"><div><h3>Help desk</h3><p className="sub muted" style={{ margin: 0, fontSize: 13 }}>Tickets and chats from delegates. Updates every 10 seconds.</p></div>
         <div className="chips">{[['', 'All'], ['open', 'New'], ['in_progress', 'Being handled'], ['resolved', 'Resolved']].map(([k, l]) => <button key={k} className={`chip ${status === k ? 'on' : ''}`} onClick={() => setStatus(k)}>{l}</button>)}</div>
       </div>
       <ErrorBox error={error ?? err} />
@@ -196,11 +202,19 @@ export function HelpTab({ id }: { id: number }) {
               <div><span className={`pill ${h.category === 'medical' ? 'bad' : 'mute'}`}>{h.category_label}</span> <b style={{ marginLeft: 6 }}>{h.raised_by}</b> <span className="mono muted">{h.raiser_mobile}</span></div>
               <span className="muted" style={{ fontSize: 12 }}>{fmtTime(h.at)}{h.waiting_minutes !== null ? ` · waiting ${h.waiting_minutes} min` : ''}</span>
             </div>
-            <span>{h.message}{h.location ? <span className="muted"> · at {h.location}</span> : null}</span>
-            {h.replies.map((r, i) => <div key={i} className="who" style={{ paddingLeft: 12, borderLeft: '2px solid var(--line)' }}><b>{r.by}</b>: {r.body}</div>)}
+            <div className="chat">
+              <div className="bubble them"><span>{h.message}</span>{h.location ? <small>at {h.location}</small> : null}</div>
+              {h.replies.map((r, i) => (
+                <div key={i} className={`bubble ${r.from_team ? 'us' : 'them'}`}>
+                  {r.from_team && <small className="by">{r.by}</small>}
+                  <span>{r.body}</span>
+                  <small>{fmtTime(r.at)}</small>
+                </div>
+              ))}
+            </div>
             {h.status !== 'resolved' && (
               <div className="toolbar">
-                <input className="input" style={{ flex: 1, minWidth: 200 }} placeholder="Reply to them" value={reply[h.id] ?? ''} onChange={(e) => setReply({ ...reply, [h.id]: e.target.value })} aria-label="Reply" />
+                <input className="input" style={{ flex: 1, minWidth: 200 }} placeholder={h.category === 'chat' ? 'Type a message' : 'Reply to them'} value={reply[h.id] ?? ''} onChange={(e) => setReply({ ...reply, [h.id]: e.target.value })} aria-label="Reply" />
                 <button className="btn small" disabled={!reply[h.id]} onClick={() => send(h)}>Send</button>
                 <button className="btn small good" onClick={() => setHelpStatus(h, 'resolved')}>Resolved</button>
               </div>
