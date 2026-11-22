@@ -18,7 +18,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->scoped(AccessControl::class);
 
-        $this->app->bind(SmsSender::class, fn () => match (config('abvp.sms.driver')) {
+        $this->app->bind(SmsSender::class, fn () => match (\App\Services\SignInSettings::smsDriver()) {
             'msg91' => new Msg91SmsSender,
             default => new LogSmsSender,
         });

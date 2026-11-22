@@ -32,6 +32,7 @@ function OtpStep({ mobile, setMobile, onVerified, busy, cta }: { mobile: string;
   const [code, setCode] = useState('')
   const [sending, setSending] = useState(false)
   const [err, setErr] = useState<unknown>(null)
+  const options = useFetch<{ otp: boolean }>('/auth/options')
 
   async function send(e: FormEvent) {
     e.preventDefault()
@@ -42,6 +43,9 @@ function OtpStep({ mobile, setMobile, onVerified, busy, cta }: { mobile: string;
     e.preventDefault()
     setErr(null)
     try { await onVerified(code) } catch (x) { setErr(x) }
+  }
+  if (options.data && !options.data.otp) {
+    return <div className="hint" role="status">Sign-in with a code on your mobile is paused right now. Use Continue with Google, or try again later.</div>
   }
   return (
     <AnimatePresence mode="wait">

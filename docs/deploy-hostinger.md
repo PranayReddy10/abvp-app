@@ -144,9 +144,10 @@ Indian SMS needs DLT registration. With MSG91:
 
 1. Register the business entity and a sender ID on a DLT portal (Jio, Vodafone Idea or Airtel).
 2. Register an OTP template, for example `{#var#} is your ABVP Connect sign-in code. It expires in 5 minutes. Do not share it.`
-3. Create a Flow in MSG91 with that template and put its template ID in `MSG91_OTP_TEMPLATE_ID`.
+3. Create a Flow in MSG91 with that template (variable `##otp##`).
+4. Admin panel → **Settings → Sign-in** (super admin): choose **SMS through MSG91**, paste the auth key and template ID, **Send test** to your own number, then **Save**. The key is stored encrypted. (`SMS_DRIVER` / `MSG91_*` in `.env` still work as a fallback when nothing is saved there.)
 
-Until DLT is approved, keep `SMS_DRIVER=log` on a staging copy only.
+The same card switches **sign in with a code on mobile** on or off. With it off, only password (and Google, if set up) sign-in work, and new members cannot sign up; the panel refuses to switch it off until you have set your own password under My account. **Testing: server log** sends no SMS and writes codes to `api/storage/logs/laravel.log` – use it only until MSG91 is ready.
 
 ## 9. Google sign-in (optional)
 

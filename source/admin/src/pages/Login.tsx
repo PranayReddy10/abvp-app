@@ -16,6 +16,10 @@ export default function Login() {
   const [link, setLink] = useState<{ token: string; email: string } | null>(null)
   const [note, setNote] = useState('')
   const gBox = useRef<HTMLDivElement>(null)
+  const [otpOn, setOtpOn] = useState(true)
+  useEffect(() => {
+    api.get<{ otp: boolean }>('/auth/options').then((r) => { setOtpOn(r.data.otp); if (!r.data.otp) setMode('password') }).catch(() => null)
+  }, [])
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
 
   async function finish(t: string, user: Me) {
@@ -97,7 +101,7 @@ export default function Login() {
         <ErrorBox error={error} />
         {link && <div className="notice" role="status">Google account {link.email} is new here. Verify your mobile once to link it – next time Google signs you straight in.</div>}
         {note && !link && <div className="hint-box" role="status">{note}</div>}
-        {!sentTo && !link && (
+        {!sentTo && !link && otpOn && (
           <div className="login-tabs" role="tablist" aria-label="How to sign in">
             <button type="button" role="tab" aria-selected={mode === 'password'} className={mode === 'password' ? 'on' : ''} onClick={() => { setMode('password'); setError(null) }}>Password</button>
             <button type="button" role="tab" aria-selected={mode === 'code'} className={mode === 'code' ? 'on' : ''} onClick={() => { setMode('code'); setError(null) }}>Code on mobile</button>
@@ -116,7 +120,9 @@ export default function Login() {
                 value={password} onChange={(e) => setPassword(e.target.value)} required />
             </div>
             <button className="btn primary" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button>
-            <small className="muted">No password yet? Sign in once with <a href="#" onClick={(e) => { e.preventDefault(); setMode('code') }}>a code on your mobile</a>, then set one under My account.</small>
+            {otpOn
+              ? <small className="muted">No password yet? Sign in once with <a href="#" onClick={(e) => { e.preventDefault(); setMode('code') }}>a code on your mobile</a>, then set one under My account.</small>
+              : <small className="muted">Forgot your password? Ask your super admin to reset it.</small>}
           </form>
         ) : !sentTo ? (
           <form onSubmit={send} style={{ display: 'grid', gap: 12 }}>

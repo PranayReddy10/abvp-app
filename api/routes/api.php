@@ -30,6 +30,7 @@ Route::prefix('v1')->group(function () {
         Route::post('auth/register', [AuthController::class, 'register']);
     });
     Route::post('auth/google', [AuthController::class, 'google'])->middleware('throttle:20,1');
+    Route::get('auth/options', [AuthController::class, 'options'])->middleware('throttle:60,1');
     Route::post('auth/password', [AuthController::class, 'passwordLogin'])->middleware('throttle:password');
 
     // Lookups for the application form
@@ -228,6 +229,9 @@ Route::prefix('v1')->group(function () {
             Route::delete('guide-items/{item}/photos/{index}', [Admin\GuideController::class, 'removePhoto'])->whereNumber('index');
             Route::get('moderation', [Admin\ModerationController::class, 'index']);
             Route::post('moderation/posts/{post}', [Admin\ModerationController::class, 'act']);
+            Route::get('settings/sign-in', [Admin\SignInSettingsController::class, 'show']);
+            Route::put('settings/sign-in', [Admin\SignInSettingsController::class, 'update']);
+            Route::post('settings/sign-in/test-sms', [Admin\SignInSettingsController::class, 'testSms'])->middleware('throttle:5,10');
             Route::get('settings/storage', [Admin\SettingsController::class, 'storage']);
             Route::put('settings/storage', [Admin\SettingsController::class, 'update']);
             Route::post('settings/storage/test', [Admin\SettingsController::class, 'test']);

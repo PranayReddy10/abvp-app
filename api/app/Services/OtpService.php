@@ -13,6 +13,7 @@ class OtpService
 
     public function send(string $mobile): void
     {
+        $this->ensureEnabled();
         $code = $this->generate();
 
         OtpCode::where('mobile', $mobile)->whereNull('consumed_at')->update(['consumed_at' => now()]);
@@ -23,12 +24,18 @@ class OtpService
             'expires_at' => now()->addMinutes(config('abvp.otp.ttl_minutes')),
         ]);
 
-        $this->sms->sendOtp($mobile, $code);
+        try {
+            $this->sms->sendOtp($mobile, $code);
+        } catch (\Throwable $e) {
+            report($e);
+            throw new ApiException('SMS_FAILED', 'The SMS could not be sent just now. Try again in a minute, or sign in with your password.', 503);
+        }
     }
 
     /** Consumes the code on success; throws with a clear reason otherwise. */
     public function verify(string $mobile, string $code): void
     {
+        $this->ensureEnabled();
         $otp = OtpCode::where('mobile', $mobile)
             ->whereNull('consumed_at')
             ->latest('id')
@@ -48,6 +55,13 @@ class OtpService
         }
 
         $otp->update(['consumed_at' => now()]);
+    }
+
+    private function ensureEnabled(): void
+    {
+        if (! SignInSettings::otpEnabled()) {
+            throw new ApiException('OTP_DISABLED', 'Sign-in with a code on your mobile is switched off for now. Use your password or Google.', 403);
+        }
     }
 
     private function generate(): string

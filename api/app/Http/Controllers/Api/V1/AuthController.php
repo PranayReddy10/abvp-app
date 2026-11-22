@@ -7,6 +7,7 @@ use App\Http\Resources\MeResource;
 use App\Models\User;
 use App\Services\GoogleIdToken;
 use App\Services\OtpService;
+use App\Services\SignInSettings;
 use App\Support\ApiException;
 use App\Services\Audit;
 use App\Support\Mobile;
@@ -18,6 +19,16 @@ use Illuminate\Validation\ValidationException;
 class AuthController extends Controller
 {
     public function __construct(private OtpService $otp) {}
+
+    /** Which sign-in methods are switched on, so the apps show only those. Public. */
+    public function options()
+    {
+        return $this->ok([
+            'otp' => SignInSettings::otpEnabled(),
+            'password' => true,
+            'google' => SignInSettings::googleEnabled(),
+        ]);
+    }
 
     public function sendOtp(Request $request)
     {

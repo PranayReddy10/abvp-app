@@ -563,3 +563,4 @@ tbody tr:hover td { background: var(--surface-2) }
 .login-tabs button { border: 0; background: transparent; padding: 9px 10px; border-radius: 9px; font: inherit; font-weight: 600; font-size: 14px; color: var(--muted); cursor: pointer; transition: background .2s, color .2s, box-shadow .2s }
 .login-tabs button.on { background: var(--surface); color: var(--ink); box-shadow: 0 1px 4px rgba(0,0,0,.12) }
 .login-tabs button:focus-visible { outline: 2px solid var(--saffron); outline-offset: 1px }
+.toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface-2) }

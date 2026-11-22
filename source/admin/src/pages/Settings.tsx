@@ -3,6 +3,7 @@ import { api, ApiError } from '../api'
 import { ErrorBox, Skeleton } from '../components/ui'
 import { fmtNum } from '../format'
 import { useFetch } from '../useFetch'
+import SignInSettings from '../components/SignInSettings'
 
 interface StorageSettings {
   driver: 'local' | 'spaces'
@@ -14,7 +15,7 @@ interface StorageSettings {
 }
 interface CopyResult { total: number; done: number; copied: number; skipped: number; failed: string[]; finished: boolean }
 
-/** Super admin settings. Today: where photos and attachments are stored. */
+/** Super admin settings: where photos and attachments are stored, and how people sign in. */
 export default function Settings() {
   const { data, error, reload } = useFetch<StorageSettings>('/admin/settings/storage')
   const [driver, setDriver] = useState<'local' | 'spaces'>('local')
@@ -184,6 +185,9 @@ export default function Settings() {
           <div><button className="btn" disabled={!onSpaces || copying || data.local_files === 0} onClick={copyAll}>{copying ? 'Copying…' : 'Copy to Spaces'}</button></div>
           <p className="muted" style={{ fontSize: 12.5, margin: 0 }}>Copies 25 files at a time, so it is safe on shared hosting. Files already in the Space are skipped. Nothing is deleted from the server.</p>
         </section>
+      </div>
+      <div className="grid2" style={{ marginTop: 18 }}>
+        <SignInSettings />
       </div>
     </main>
   )
