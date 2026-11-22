@@ -1,14 +1,16 @@
 # ABVP Connect
 
 One app for every karyakarta: membership, profiles, Vibhags, meetings and events.
-This repository holds all three parts.
 
-| Folder | What it is | Built with | Runs on |
+| Where | What it is | Built with | Runs on |
 |---|---|---|---|
-| `api/` | The server and database rules | Laravel 13, PHP 8.3 | Hostinger shared hosting, `api.abvpconnect.in` |
-| `admin/` | Web admin panel for state, district and Vibhag offices | React 19, Vite | Static files on Hostinger, `admin.abvpconnect.in` |
-| `mobile/` | Android and iOS app for members | Flutter 3.47 | Play Store and App Store |
-| `docs/` | Design vision and deployment guide | | |
+| `api/` | The server and database rules | Laravel 13, PHP 8.3 | Hostinger shared hosting, `api.abvpconnect.org` |
+| `admin/` | Web admin panel for state, district and Vibhag offices | React 19, Vite | Static files on Hostinger, `admin.abvpconnect.org` |
+| `web/` | Public website: conference guide, sign-up, delegate registration, passes, help desk, community | React 19, Vite, Framer Motion | Static files on Hostinger, `abvpconnect.org` |
+| **`mobile` branch** | Android and iOS app (the `mobile/` folder lives only on the `mobile` branch) | Flutter 3.47 | Play Store and App Store |
+| `docs/` | Design vision, deployment guide, guide for leads (PDF) | | |
+
+The app's code is kept on its own branch: `git checkout mobile`. The API, admin panel and website on this branch are what the app talks to; the app's features are described below because they use the same API.
 
 The design vision is in [`docs/design/design-vision.html`](docs/design/design-vision.html). Hosting steps are in [`docs/deploy-hostinger.md`](docs/deploy-hostinger.md).
 
@@ -103,9 +105,21 @@ For a big event such as the Rashtriya Adhiveshan in Bhagyanagar, organisers fill
 - **Languages: English, हिन्दी, తెలుగు.** A language button on the sign-in screen and in the guide, and Language under Me. The choice is remembered; the phone's language is used the first time. Sign-in, the bottom bar, Home and the whole conference guide (including emergency and support) are translated; Telugu uses the bundled Anek Telugu font. Names and details typed by organisers appear as written. Other screens (meetings, circulars, applications, profile details) are still English. To add a language, add a column in `mobile/lib/l10n.dart` – a test fails if any string is missing in any language.
 - **Opens by itself** from two days before the event until it ends, once per app launch – even before signing in – with Skip and "Continue to app". A card on the sign-in screen, Home and the application-status screen opens it at any time. Your own team still gets duties and teams as before.
 - **Organisers** fill it in the admin panel: event → **Guide** tab. Switch the guide on, set the helpline and venue pin, and add places per section in a side drawer: details, colour and landmark, map pin, road km, steps, contacts with a ★ lead (link a member by Member ID to use their verified badge and mobile) and up to 8 photos.
-- **Google sign-in** in the app and the admin panel. The first time, the member verifies their mobile once to link the Google account; then Google signs them in directly. A Google account can be linked to only one number. Setup: `docs/deploy-hostinger.md`, section 8.
+- **Google sign-in** in the app and the admin panel. The first time, the member verifies their mobile once to link the Google account; then Google signs them in directly. A Google account can be linked to only one number. Setup: `docs/deploy-hostinger.md`, section 9.
 
 The demo data (`php artisan db:seed --class=DemoSeeder`) includes a filled guide for "Rashtriya Adhiveshan 2026 – Bhagyanagar". Names and phone numbers in it are made up; replace them with the real leads.
+
+## What works now (Phase 8: public website)
+
+**abvpconnect.org** is a full website (not the Flutter app in a browser), with page transitions, scroll-reveal sections, a moving hero, a live countdown, tilting cards and animated forms.
+
+- **Landing page:** the conference with a live countdown, Register and Guide buttons, what the guide offers, how it works in three steps.
+- **Conference guide** for everyone, no sign-in: every section of the app – stay by prant, transport desks with "nearest to me" and route steps, food stalls, offices, sessions, exhibition, campus, tourist places, emergency by hall with a pulsing 108 button – with Call and WhatsApp buttons for every lead. Places open in a side drawer.
+- **Sign up for everyone** (`POST auth/register`): name, email, gender, prant, occupation, college → mobile OTP. Or **Continue with Google**, which fills name and email and links the Google account after the one-time mobile check. Becoming a member is still the separate application in the app.
+- **Delegate registration** (both website and API; the app can use the same API): four animated steps – about you (prant, gender, food, emergency contact), travel (train/bus/flight, number, arrival point from the guide's desks, arrival and departure time, pickup), stay, review – then a QR pass. Organisers open it with the **Delegate registration** switch in admin → event → Guide. Travel and stay go straight into the event's Logistics tab; delegates appear in Registrations as "delegate". If the event is full and a waitlist is on, new delegates are waitlisted.
+- **My space:** passes with QR (the same pass works at the gate scanner), shortcuts, details.
+- **Help desk:** chat (new replies every 5 seconds) or a ticket with category and location; the same conversations the admin Help desk answers.
+- **Community** for approved members: read, like and post.
 
 ## Design
 
@@ -118,7 +132,7 @@ All phases in the design vision, plus the community feed, are now built. See `do
 
 ## Run it on your computer
 
-You need PHP 8.3 with Composer, Node 20+, and Flutter 3.47.
+You need PHP 8.3 with Composer and Node 20+ (and Flutter 3.47 for the app, on the `mobile` branch).
 
 ### API
 
@@ -152,9 +166,20 @@ npm run dev
 
 Open http://localhost:5173 and sign in with the mobile number you made admin.
 
-### Mobile app
+### Website
 
 ```bash
+cd web
+npm install
+npm run dev
+```
+
+Open http://localhost:5175. The API allows it through `WEB_URL` in `api/.env` (default `http://localhost:5175`).
+
+### Mobile app (on the `mobile` branch)
+
+```bash
+git checkout mobile
 cd mobile
 flutter pub get
 flutter run --dart-define=API_URL=http://10.0.2.2:8000/api/v1
@@ -168,6 +193,8 @@ All routes start with `/api/v1`. Responses look like `{ "success": true, "data":
 
 | | Route |
 |---|---|
+| Sign up | `POST auth/register` (details + OTP, optional `google_link_token`), `GET guide/prants` |
+| Delegates | `GET/PUT/DELETE events/{id}/delegate` |
 | Sign in | `POST auth/send-otp`, `POST auth/verify-otp` (optional `google_link_token`), `POST auth/google`, `GET auth/me`, `POST auth/logout` |
 | Lookups | `GET org/units?parent_id=`, `GET vibhags` |
 | Me | `GET/PATCH me/profile`, `PUT me/privacy`, `POST me/photo`, `GET me/qr` |

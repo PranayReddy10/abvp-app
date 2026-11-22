@@ -197,7 +197,7 @@ class MeetingController extends Controller
 
         $body = implode("\r\n", array_filter([
             'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//ABVP Connect//EN', 'BEGIN:VEVENT',
-            'UID:meeting-'.$meeting->id.'@abvpconnect.in',
+            'UID:meeting-'.$meeting->id.'@abvpconnect.org',
             'DTSTAMP:'.$fmt(now()),
             'DTSTART:'.$fmt($meeting->starts_at),
             'DTEND:'.$fmt($meeting->ends_at),
