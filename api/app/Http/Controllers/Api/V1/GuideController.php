@@ -23,6 +23,12 @@ class GuideController extends Controller
         return $this->ok($rows->map(fn (Event $e) => $this->summary($e)));
     }
 
+    /** ABVP prants, for sign-up and registration forms. */
+    public function prants()
+    {
+        return $this->ok(config('abvp.prants'));
+    }
+
     public function hub(Request $request, Event $event)
     {
         $user = $request->user('sanctum'); // optional: guests open the guide without an account
