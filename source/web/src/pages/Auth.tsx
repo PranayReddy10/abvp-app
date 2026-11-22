@@ -27,12 +27,20 @@ const slide = {
 }
 
 /** Mobile number then the 6-digit code. Calls onVerified(code) when the code is entered. */
-function OtpStep({ mobile, setMobile, onVerified, busy, cta }: { mobile: string; setMobile: (m: string) => void; onVerified: (code: string) => Promise<void>; busy: boolean; cta: string }) {
+function OtpStep({ mobile, setMobile, onVerified, onPassword, newPassword = false, busy, cta }: {
+  mobile: string; setMobile: (m: string) => void; onVerified: (code: string) => Promise<void>
+  /** Mobile + password instead of a code: used when codes are switched off, or chosen on sign-in. */
+  onPassword?: (password: string, confirm: string) => Promise<void>; newPassword?: boolean; busy: boolean; cta: string
+}) {
   const [sentTo, setSentTo] = useState<string | null>(null)
   const [code, setCode] = useState('')
   const [sending, setSending] = useState(false)
   const [err, setErr] = useState<unknown>(null)
   const options = useFetch<{ otp: boolean }>('/auth/options')
+  const [usePw, setUsePw] = useState(false)
+  const [pw, setPw] = useState('')
+  const [pw2, setPw2] = useState('')
+  const otpOff = options.data?.otp === false
 
   async function send(e: FormEvent) {
     e.preventDefault()
@@ -44,7 +52,38 @@ function OtpStep({ mobile, setMobile, onVerified, busy, cta }: { mobile: string;
     setErr(null)
     try { await onVerified(code) } catch (x) { setErr(x) }
   }
-  if (options.data && !options.data.otp) {
+  async function withPassword(e: FormEvent) {
+    e.preventDefault()
+    setErr(null)
+    try { await onPassword?.(pw, pw2) } catch (x) { setErr(x) }
+  }
+  if ((otpOff || usePw) && onPassword) {
+    const mismatch = newPassword && pw2.length > 0 && pw !== pw2
+    return (
+      <motion.form key="p" {...slide} onSubmit={withPassword} style={{ display: 'grid', gap: 14 }}>
+        <ErrorBox error={err} />
+        <div className="field">
+          <label htmlFor="mobile">Mobile number</label>
+          <input id="mobile" className="input" inputMode="tel" autoComplete={newPassword ? 'tel' : 'username'} placeholder="98480 12345" value={mobile} onChange={(e) => setMobile(e.target.value)} required />
+        </div>
+        <div className="field">
+          <label htmlFor="pw">{newPassword ? 'Choose a password' : 'Password'}</label>
+          <input id="pw" className="input" type="password" autoComplete={newPassword ? 'new-password' : 'current-password'} minLength={newPassword ? 8 : undefined} value={pw} onChange={(e) => setPw(e.target.value)} required />
+          {newPassword && <small>At least 8 characters. You will sign in with your mobile number and this password.</small>}
+        </div>
+        {newPassword && (
+          <div className="field">
+            <label htmlFor="pw2">Type it again</label>
+            <input id="pw2" className="input" type="password" autoComplete="new-password" value={pw2} onChange={(e) => setPw2(e.target.value)} required />
+            {mismatch && <small style={{ color: 'var(--bad, #C92A2A)' }}>The two passwords don't match.</small>}
+          </div>
+        )}
+        <button className="btn primary block" disabled={busy || mismatch || (newPassword && pw.length < 8)}>{busy ? 'Please wait…' : newPassword ? cta : 'Sign in'}</button>
+        {!otpOff && <button type="button" className="btn ghost" onClick={() => { setUsePw(false); setErr(null) }}>Use a code on my mobile instead</button>}
+      </motion.form>
+    )
+  }
+  if (otpOff) {
     return <div className="hint" role="status">Sign-in with a code on your mobile is paused right now. Use Continue with Google, or try again later.</div>
   }
   return (
@@ -55,9 +94,10 @@ function OtpStep({ mobile, setMobile, onVerified, busy, cta }: { mobile: string;
           <div className="field">
             <label htmlFor="mobile">Mobile number</label>
             <input id="mobile" className="input" inputMode="tel" autoComplete="tel" placeholder="98480 12345" value={mobile} onChange={(e) => setMobile(e.target.value)} required />
-            <small>We send a 6-digit code by SMS. No passwords.</small>
+            <small>We send a 6-digit code by SMS.</small>
           </div>
           <button className="btn primary block" disabled={sending}>{sending ? 'Sending…' : 'Send code'}</button>
+          {onPassword && !newPassword && <button type="button" className="btn ghost" onClick={() => { setUsePw(true); setErr(null) }}>Sign in with password instead</button>}
         </motion.form>
       ) : (
         <motion.form key="c" {...slide} onSubmit={verify} style={{ display: 'grid', gap: 14 }}>
@@ -98,6 +138,13 @@ export function Login() {
             signIn(r.data.token, r.data.user)
             navigate(r.data.user.name || r.data.user.profile ? next : `/signup?complete=1&next=${encodeURIComponent(next)}`)
           } finally { setBusy(false) }
+        }} onPassword={async (password) => {
+          setBusy(true)
+          try {
+            const r = await api.post<{ token: string; user: Me }>('/auth/password', { login: mobile, password, device_name: 'web' })
+            signIn(r.data.token, r.data.user)
+            navigate(r.data.user.name || r.data.user.profile ? next : `/signup?complete=1&next=${encodeURIComponent(next)}`)
+          } finally { setBusy(false) }
         }} />
         <div className="or">or</div>
         <GoogleButton onNew={(d) => navigate(`/signup?next=${encodeURIComponent(next)}`, { state: d })} />
@@ -121,6 +168,20 @@ export function Signup() {
   const [mobile, setMobile] = useState('')
   const [f, setF] = useState({ name: google?.name ?? '', email: google?.email ?? '', gender: '', prant: '', institution: '', occupation: 'Student' })
   const set = (p: Partial<typeof f>) => setF({ ...f, ...p })
+  const otpOff = useFetch<{ otp: boolean }>('/auth/options').data?.otp === false
+  const details = () => ({
+    mobile, name: f.name, email: f.email || null, gender: f.gender || null, prant: f.prant,
+    institution: f.institution || null, occupation: f.occupation, device_name: 'web', google_link_token: link?.link_token,
+  })
+  async function create(extra: Record<string, string>) {
+    setBusy(true)
+    try {
+      const r = await api.post<{ token: string; user: Me }>('/auth/register', { ...details(), ...extra })
+      signIn(r.data.token, r.data.user)
+      setStep(2)
+      setTimeout(() => navigate(next), 1400)
+    } finally { setBusy(false) }
+  }
 
   return (
     <Shell side={<>
@@ -128,7 +189,7 @@ export function Signup() {
       <h2>Create your account in a minute.</h2>
       <p style={{ opacity: .9, fontSize: 17 }}>Register for the national conference, get your pass, and reach the help desk. Becoming a member is a separate step with your district office.</p>
       <div style={{ display: 'grid', gap: 10, marginTop: 10 }}>
-        {['Your details', 'Verify your mobile', 'You are in'].map((t, i) => (
+        {['Your details', otpOff ? 'Mobile and password' : 'Verify your mobile', 'You are in'].map((t, i) => (
           <motion.div key={t} animate={{ opacity: step >= i ? 1 : .55, x: step === i ? 8 : 0 }} style={{ display: 'flex', gap: 12, alignItems: 'center', fontWeight: 700 }}>
             <span style={{ width: 32, height: 32, borderRadius: 16, display: 'grid', placeItems: 'center', background: step > i ? '#fff' : 'rgba(255,255,255,.2)', color: step > i ? 'var(--deep)' : '#fff' }}>{step > i ? <Icon name="check" size={16} /> : i + 1}</span>{t}
           </motion.div>
@@ -142,7 +203,7 @@ export function Signup() {
           {step === 0 ? (
             <motion.form key="d" {...slide} style={{ display: 'grid', gap: 14 }} onSubmit={(e) => { e.preventDefault(); setStep(1) }}>
               <div><h1>{params.get('complete') ? 'A few details' : 'Sign up'}</h1><p className="muted">Already have an account? <Link to={`/login?next=${encodeURIComponent(next)}`} style={{ color: 'var(--deep)', fontWeight: 700 }}>Sign in</Link></p></div>
-              {link ? <div className="notice">Google account {link.email} connected. Add your details and verify your mobile once.</div> : (
+              {link ? <div className="notice">Google account {link.email} connected. Add your details{otpOff ? ' and choose a password' : ' and verify your mobile once'}.</div> : (
                 <><GoogleButton onNew={(d) => { setLink(d); set({ name: f.name || d.name || '', email: f.email || d.email }) }} /><div className="or">or fill in the form</div></>
               )}
               <div className="field"><label htmlFor="name">Full name *</label><input id="name" className="input" required minLength={2} autoComplete="name" value={f.name} onChange={(e) => set({ name: e.target.value })} /></div>
@@ -162,19 +223,10 @@ export function Signup() {
             </motion.form>
           ) : (
             <motion.div key="v" {...slide} style={{ display: 'grid', gap: 14 }}>
-              <div><h1>Verify your mobile</h1><p className="muted">Hi {f.name.split(' ')[0]}, one last step.</p></div>
-              <OtpStep mobile={mobile} setMobile={setMobile} busy={busy} cta="Create my account" onVerified={async (code) => {
-                setBusy(true)
-                try {
-                  const r = await api.post<{ token: string; user: Me }>('/auth/register', {
-                    mobile, code, name: f.name, email: f.email || null, gender: f.gender || null, prant: f.prant,
-                    institution: f.institution || null, occupation: f.occupation, device_name: 'web', google_link_token: link?.link_token,
-                  })
-                  signIn(r.data.token, r.data.user)
-                  setStep(2)
-                  setTimeout(() => navigate(next), 1400)
-                } finally { setBusy(false) }
-              }} />
+              <div><h1>{otpOff ? 'Your mobile and a password' : 'Verify your mobile'}</h1><p className="muted">Hi {f.name.split(' ')[0]}, one last step.</p></div>
+              <OtpStep mobile={mobile} setMobile={setMobile} busy={busy} cta="Create my account" newPassword
+                onVerified={(code) => create({ code })}
+                onPassword={(password, confirm) => create({ password, password_confirmation: confirm })} />
               <button className="btn ghost" onClick={() => setStep(0)}><Icon name="back" size={16} /> Edit details</button>
             </motion.div>
           )}

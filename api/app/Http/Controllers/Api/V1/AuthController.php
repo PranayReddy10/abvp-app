@@ -81,9 +81,12 @@ class AuthController extends Controller
      */
     public function register(Request $request)
     {
+        $otpOn = SignInSettings::otpEnabled();
         $data = $request->validate([
             'mobile' => ['required', 'string', 'max:20'],
-            'code' => ['required', 'digits:'.config('abvp.otp.length')],
+            // With codes switched off (Settings → Sign-in) the account is protected by a password instead.
+            'code' => [$otpOn ? 'required' : 'nullable', 'digits:'.config('abvp.otp.length')],
+            'password' => [$otpOn ? 'nullable' : 'required', 'string', 'min:8', 'max:200', 'confirmed'],
             'name' => ['required', 'string', 'min:2', 'max:100'],
             'email' => ['nullable', 'email', 'max:190'],
             'gender' => ['nullable', 'in:male,female,other'],
@@ -96,10 +99,20 @@ class AuthController extends Controller
         $mobile = $this->mobile($request);
         $google = $request->filled('google_link_token') ? $this->readLinkToken($request->string('google_link_token')) : null;
 
-        $this->otp->verify($mobile, $request->string('code'));
-
-        $user = User::firstOrCreate(['mobile' => $mobile]);
+        if ($otpOn) {
+            $this->otp->verify($mobile, $request->string('code'));
+            $user = User::firstOrCreate(['mobile' => $mobile]);
+        } else {
+            // Without a code nobody has proved they own this number, so never touch an existing account.
+            if (User::where('mobile', $mobile)->exists()) {
+                throw new ApiException('ACCOUNT_EXISTS', 'This mobile number already has an account. Sign in with your password.', 409);
+            }
+            $user = User::create(['mobile' => $mobile]);
+        }
         $isNew = $user->wasRecentlyCreated;
+        if (! empty($data['password']) && ($isNew || $user->password === null)) {
+            $user->forceFill(['password' => $data['password'], 'password_set_at' => now()]);
+        }
         if ($user->status !== 'active') {
             throw new ApiException('ACCOUNT_SUSPENDED', 'This account is suspended. Contact your district office.', 403);
         }
@@ -116,7 +129,7 @@ class AuthController extends Controller
             $user->forceFill(['google_id' => $google['sub'], 'google_email' => $google['email']]);
         }
 
-        return $this->issue($request, $user, $isNew, ['google_linked' => (bool) $google]);
+        return $this->issue($request, $user, $isNew, ['google_linked' => (bool) $google], verified: $otpOn);
     }
 
     /**
@@ -147,9 +160,12 @@ class AuthController extends Controller
         ]);
     }
 
-    private function issue(Request $request, User $user, bool $isNew, array $extra = [])
+    private function issue(Request $request, User $user, bool $isNew, array $extra = [], bool $verified = true)
     {
-        $user->forceFill(['mobile_verified_at' => $user->mobile_verified_at ?? now(), 'last_login_at' => now()])->save();
+        $user->forceFill([
+            'mobile_verified_at' => $user->mobile_verified_at ?? ($verified ? now() : null),
+            'last_login_at' => now(),
+        ])->save();
         $token = $user->createToken($request->input('device_name', 'app'), ['*'], now()->addDays(60));
 
         return $this->ok([
@@ -196,7 +212,7 @@ class AuthController extends Controller
         }
         Audit::record('auth.password_login', $user);
 
-        return $this->issue($request, $user, false);
+        return $this->issue($request, $user, false, verified: false);
     }
 
     /** Set or change your password. Changing needs the current one; other signed-in devices are signed out. */

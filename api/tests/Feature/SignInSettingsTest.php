@@ -87,4 +87,29 @@ class SignInSettingsTest extends TestCase
         Setting::putMany(['sms.driver' => 'msg91', 'sms.msg91_key_secret' => 'k', 'sms.msg91_template' => 't']);
         $this->postJson('/api/v1/auth/send-otp', ['mobile' => '9876543210'])->assertStatus(503)->assertJsonPath('error.code', 'SMS_FAILED');
     }
+
+    public function test_with_codes_off_sign_up_uses_a_password_and_never_takes_over_an_account(): void
+    {
+        Setting::putMany(['auth.otp_enabled' => '0']);
+        $form = ['mobile' => '9876500001', 'name' => 'Sita Rao', 'prant' => 'Telangana', 'device_name' => 'web'];
+
+        $this->postJson('/api/v1/auth/register', $form)->assertStatus(422)->assertJsonStructure(['error' => ['fields' => ['password']]]);
+        $r = $this->postJson('/api/v1/auth/register', $form + ['password' => 'Delegate@26', 'password_confirmation' => 'Delegate@26'])
+            ->assertOk()->assertJsonPath('data.is_new_user', true)->assertJsonPath('data.user.has_password', true);
+        $this->assertNotEmpty($r->json('data.token'));
+        $this->assertNull(User::where('mobile', '+919876500001')->value('mobile_verified_at'));
+
+        // Same number again: refused, the first account is untouched.
+        $this->postJson('/api/v1/auth/register', ['name' => 'Someone Else', 'password' => 'Other@2026', 'password_confirmation' => 'Other@2026'] + $form)
+            ->assertStatus(409)->assertJsonPath('error.code', 'ACCOUNT_EXISTS');
+        $this->assertSame('Sita Rao', User::where('mobile', '+919876500001')->value('name'));
+
+        $this->postJson('/api/v1/auth/password', ['login' => '98765 00001', 'password' => 'Delegate@26'])->assertOk();
+    }
+
+    public function test_with_codes_on_sign_up_still_needs_the_code(): void
+    {
+        $this->postJson('/api/v1/auth/register', ['mobile' => '9876500002', 'name' => 'Ravi', 'password' => 'Delegate@26', 'password_confirmation' => 'Delegate@26'])
+            ->assertStatus(422)->assertJsonStructure(['error' => ['fields' => ['code']]]);
+    }
 }
