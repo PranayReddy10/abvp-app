@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\CircularController;
 use App\Http\Controllers\Api\V1\EventController;
 use App\Http\Controllers\Api\V1\FeedController;
 use App\Http\Controllers\Api\V1\GuideController;
+use App\Http\Controllers\Api\V1\DelegateController;
 use App\Http\Controllers\Api\V1\DirectoryController;
 use App\Http\Controllers\Api\V1\LogisticsController;
 use App\Http\Controllers\Api\V1\MediaController;
@@ -26,6 +27,7 @@ Route::prefix('v1')->group(function () {
     Route::middleware('throttle:otp')->group(function () {
         Route::post('auth/send-otp', [AuthController::class, 'sendOtp']);
         Route::post('auth/verify-otp', [AuthController::class, 'verifyOtp']);
+        Route::post('auth/register', [AuthController::class, 'register']);
     });
     Route::post('auth/google', [AuthController::class, 'google'])->middleware('throttle:20,1');
 
@@ -134,6 +136,9 @@ Route::prefix('v1')->group(function () {
 
         // Phase 6: community feed
         Route::get('me/guide-events', [GuideController::class, 'myEvents']);
+        Route::get('events/{event}/delegate', [DelegateController::class, 'show']);
+        Route::put('events/{event}/delegate', [DelegateController::class, 'save']);
+        Route::delete('events/{event}/delegate', [DelegateController::class, 'cancel']);
         Route::get('feed', [FeedController::class, 'feed']);
         Route::get('feed/trending', [FeedController::class, 'trending']);
         Route::post('posts', [FeedController::class, 'store'])->middleware('throttle:posts');

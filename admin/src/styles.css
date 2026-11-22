@@ -490,7 +490,7 @@ tbody tr:hover td { background: var(--surface-2) }
 
 /* Conference guide editor */
 .guide-admin { display: grid; gap: 16px }
-.guide-settings { grid-template-columns: minmax(260px, 1.4fr) repeat(3, minmax(0, 1fr)) auto; align-items: end; gap: 14px }
+.guide-settings { grid-template-columns: repeat(2, minmax(240px, 1.3fr)) repeat(3, minmax(0, 1fr)) auto; align-items: end; gap: 14px }
 .gs-switch { display: flex; gap: 14px; align-items: center }
 .gs-switch > div { display: grid } .gs-switch .muted { font-size: 13px }
 .switch { width: 52px; height: 30px; border-radius: 99px; border: 0; background: var(--line); position: relative; cursor: pointer; flex: none; transition: background .2s var(--ease) }

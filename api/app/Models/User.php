@@ -17,7 +17,7 @@ class User extends Authenticatable
     // Mirror the database defaults so a freshly created user is not read as blank.
     protected $attributes = ['locale' => 'en', 'status' => 'active'];
 
-    protected $fillable = ['name', 'mobile', 'email', 'locale', 'status', 'mobile_verified_at', 'last_login_at'];
+    protected $fillable = ['name', 'mobile', 'email', 'locale', 'status', 'mobile_verified_at', 'last_login_at', 'prant', 'institution', 'occupation', 'gender'];
 
     protected function casts(): array
     {

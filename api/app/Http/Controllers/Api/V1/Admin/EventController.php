@@ -147,7 +147,7 @@ class EventController extends Controller
         $this->guard($request, $event);
         $request->validate([
             'status' => ['nullable', 'in:registered,waitlisted,pending,cancelled,rejected,arrived,not_arrived'],
-            'kind' => ['nullable', 'in:member,guest'],
+            'kind' => ['nullable', 'in:member,guest,delegate'],
             'q' => ['nullable', 'string', 'max:60'],
         ]);
 
@@ -171,7 +171,7 @@ class EventController extends Controller
             'verified' => (bool) $r->user?->profile?->isVerified(),
             // Coordinators need to reach people on the day.
             'mobile' => $r->user?->mobile,
-            'place' => $r->kind === 'guest' ? $r->guest_organisation : $r->user?->profile?->orgUnit?->name,
+            'place' => in_array($r->kind, ['guest', 'delegate'], true) ? $r->guest_organisation : $r->user?->profile?->orgUnit?->name,
             'status' => $r->status,
             'registered_at' => $r->created_at?->toIso8601String(),
             'checked_in_at' => $r->checked_in_at?->toIso8601String(),
@@ -305,7 +305,7 @@ class EventController extends Controller
             'help_medical_open' => \App\Models\HelpRequest::where('event_id', $event->id)->where('status', '!=', 'resolved')->where('category', 'medical')->count(),
             'recent' => $recent->map(fn (Reg $r) => [
                 'name' => $r->displayName(), 'kind' => $r->kind, 'gate' => $r->gate,
-                'place' => $r->kind === 'guest' ? $r->guest_organisation : $r->user?->profile?->orgUnit?->name,
+                'place' => in_array($r->kind, ['guest', 'delegate'], true) ? $r->guest_organisation : $r->user?->profile?->orgUnit?->name,
                 'at' => $r->checked_in_at->toIso8601String(),
             ]),
             'updated_at' => now()->toIso8601String(),

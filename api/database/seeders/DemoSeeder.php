@@ -185,7 +185,7 @@ class DemoSeeder extends Seeder
             'org_unit_id' => $state->id, 'organiser_id' => $admin?->id ?? $members->first()->id, 'capacity' => 10000,
             'instructions' => 'Carry your pass and a photo ID. Your stay and help desks are in the Conference guide.',
             'contact_name' => 'Adhiveshan Karyalay', 'contact_phone' => '9000090000',
-            'guide_enabled' => true, 'venue_lat' => 17.3850, 'venue_lng' => 78.4867, 'helpline_phone' => '9000090000',
+            'guide_enabled' => true, 'delegate_registration_open' => true, 'venue_lat' => 17.3850, 'venue_lng' => 78.4867, 'helpline_phone' => '9000090000',
         ]);
         $event->forceFill(['status' => 'published', 'published_at' => now()->subDays(30)])->save();
         $event->forceFill(['cover_path' => $this->art('events/covers', 77)])->save();

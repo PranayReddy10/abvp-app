@@ -73,6 +73,8 @@ class GuideController extends Controller
                 'cover_url' => $e->cover_path ? URL::temporarySignedRoute('media.event', now()->addDay(), ['event' => $e->id]) : null,
                 'helpline' => $e->helpline_phone ?: $e->contact_phone,
                 'contact_name' => $e->contact_name,
+                'description' => $e->description,
+                'delegate_registration_open' => $e->delegate_registration_open,
             ],
             // The app opens the guide first from two days before the event until it ends.
             'open_first' => $now->gte($e->starts_at->copy()->subDays(2)) && $now->lt($e->ends_at),

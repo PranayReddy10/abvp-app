@@ -62,6 +62,50 @@ class AuthController extends Controller
     }
 
     /**
+     * Sign up from the website or app: basic details plus the SMS code. Works for anyone –
+     * conference guests included. Becoming a member is a separate application.
+     */
+    public function register(Request $request)
+    {
+        $data = $request->validate([
+            'mobile' => ['required', 'string', 'max:20'],
+            'code' => ['required', 'digits:'.config('abvp.otp.length')],
+            'name' => ['required', 'string', 'min:2', 'max:100'],
+            'email' => ['nullable', 'email', 'max:190'],
+            'gender' => ['nullable', 'in:male,female,other'],
+            'prant' => ['nullable', 'string', 'max:80'],
+            'institution' => ['nullable', 'string', 'max:150'],
+            'occupation' => ['nullable', 'string', 'max:80'],
+            'device_name' => ['nullable', 'string', 'max:60'],
+            'google_link_token' => ['nullable', 'string', 'max:2000'],
+        ]);
+        $mobile = $this->mobile($request);
+        $google = $request->filled('google_link_token') ? $this->readLinkToken($request->string('google_link_token')) : null;
+
+        $this->otp->verify($mobile, $request->string('code'));
+
+        $user = User::firstOrCreate(['mobile' => $mobile]);
+        $isNew = $user->wasRecentlyCreated;
+        if ($user->status !== 'active') {
+            throw new ApiException('ACCOUNT_SUSPENDED', 'This account is suspended. Contact your district office.', 403);
+        }
+        // Someone who already had an account keeps their details; only empty fields are filled.
+        foreach (['name', 'email', 'gender', 'prant', 'institution', 'occupation'] as $field) {
+            if (! empty($data[$field]) && ($isNew || empty($user->{$field}))) {
+                $user->{$field} = $data[$field];
+            }
+        }
+        if ($google) {
+            if (User::where('google_id', $google['sub'])->whereKeyNot($user->id)->exists()) {
+                throw new ApiException('GOOGLE_ALREADY_LINKED', 'This Google account is already linked to another mobile number.', 409);
+            }
+            $user->forceFill(['google_id' => $google['sub'], 'google_email' => $google['email']]);
+        }
+
+        return $this->issue($request, $user, $isNew, ['google_linked' => (bool) $google]);
+    }
+
+    /**
      * Sign in with Google. A Google account linked to a member signs in straight away. The first
      * time, the member verifies their mobile once (identity in ABVP Connect is the mobile number);
      * we return a short-lived link token that verify-otp uses to link the two.

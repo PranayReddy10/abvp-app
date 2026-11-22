@@ -19,6 +19,12 @@ class MeResource extends JsonResource
             'id' => $this->id,
             'name' => $this->profile?->full_name ?? $this->name,
             'mobile' => $this->mobile,
+            'email' => $this->email,
+            'prant' => $this->prant,
+            'institution' => $this->institution,
+            'occupation' => $this->occupation,
+            'gender' => $this->gender,
+            'is_member' => $this->isApprovedMember(),
             'locale' => $this->locale,
             'profile' => $this->profile ? new ProfileResource($this->profile) : null,
             'application' => $application ? [

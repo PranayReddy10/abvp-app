@@ -33,6 +33,7 @@ class GuideController extends Controller
                 'venue_lat' => $event->venue_lat,
                 'venue_lng' => $event->venue_lng,
                 'helpline_phone' => $event->helpline_phone,
+                'delegate_registration_open' => $event->delegate_registration_open,
             ],
             'kinds' => GuidePresenter::kinds(),
             'prants' => config('abvp.prants'),
@@ -48,7 +49,9 @@ class GuideController extends Controller
             'venue_lat' => ['nullable', 'numeric', 'between:-90,90'],
             'venue_lng' => ['nullable', 'numeric', 'between:-180,180'],
             'helpline_phone' => ['nullable', 'string', 'max:20', 'regex:/^[0-9+ -]{3,20}$/'],
+            'delegate_registration_open' => ['nullable', 'boolean'],
         ]);
+        $data['delegate_registration_open'] = (bool) ($data['delegate_registration_open'] ?? $event->delegate_registration_open);
         $before = $event->only(array_keys($data));
         $event->fill($data)->save();
         Audit::record('event.guide_settings', $event, $before, $data);

@@ -13,7 +13,7 @@ interface Item {
 }
 interface Kind { kind: string; title: string; hindi: string }
 interface Guide {
-  settings: { guide_enabled: boolean; venue_lat: number | null; venue_lng: number | null; helpline_phone: string | null }
+  settings: { guide_enabled: boolean; delegate_registration_open?: boolean; venue_lat: number | null; venue_lng: number | null; helpline_phone: string | null }
   kinds: Kind[]; prants: string[]; items: Item[]
 }
 
@@ -119,16 +119,16 @@ export default function GuideTab({ id }: { id: number }) {
 }
 
 function Settings({ guide, id, onSaved }: { guide: Guide; id: number; onSaved: (m: string) => void }) {
-  const [s, setS] = useState({ guide_enabled: guide.settings.guide_enabled, venue_lat: guide.settings.venue_lat?.toString() ?? '', venue_lng: guide.settings.venue_lng?.toString() ?? '', helpline_phone: guide.settings.helpline_phone ?? '' })
+  const [s, setS] = useState({ guide_enabled: guide.settings.guide_enabled, delegate_registration_open: !!guide.settings.delegate_registration_open, venue_lat: guide.settings.venue_lat?.toString() ?? '', venue_lng: guide.settings.venue_lng?.toString() ?? '', helpline_phone: guide.settings.helpline_phone ?? '' })
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<unknown>(null)
-  async function save(e?: FormEvent, enabled = s.guide_enabled) {
+  async function save(e?: FormEvent, enabled = s.guide_enabled, delegates = s.delegate_registration_open) {
     e?.preventDefault()
     setBusy(true)
     setErr(null)
     try {
-      await api.put(`/admin/events/${id}/guide/settings`, { guide_enabled: enabled, venue_lat: s.venue_lat || null, venue_lng: s.venue_lng || null, helpline_phone: s.helpline_phone || null })
-      onSaved(enabled ? 'Guide is on. Everyone who opens the app sees it.' : 'Guide saved. It stays hidden from delegates until you switch it on.')
+      await api.put(`/admin/events/${id}/guide/settings`, { guide_enabled: enabled, delegate_registration_open: delegates, venue_lat: s.venue_lat || null, venue_lng: s.venue_lng || null, helpline_phone: s.helpline_phone || null })
+      onSaved(`${enabled ? 'Guide is on.' : 'Guide is off.'} Delegate registration is ${delegates ? 'open on the website and app' : 'closed'}.`)
     } catch (x) { setErr(x) } finally { setBusy(false) }
   }
   return (
@@ -137,6 +137,11 @@ function Settings({ guide, id, onSaved }: { guide: Guide; id: number; onSaved: (
         <button type="button" role="switch" aria-checked={s.guide_enabled} className={`switch ${s.guide_enabled ? 'on' : ''}`} disabled={busy}
           onClick={() => { const v = !s.guide_enabled; setS({ ...s, guide_enabled: v }); save(undefined, v) }}><i /></button>
         <div><b>Conference guide {s.guide_enabled ? 'is on' : 'is off'}</b><span className="muted">{s.guide_enabled ? 'Everyone who opens the app sees it – no sign-in needed.' : 'Fill it in first; switch on when ready.'}</span></div>
+      </div>
+      <div className="gs-switch">
+        <button type="button" role="switch" aria-checked={s.delegate_registration_open} className={`switch ${s.delegate_registration_open ? 'on' : ''}`} disabled={busy}
+          onClick={() => { const v = !s.delegate_registration_open; setS({ ...s, delegate_registration_open: v }); save(undefined, s.guide_enabled, v) }}><i /></button>
+        <div><b>Delegate registration {s.delegate_registration_open ? 'is open' : 'is closed'}</b><span className="muted">{s.delegate_registration_open ? 'Anyone can register on abvpconnect.org and get a pass.' : 'Open it when the form should go live.'}</span></div>
       </div>
       <div className="field"><label htmlFor="g-hl">Helpline</label><input id="g-hl" className="input" placeholder="24x7 number" value={s.helpline_phone} onChange={(e) => setS({ ...s, helpline_phone: e.target.value })} /></div>
       <div className="field"><label htmlFor="g-lat">Venue latitude</label><input id="g-lat" className="input" inputMode="decimal" placeholder="17.385" value={s.venue_lat} onChange={(e) => setS({ ...s, venue_lat: e.target.value })} /></div>

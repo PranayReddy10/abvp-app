@@ -15,12 +15,12 @@ class EventRegistration extends Model
 
     protected $fillable = [
         'event_id', 'user_id', 'kind', 'status', 'guest_name', 'guest_organisation', 'invited_by',
-        'decision_note', 'checked_in_at', 'checked_in_by', 'gate', 'check_in_method',
+        'decision_note', 'checked_in_at', 'checked_in_by', 'gate', 'check_in_method', 'details',
     ];
 
     protected function casts(): array
     {
-        return ['checked_in_at' => 'datetime'];
+        return ['checked_in_at' => 'datetime', 'details' => 'array'];
     }
 
     public function event(): BelongsTo

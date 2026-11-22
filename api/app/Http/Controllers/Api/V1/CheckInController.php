@@ -54,7 +54,7 @@ class CheckInController extends Controller
             'pass_id' => base_convert((string) $r->id, 10, 36),
             'name' => $r->displayName(),
             'kind' => $r->kind,
-            'place' => $r->kind === 'guest' ? $r->guest_organisation : $r->user?->profile?->orgUnit?->name,
+            'place' => in_array($r->kind, ['guest', 'delegate'], true) ? $r->guest_organisation : $r->user?->profile?->orgUnit?->name,
             'checked_in' => $r->checked_in_at !== null,
         ]), meta: ['generated_at' => now()->toIso8601String()]);
     }
@@ -146,7 +146,7 @@ class CheckInController extends Controller
             'kind' => $reg->kind,
             'member_id' => $reg->kind === 'member' ? $profile?->member_id : null,
             'verified' => (bool) $profile?->isVerified(),
-            'place' => $reg->kind === 'guest' ? $reg->guest_organisation : $profile?->orgUnit?->name,
+            'place' => in_array($reg->kind, ['guest', 'delegate'], true) ? $reg->guest_organisation : $profile?->orgUnit?->name,
             'photo_url' => $profile?->photo_path ? URL::temporarySignedRoute('media.photo', now()->addMinutes(10), ['profile' => $profile->id]) : null,
             'checked_in_at' => $reg->checked_in_at?->toIso8601String(),
             'gate' => $reg->gate,
