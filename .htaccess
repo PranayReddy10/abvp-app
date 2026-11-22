@@ -1,9 +1,10 @@
 # Hostinger (Apache/LiteSpeed): serve index.html for every app route.
 Options -MultiViews
 RewriteEngine On
-# The API and admin code may sit in folders under this one on shared hosting: never serve them here.
-RewriteRule ^(api|admin|web|src|public|node_modules|vendor|storage)(/|$) - [F,L]
-RewriteRule ^(composer\.(json|lock)|package(-lock)?\.json|artisan|vite\.config\.ts|tsconfig.*\.json|eslint\.config\.js)$ - [F,L]
+# This branch is cloned straight into public_html: the API, admin, source and docs folders sit under this one. Never serve them (or dot-files like .git) from the main domain.
+RewriteRule ^(api|admin|source|docs|web|src|public|node_modules|vendor|storage)(/|$) - [F,L]
+RewriteRule ^(README\.md|build\.sh|composer\.(json|lock)|package(-lock)?\.json|artisan|vite\.config\.ts|tsconfig.*\.json|eslint\.config\.js)$ - [F,L]
+RewriteRule (^|/)\.(?!well-known) - [F,L]
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^ index.html [QSA,L]

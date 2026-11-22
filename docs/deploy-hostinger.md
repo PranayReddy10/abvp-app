@@ -3,9 +3,9 @@
 This fits a Hostinger **Premium or Business** shared plan (PHP 8.3, SSH, cron, MySQL). Nothing here needs a server that stays running.
 
 ```
-abvpconnect.org        ->  static files from web/dist   (public website)
-admin.abvpconnect.org  ->  static files from admin/dist
-api.abvpconnect.org    ->  api/public  (Laravel)
+abvpconnect.org        ->  public_html            (the repository root: built website)
+admin.abvpconnect.org  ->  public_html/admin      (built admin panel)
+api.abvpconnect.org    ->  public_html/api/public (Laravel)
 MySQL                 ->  Hostinger's own database on the same account
 Photos                ->  DigitalOcean Spaces (optional at first; local private storage works for the pilot)
 Cron (every minute)   ->  php artisan schedule:run
@@ -23,10 +23,10 @@ In hPanel:
 
 In **Domains › Subdomains**, create `api` and `admin`. Then change each one's document root:
 
-- `api.abvpconnect.org` → `/home/USER/domains/abvpconnect.org/abvp-app/api/public`
-- `admin.abvpconnect.org` → `/home/USER/domains/abvpconnect.org/public_html/admin` (or wherever you upload `admin/dist`)
+- `api.abvpconnect.org` → `/home/USER/domains/abvpconnect.org/public_html/api/public`
+- `admin.abvpconnect.org` → `/home/USER/domains/abvpconnect.org/public_html/admin`
 
-The Laravel code (including `.env`) must stay outside any public folder. Only `api/public` is served.
+The `main` branch is cloned straight into `public_html` (see "Deploy with git over SSH" below). The website's `.htaccess` at the root refuses `/api`, `/admin`, `/source`, `/docs` and dot-files on the main domain, so the Laravel code, `.env` and logs are never served from `abvpconnect.org`. Only `api/public` is served, on its own sub-domain.
 
 Turn on **SSL** for both sub-domains (free Let's Encrypt in hPanel).
 
@@ -35,9 +35,9 @@ Turn on **SSL** for both sub-domains (free Let's Encrypt in hPanel).
 Over SSH:
 
 ```bash
-cd ~/domains/abvpconnect.org
-git clone https://github.com/PranayReddy10/abvp-app.git
-cd abvp-app/api
+cd ~/domains/abvpconnect.org/public_html     # empty it first, keep nothing from earlier uploads
+git clone https://github.com/PranayReddy10/abvp-app.git .
+cd api
 composer install --no-dev --optimize-autoloader
 cp .env.example .env
 php artisan key:generate
@@ -97,36 +97,25 @@ Do **not** run `db:seed --class=DemoSeeder` on the live server: it is sample dat
 In **Advanced › Cron Jobs**, add a job that runs every minute:
 
 ```
-cd /home/USER/domains/abvpconnect.org/abvp-app/api && php artisan schedule:run >> /dev/null 2>&1
+cd /home/USER/domains/abvpconnect.org/public_html/api && php artisan schedule:run >> /dev/null 2>&1
 ```
 
 This clears old OTP codes and expired sign-ins, and sends meeting reminders (a day before and 15 minutes before). Without it, reminders do not go out.
 
 ## 5. Admin panel
 
-On your own computer:
-
-```bash
-cd admin
-echo "VITE_API_URL=https://api.abvpconnect.org/api/v1" > .env.production
-npm ci
-npm run build
-```
-
-Upload everything inside `admin/dist` (including the hidden `.htaccess`) to the admin sub-domain's folder with hPanel's File Manager or SFTP.
+The built admin panel is committed in `admin/`, so `git pull` puts it in `public_html/admin`. Nothing to build on the server. To change it, edit `source/admin` and run `./build.sh` on your computer (next section).
 
 ## 6. Public website (abvpconnect.org)
 
-On your own computer:
+The built website is the repository root (`index.html`, `.htaccess`, `assets/`, `fonts/`, `img/`). After changing `source/web` or `source/admin`, on your own computer:
 
 ```bash
-cd web
-cp .env.example .env.production     # set VITE_API_URL (and VITE_GOOGLE_CLIENT_ID if using Google)
-npm ci
-npm run build
+./build.sh                                   # API https://api.abvpconnect.org/api/v1
+VITE_GOOGLE_CLIENT_ID=<web client ID> ./build.sh   # with Google sign-in
 ```
 
-Upload everything inside `web/dist` (including the hidden `.htaccess`) to the main domain's `public_html`. The `.htaccess` makes links like `/guide/5` work on refresh. Add `https://abvpconnect.org` to the Google OAuth web client's Authorised JavaScript origins if Google sign-in is used, and make sure `WEB_URL` in the API's `.env` lists the site's address.
+Commit and push to `main`, then `git pull` on the server. The `.htaccess` makes links like `/guide/5` work on refresh. Add `https://abvpconnect.org` to the Google OAuth web client's Authorised JavaScript origins if Google sign-in is used, and make sure `WEB_URL` in the API's `.env` lists the site's address.
 
 ## 7. Mobile app
 
@@ -159,7 +148,7 @@ Members can tap **Continue with Google** in the app, the website and the admin p
    - **Android** with the app's package name and the SHA-1 of your Play signing key (from the Play Console).
    - **iOS**, if you publish on iPhone.
 2. API `.env`: put every client ID, comma separated, in `GOOGLE_CLIENT_IDS`, then `php artisan config:cache`.
-3. Admin and website builds: add `VITE_GOOGLE_CLIENT_ID=<web client ID>` to `admin/.env.production` and `web/.env.production`, and rebuild.
+3. Admin and website builds: run `VITE_GOOGLE_CLIENT_ID=<web client ID> ./build.sh`, commit and push.
 4. App build: add `--dart-define=GOOGLE_SERVER_CLIENT_ID=<web client ID>` to the `flutter build` command. For iOS also add the iOS client's reversed ID as a URL scheme in `ios/Runner/Info.plist` (see the google_sign_in package README).
 
 Until these are set, the Google button explains that it is not switched on yet, and mobile sign-in works as before. The API checks each Google token with Google over HTTPS, which Hostinger allows.
@@ -177,8 +166,20 @@ The secret is stored encrypted with `APP_KEY` (keep that key safe; if it changes
 
 ## Updating
 
+### Deploy with git over SSH
+
+First time (the folder must be empty apart from what Hostinger puts there):
+
 ```bash
-cd ~/domains/abvpconnect.org/abvp-app && git pull
+cd ~/domains/abvpconnect.org/public_html
+git init && git remote add origin git@github.com:PranayReddy10/abvp-app.git
+git fetch origin main && git checkout -f -B main origin/main
+```
+
+Every update:
+
+```bash
+cd ~/domains/abvpconnect.org/public_html && git pull origin main
 cd api && composer install --no-dev --optimize-autoloader && php artisan migrate --force && php artisan optimize
 ```
 

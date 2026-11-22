@@ -5,12 +5,16 @@ One app for every karyakarta: membership, profiles, Vibhags, meetings and events
 | Where | What it is | Built with | Runs on |
 |---|---|---|---|
 | `api/` | The server and database rules | Laravel 13, PHP 8.3 | Hostinger shared hosting, `api.abvpconnect.org` |
-| `admin/` | Web admin panel for state, district and Vibhag offices | React 19, Vite | Static files on Hostinger, `admin.abvpconnect.org` |
-| `web/` | Public website: conference guide, sign-up, delegate registration, passes, help desk, community | React 19, Vite, Framer Motion | Static files on Hostinger, `abvpconnect.org` |
+| `source/admin/` | Code of the web admin panel for state, district and Vibhag offices | React 19, Vite | Built into `admin/`, served at `admin.abvpconnect.org` |
+| `source/web/` | Code of the public website: conference guide, sign-up, delegate registration, passes, help desk, community | React 19, Vite, Framer Motion | Built into the repository root, served at `abvpconnect.org` |
+| root files, `assets/`, `fonts/`, `img/` | The **built** website (`index.html` and friends) | made by `./build.sh` | `public_html` |
+| `admin/` | The **built** admin panel | made by `./build.sh` | `public_html/admin` |
 | **`mobile` branch** | Android and iOS app (the `mobile/` folder lives only on the `mobile` branch) | Flutter 3.47 | Play Store and App Store |
 | `docs/` | Design vision, deployment guide, guide for leads (PDF) | | |
 
 The app's code is kept on its own branch: `git checkout mobile`. The API, admin panel and website on this branch are what the app talks to; the app's features are described below because they use the same API.
+
+**Deploying:** this repository is cloned straight into `public_html` on Hostinger, so the root *is* the website. After changing anything in `source/`, run `./build.sh`, commit and push to `main`, then `git pull` on the server. Never edit the built files by hand.
 
 The design vision is in [`docs/design/design-vision.html`](docs/design/design-vision.html). Hosting steps are in [`docs/deploy-hostinger.md`](docs/deploy-hostinger.md).
 
@@ -158,7 +162,7 @@ cd api && php artisan test
 ### Admin panel
 
 ```bash
-cd admin
+cd source/admin
 cp .env.example .env
 npm install
 npm run dev
@@ -169,7 +173,7 @@ Open http://localhost:5173 and sign in with the mobile number you made admin.
 ### Website
 
 ```bash
-cd web
+cd source/web
 npm install
 npm run dev
 ```
