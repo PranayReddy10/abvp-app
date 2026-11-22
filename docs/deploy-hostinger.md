@@ -78,6 +78,20 @@ php artisan config:cache
 php artisan route:cache
 ```
 
+### Fill the empty database
+
+`php artisan migrate --seed --force` only adds states, districts and Vibhags. Then:
+
+```bash
+php artisan abvp:make-admin 98XXXXXXXX "Your Name"        # the first super admin
+php artisan abvp:setup-conference --helpline=98XXXXXXXX \
+  --start="2026-12-26 09:00" --days=3 --venue="Venue name, Hyderabad" --lat=17.385 --lng=78.4867
+```
+
+The second command creates the national conference with the guide already laid out: Hyderabad's airport, stations and bus stands (with map pins), the emergency numbers 108/112/181, the usual offices and tourist places. It adds **no sample people**. Organisers then fill stays, food stalls, sessions, hall emergency leads and desk leads in the admin panel (Events → the conference → Guide) and switch on the guide and delegate registration when ready.
+
+Do **not** run `db:seed --class=DemoSeeder` on the live server: it is sample data with made-up names and numbers, and it refuses to run when `APP_ENV=production`. To see the demo, use your own computer or a separate test copy with `APP_ENV=local`.
+
 ## 4. Cron
 
 In **Advanced › Cron Jobs**, add a job that runs every minute:
