@@ -19,11 +19,15 @@ class User extends Authenticatable
 
     protected $fillable = ['name', 'mobile', 'email', 'locale', 'status', 'mobile_verified_at', 'last_login_at', 'prant', 'institution', 'occupation', 'gender'];
 
+    protected $hidden = ['password', 'remember_token'];
+
     protected function casts(): array
     {
         return [
             'mobile_verified_at' => 'datetime',
             'last_login_at' => 'datetime',
+            'password' => 'hashed',
+            'password_set_at' => 'datetime',
         ];
     }
 

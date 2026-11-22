@@ -18,9 +18,10 @@ class MakeSuperAdmin extends Command
         {mobile : 10-digit mobile number}
         {name : Full name}
         {--role=super_admin : Role to give}
-        {--unit= : Org unit id for the scope (defaults to the national unit)}';
+        {--unit= : Org unit id for the scope (defaults to the national unit)}
+        {--password : Also set a password for the admin panel (you will be asked for it)}';
 
-    protected $description = 'Create or promote an administrator who signs in with OTP';
+    protected $description = 'Create or promote an administrator (signs in with a mobile code, or a password with --password)';
 
     public function handle(MemberIdGenerator $ids): int
     {
@@ -48,8 +49,19 @@ class MakeSuperAdmin extends Command
             return self::FAILURE;
         }
 
-        DB::transaction(function () use ($mobile, $unit, $role, $ids) {
+        $password = null;
+        if ($this->option('password')) {
+            $password = SetPassword::askNew($this);
+            if ($password === null) {
+                return self::FAILURE;
+            }
+        }
+
+        DB::transaction(function () use ($mobile, $unit, $role, $ids, $password) {
             $user = User::firstOrCreate(['mobile' => $mobile], ['name' => $this->argument('name')]);
+            if ($password !== null) {
+                $user->forceFill(['password' => $password, 'password_set_at' => now()])->save();
+            }
 
             $profile = $user->profile ?? new MemberProfile;
             $profile->user_id = $user->id;
@@ -65,7 +77,7 @@ class MakeSuperAdmin extends Command
                 ['starts_on' => now()->toDateString()],
             );
 
-            $this->info("{$this->argument('name')} ({$mobile}) is now {$role} for {$unit->name}. Member ID {$profile->member_id}.");
+            $this->info("{$this->argument('name')} ({$mobile}) is now {$role} for {$unit->name}. Member ID {$profile->member_id}.".($password !== null ? ' Password set: sign in to the admin panel with this mobile number and the password.' : ''));
         });
 
         return self::SUCCESS;

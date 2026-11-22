@@ -18,7 +18,7 @@ export interface Profile {
 }
 
 export interface Me {
-  id: number; name: string | null; mobile: string; locale: string
+  id: number; name: string | null; mobile: string; locale: string; has_password?: boolean
   profile: Profile | null; roles: Role[]; permissions: string[]
 }
 

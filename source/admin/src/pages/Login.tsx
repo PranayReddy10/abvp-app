@@ -6,7 +6,9 @@ import { ErrorBox } from '../components/ui'
 
 export default function Login() {
   const { signIn } = useAuth()
+  const [mode, setMode] = useState<'password' | 'code'>('password')
   const [mobile, setMobile] = useState('')
+  const [password, setPassword] = useState('')
   const [code, setCode] = useState('')
   const [sentTo, setSentTo] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -60,6 +62,15 @@ export default function Login() {
     } catch (err) { setError(err) } finally { setBusy(false) }
   }
 
+  async function passwordLogin(e: FormEvent) {
+    e.preventDefault()
+    setBusy(true); setError(null)
+    try {
+      const r = await api.post<{ token: string; user: Me }>('/auth/password', { login: mobile, password, device_name: 'admin-web' })
+      await finish(r.data.token, r.data.user)
+    } catch (err) { setError(err) } finally { setBusy(false) }
+  }
+
   async function verify(e: FormEvent) {
     e.preventDefault()
     setBusy(true); setError(null)
@@ -86,7 +97,28 @@ export default function Login() {
         <ErrorBox error={error} />
         {link && <div className="notice" role="status">Google account {link.email} is new here. Verify your mobile once to link it – next time Google signs you straight in.</div>}
         {note && !link && <div className="hint-box" role="status">{note}</div>}
-        {!sentTo ? (
+        {!sentTo && !link && (
+          <div className="login-tabs" role="tablist" aria-label="How to sign in">
+            <button type="button" role="tab" aria-selected={mode === 'password'} className={mode === 'password' ? 'on' : ''} onClick={() => { setMode('password'); setError(null) }}>Password</button>
+            <button type="button" role="tab" aria-selected={mode === 'code'} className={mode === 'code' ? 'on' : ''} onClick={() => { setMode('code'); setError(null) }}>Code on mobile</button>
+          </div>
+        )}
+        {mode === 'password' && !sentTo && !link ? (
+          <form onSubmit={passwordLogin} style={{ display: 'grid', gap: 12 }}>
+            <div className="field">
+              <label htmlFor="login">Mobile number</label>
+              <input id="login" className="input" inputMode="tel" autoComplete="username" placeholder="98480 12345"
+                value={mobile} onChange={(e) => setMobile(e.target.value)} required />
+            </div>
+            <div className="field">
+              <label htmlFor="password">Password</label>
+              <input id="password" className="input" type="password" autoComplete="current-password"
+                value={password} onChange={(e) => setPassword(e.target.value)} required />
+            </div>
+            <button className="btn primary" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button>
+            <small className="muted">No password yet? Sign in once with <a href="#" onClick={(e) => { e.preventDefault(); setMode('code') }}>a code on your mobile</a>, then set one under My account.</small>
+          </form>
+        ) : !sentTo ? (
           <form onSubmit={send} style={{ display: 'grid', gap: 12 }}>
             <div className="field">
               <label htmlFor="mobile">Mobile number</label>

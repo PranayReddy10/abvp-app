@@ -39,6 +39,12 @@ class AppServiceProvider extends ServiceProvider
             ];
         });
 
+        // Password sign-in: 5 tries per account every 10 minutes, 20 per IP per hour.
+        RateLimiter::for('password', fn (Request $request) => [
+            Limit::perMinutes(10, 5)->by('pw:'.strtolower(trim((string) $request->input('login')))),
+            Limit::perHour(20)->by('pw-ip:'.$request->ip()),
+        ]);
+
         // Posting and replying: 10 every 10 minutes per member.
         RateLimiter::for('posts', fn (Request $request) => Limit::perMinutes(10, 10)->by('posts:'.$request->user()?->id));
 

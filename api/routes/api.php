@@ -30,6 +30,7 @@ Route::prefix('v1')->group(function () {
         Route::post('auth/register', [AuthController::class, 'register']);
     });
     Route::post('auth/google', [AuthController::class, 'google'])->middleware('throttle:20,1');
+    Route::post('auth/password', [AuthController::class, 'passwordLogin'])->middleware('throttle:password');
 
     // Lookups for the application form
     Route::get('org/units', [OrganisationController::class, 'units']);
@@ -60,6 +61,7 @@ Route::prefix('v1')->group(function () {
     Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         Route::get('auth/me', [AuthController::class, 'me']);
         Route::post('auth/logout', [AuthController::class, 'logout']);
+        Route::put('me/password', [AuthController::class, 'setPassword']);
 
         Route::get('me/profile', [ProfileController::class, 'show']);
         Route::patch('me/profile', [ProfileController::class, 'update']);

@@ -147,7 +147,7 @@ composer install
 php artisan key:generate
 touch database/database.sqlite
 php artisan migrate --seed
-php artisan abvp:make-admin 9848012345 "Your Name"
+php artisan abvp:make-admin 9848012345 "Your Name" --password   # asks for an admin panel password
 php artisan serve
 ```
 

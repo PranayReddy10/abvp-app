@@ -73,17 +73,26 @@ Then:
 
 ```bash
 php artisan migrate --force --seed
-php artisan abvp:make-admin 98XXXXXXXX "First Admin Name"
+php artisan abvp:make-admin 98XXXXXXXX "First Admin Name" --password
 php artisan config:cache
 php artisan route:cache
 ```
+
+### Admin sign-in
+
+The admin panel offers two ways in:
+
+- **Password:** mobile number + password. `--password` on `abvp:make-admin` asks for one (typed twice, hidden). Any admin can set or change theirs later under **My account** in the panel; changing it signs out their other devices. 5 wrong tries lock that account for 10 minutes.
+- **Code on mobile:** a 6-digit SMS code (needs SMS set up, section 8).
+
+Forgotten password: `php artisan abvp:set-password 98XXXXXXXX` (asks for the new one and signs the account out everywhere). To give someone else admin access, make them an admin in **Admins and roles**; they sign in once with a code, or you run `abvp:set-password` for them, and they set their own password under My account.
 
 ### Fill the empty database
 
 `php artisan migrate --seed --force` only adds states, districts and Vibhags. Then:
 
 ```bash
-php artisan abvp:make-admin 98XXXXXXXX "Your Name"        # the first super admin
+php artisan abvp:make-admin 98XXXXXXXX "Your Name" --password   # the first super admin; asks for a password
 php artisan abvp:setup-conference --helpline=98XXXXXXXX \
   --start="2026-12-26 09:00" --days=3 --venue="Venue name, Hyderabad" --lat=17.385 --lng=78.4867
 ```

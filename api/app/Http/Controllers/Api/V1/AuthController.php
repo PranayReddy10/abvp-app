@@ -8,9 +8,12 @@ use App\Models\User;
 use App\Services\GoogleIdToken;
 use App\Services\OtpService;
 use App\Support\ApiException;
+use App\Services\Audit;
 use App\Support\Mobile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
@@ -158,6 +161,50 @@ class AuthController extends Controller
         }
 
         return ['sub' => (string) $data['sub'], 'email' => (string) ($data['email'] ?? '')];
+    }
+
+    /** Mobile (or email) and password. Only accounts that have set a password; mainly admins in the admin panel. */
+    public function passwordLogin(Request $request)
+    {
+        $request->validate([
+            'login' => ['required', 'string', 'max:120'],
+            'password' => ['required', 'string', 'max:200'],
+            'device_name' => ['nullable', 'string', 'max:60'],
+        ]);
+        $login = trim((string) $request->input('login'));
+        $mobile = Mobile::normalize($login);
+        $user = $mobile
+            ? User::where('mobile', $mobile)->first()
+            : User::whereNotNull('password')->where('email', strtolower($login))->first();
+
+        if (! $user || $user->password === null || ! Hash::check($request->string('password'), $user->password)) {
+            throw new ApiException('WRONG_PASSWORD', 'Mobile number or password is wrong. You can also sign in with a code on your mobile.', 422);
+        }
+        if ($user->status !== 'active') {
+            throw new ApiException('ACCOUNT_SUSPENDED', 'This account is suspended. Contact your district office.', 403);
+        }
+        Audit::record('auth.password_login', $user);
+
+        return $this->issue($request, $user, false);
+    }
+
+    /** Set or change your password. Changing needs the current one; other signed-in devices are signed out. */
+    public function setPassword(Request $request)
+    {
+        $user = $request->user();
+        $request->validate([
+            'current_password' => [$user->password ? 'required' : 'nullable', 'string', 'max:200'],
+            'password' => ['required', 'string', 'min:8', 'max:200', 'confirmed'],
+        ]);
+        if ($user->password && ! Hash::check($request->string('current_password'), $user->password)) {
+            throw ValidationException::withMessages(['current_password' => 'Your current password is wrong.']);
+        }
+        $user->forceFill(['password' => $request->string('password')->toString(), 'password_set_at' => now()])->save();
+        $current = $user->currentAccessToken();
+        $user->tokens()->when($current?->id, fn ($q, $id) => $q->whereKeyNot($id))->delete();
+        Audit::record('auth.password_set', $user);
+
+        return $this->ok(['has_password' => true]);
     }
 
     public function me(Request $request)

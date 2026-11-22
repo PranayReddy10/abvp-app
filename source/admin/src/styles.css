@@ -557,3 +557,9 @@ tbody tr:hover td { background: var(--surface-2) }
 .bubble.us { justify-self: end; background: var(--saffron); color: #fff; border-bottom-right-radius: 6px }
 .bubble.us small { color: rgba(255,255,255,.8) }
 .bubble .by { font-weight: 700 }
+
+/* Sign-in: password or code on mobile */
+.login-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line) }
+.login-tabs button { border: 0; background: transparent; padding: 9px 10px; border-radius: 9px; font: inherit; font-weight: 600; font-size: 14px; color: var(--muted); cursor: pointer; transition: background .2s, color .2s, box-shadow .2s }
+.login-tabs button.on { background: var(--surface); color: var(--ink); box-shadow: 0 1px 4px rgba(0,0,0,.12) }
+.login-tabs button:focus-visible { outline: 2px solid var(--saffron); outline-offset: 1px }
