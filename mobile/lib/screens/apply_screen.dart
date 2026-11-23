@@ -121,8 +121,40 @@ class _ApplyScreenState extends State<ApplyScreen> {
     if (x != null) setState(() => _photo = File(x.path));
   }
 
-  Future<void> _submit() async {
+  /// Save details (and area, photo, Vibhags) without applying.
+  Future<void> _saveOnly() => _submit(apply: false);
+
+  Future<void> _submit({bool apply = true}) async {
     if (!_form.currentState!.validate()) return;
+    if (!apply) {
+      final areaId =
+          (_unit ?? _district)?.id ?? widget.session.me?.profile?.orgUnitId;
+      setState(() {
+        _busy = true;
+        _error = null;
+      });
+      try {
+        await api.patch('/me/profile', {
+          'full_name': _name.text.trim(),
+          if (_dob != null)
+            'date_of_birth': DateFormat('yyyy-MM-dd').format(_dob!),
+          'gender': _gender,
+          'org_unit_id': ?areaId,
+          'institution': _institution.text.trim(),
+          'course': _course.text.trim(),
+          'study_year': _year.text.trim(),
+          'vibhag_ids': _chosenVibhags.toList(),
+        });
+        if (_photo != null) await api.upload('/me/photo', 'photo', _photo!);
+        widget.session.editApplication(false);
+        await widget.session.refresh();
+      } on ApiException catch (e) {
+        setState(() => _error = e.message);
+      } finally {
+        if (mounted) setState(() => _busy = false);
+      }
+      return;
+    }
     if (_dob == null) {
       return setState(() => _error = 'Choose your date of birth.');
     }
@@ -169,13 +201,12 @@ class _ApplyScreenState extends State<ApplyScreen> {
     final existingArea = widget.session.me?.profile?.orgUnitLabel;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Apply for membership'),
-        actions: [
-          TextButton(
-            onPressed: widget.session.signOut,
-            child: const Text('Sign out'),
-          ),
-        ],
+        leading: IconButton(
+          tooltip: 'Close',
+          icon: const Icon(Icons.close),
+          onPressed: () => widget.session.editApplication(false),
+        ),
+        title: const Text('Your details'),
       ),
       body: Form(
         key: _form,
@@ -359,6 +390,11 @@ class _ApplyScreenState extends State<ApplyScreen> {
             FilledButton(
               onPressed: _busy ? null : _submit,
               child: Text(_busy ? 'Submitting…' : 'Submit application'),
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton(
+              onPressed: _busy ? null : _saveOnly,
+              child: const Text('Only save my details'),
             ),
           ],
         ),

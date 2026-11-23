@@ -6,6 +6,7 @@ import '../l10n.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/motion.dart';
+import '../widgets/password_sheet.dart';
 import 'duties_screen.dart';
 import 'help_screen.dart';
 import 'scanner_screen.dart';
@@ -303,6 +304,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   )
                   .toList(),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.lock_outline, color: AppColors.saffron),
+              title: Text(
+                me.hasPassword ? tr('me.passwordChange') : tr('me.passwordSet'),
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+              subtitle: Text(tr('me.passwordHint')),
+              trailing: const Icon(Icons.chevron_right_rounded),
+              onTap: () async {
+                await showPasswordSheet(context, widget.session);
+                if (mounted) setState(() {});
+              },
             ),
           ),
           const SizedBox(height: 16),

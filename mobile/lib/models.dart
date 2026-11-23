@@ -126,5 +126,7 @@ class Me {
       : Application(json['application'] as Map<String, dynamic>);
   bool get isMember => profile?.status == 'approved';
   bool get isGuest => json['is_guest'] == true;
+  bool get hasPassword => json['has_password'] == true;
+  String? get email => json['email'] as String?;
   bool get canCheckIn => json['can_check_in'] == true;
 }

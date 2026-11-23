@@ -4,6 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'api/api_client.dart';
 import 'l10n.dart';
 import 'screens/apply_screen.dart';
+import 'screens/account_shell.dart';
 import 'screens/guest_shell.dart';
 import 'screens/member_shell.dart';
 import 'screens/sign_in_screen.dart';
@@ -53,6 +54,7 @@ class AbvpConnectApp extends StatelessWidget {
             SessionStage.waiting => StatusScreen(session: session),
             SessionStage.member => MemberShell(session: session),
             SessionStage.guest => GuestShell(session: session),
+            SessionStage.account => AccountShell(session: session),
           },
         ),
       ),

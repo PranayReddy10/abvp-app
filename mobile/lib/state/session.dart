@@ -6,7 +6,15 @@ import '../config.dart';
 import '../models.dart';
 import 'location_sharer.dart';
 
-enum SessionStage { loading, signedOut, applying, waiting, member, guest }
+enum SessionStage {
+  loading,
+  signedOut,
+  applying,
+  waiting,
+  member,
+  guest,
+  account,
+}
 
 /// Who is signed in and where they are in the membership journey.
 class Session extends ChangeNotifier {
@@ -26,16 +34,73 @@ class Session extends ChangeNotifier {
     final m = me;
     if (m == null) return SessionStage.signedOut;
     if (m.isMember) return SessionStage.member;
-    // Invited guests who have not applied see only their invitations and passes.
-    if (m.isGuest && m.application == null && !editingApplication) {
-      return SessionStage.guest;
+    if (editingApplication) return SessionStage.applying;
+    // Everyone else uses the app straight away: community, events, the guide and passes.
+    // Membership is applied for from the Me tab when they are ready.
+    return SessionStage.account;
+  }
+
+  /// Sign-in methods switched on by the super admin (Settings → Sign-in).
+  bool otpEnabled = true;
+
+  Future<void> loadOptions() async {
+    try {
+      final o = await api.get('/auth/options') as Map<String, dynamic>;
+      otpEnabled = o['otp'] != false;
+      notifyListeners();
+    } catch (_) {
+      // Offline or older server: keep codes on.
     }
-    final app = m.application;
-    if (app == null || editingApplication) return SessionStage.applying;
-    return SessionStage.waiting;
+  }
+
+  Future<void> _signedIn(Map<String, dynamic> data) async {
+    await api.saveToken(data['token'] as String);
+    me = Me(data['user'] as Map<String, dynamic>);
+    notifyListeners();
+  }
+
+  /// Mobile number (or email) and password.
+  Future<void> passwordLogin(String login, String password) async {
+    await _signedIn(
+      await api.post('/auth/password', {
+        'login': login,
+        'password': password,
+        'device_name': 'mobile',
+      }) as Map<String, dynamic>,
+    );
+  }
+
+  /// New account with a password, used when sign-in codes are switched off.
+  Future<void> registerWithPassword({
+    required String name,
+    required String mobile,
+    required String password,
+    String? googleLinkToken,
+  }) async {
+    await _signedIn(
+      await api.post('/auth/register', {
+        'name': name,
+        'mobile': mobile,
+        'password': password,
+        'password_confirmation': password,
+        'device_name': 'mobile',
+        'google_link_token': ?googleLinkToken,
+      }) as Map<String, dynamic>,
+    );
+  }
+
+  /// Set a password, or change it (then [current] is required). Signs out other devices.
+  Future<void> setPassword(String password, {String? current}) async {
+    await api.put('/me/password', {
+      'current_password': ?current,
+      'password': password,
+      'password_confirmation': password,
+    });
+    await refresh();
   }
 
   Future<void> start() async {
+    await loadOptions();
     if (await api.restoreToken()) {
       try {
         await refresh();

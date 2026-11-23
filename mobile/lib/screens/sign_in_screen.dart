@@ -21,6 +21,12 @@ class SignInScreen extends StatefulWidget {
 class _SignInScreenState extends State<SignInScreen> {
   final _mobile = TextEditingController();
   final _code = TextEditingController();
+  final _password = TextEditingController();
+  final _name = TextEditingController();
+
+  /// code: SMS code · password: mobile + password · create: new account with a password.
+  String _mode = 'code';
+  bool _showPassword = false;
   String? _sentTo;
   String? _error;
   bool _busy = false;
@@ -33,6 +39,20 @@ class _SignInScreenState extends State<SignInScreen> {
     WidgetsBinding.instance.addPostFrameCallback(
       (_) => maybeOpenGuide(context, widget.session),
     );
+    if (!widget.session.otpEnabled) _mode = 'password';
+    widget.session.addListener(_onSession);
+  }
+
+  void _onSession() {
+    if (!widget.session.otpEnabled && _mode == 'code' && mounted) {
+      setState(() => _mode = 'password');
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.session.removeListener(_onSession);
+    super.dispose();
   }
 
   Future<void> _google() async {
@@ -177,7 +197,11 @@ class _SignInScreenState extends State<SignInScreen> {
                     child: child,
                   ),
                 ),
-                child: _sentTo == null ? _mobileStep(text) : _codeStep(text),
+                child: _sentTo != null
+                    ? _codeStep(text)
+                    : _mode == 'code'
+                    ? _mobileStep(text)
+                    : _passwordStep(text),
               ),
             ),
           ),
@@ -200,7 +224,9 @@ class _SignInScreenState extends State<SignInScreen> {
         tr('signin.desc'),
         style: text.bodyMedium?.copyWith(color: AppColors.muted),
       ),
-      const SizedBox(height: 24),
+      const SizedBox(height: 20),
+      _modeSwitch(),
+      const SizedBox(height: 20),
       if (_error != null) ...[ErrorBanner(_error!), const SizedBox(height: 16)],
       if (_googleLink != null) ...[
         Container(
@@ -281,6 +307,174 @@ class _SignInScreenState extends State<SignInScreen> {
       ),
     ],
   );
+
+  /// Code by SMS ↔ Password. Hidden when codes are switched off (password only).
+  Widget _modeSwitch() {
+    if (!widget.session.otpEnabled) return const SizedBox.shrink();
+    return SegmentedButton<String>(
+      showSelectedIcon: false,
+      segments: [
+        ButtonSegment(
+          value: 'code',
+          label: Text(tr('signin.tabCode')),
+          icon: const Icon(Icons.sms_outlined),
+        ),
+        ButtonSegment(
+          value: 'password',
+          label: Text(tr('signin.tabPassword')),
+          icon: const Icon(Icons.lock_outline),
+        ),
+      ],
+      selected: {_mode == 'create' ? 'password' : _mode},
+      onSelectionChanged: (v) => setState(() {
+        _mode = v.first;
+        _error = null;
+      }),
+    );
+  }
+
+  Widget _passwordStep(TextTheme text) {
+    final creating = _mode == 'create';
+    return Column(
+      key: ValueKey(_mode),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        GuideEntry(
+          session: widget.session,
+          padding: const EdgeInsets.only(bottom: 22),
+        ),
+        Text(
+          creating ? tr('signin.create') : tr('signin.title'),
+          style: text.headlineSmall,
+        ),
+        const SizedBox(height: 20),
+        if (widget.session.otpEnabled) ...[
+          _modeSwitch(),
+          const SizedBox(height: 20),
+        ] else ...[
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: AppColors.saffronSoft,
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Text(
+              tr('signin.codesOff'),
+              style: const TextStyle(
+                color: AppColors.saffronInk,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          const SizedBox(height: 18),
+        ],
+        if (_error != null) ...[
+          ErrorBanner(_error!),
+          const SizedBox(height: 16),
+        ],
+        if (creating) ...[
+          TextField(
+            controller: _name,
+            textCapitalization: TextCapitalization.words,
+            autofillHints: const [AutofillHints.name],
+            decoration: InputDecoration(
+              labelText: tr('signin.name'),
+              prefixIcon: const Icon(Icons.person_outline),
+            ),
+          ),
+          const SizedBox(height: 14),
+        ],
+        TextField(
+          controller: _mobile,
+          keyboardType: TextInputType.phone,
+          autofillHints: const [AutofillHints.username],
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'[0-9 +]')),
+          ],
+          decoration: InputDecoration(
+            labelText: tr('signin.mobile'),
+            prefixIcon: const Icon(Icons.phone_iphone),
+            prefixText: '+91  ',
+          ),
+        ),
+        const SizedBox(height: 14),
+        TextField(
+          controller: _password,
+          obscureText: !_showPassword,
+          autofillHints: [
+            creating ? AutofillHints.newPassword : AutofillHints.password,
+          ],
+          decoration: InputDecoration(
+            labelText: creating
+                ? tr('signin.newPassword')
+                : tr('signin.password'),
+            prefixIcon: const Icon(Icons.lock_outline),
+            suffixIcon: IconButton(
+              tooltip: _showPassword ? 'Hide' : 'Show',
+              icon: Icon(
+                _showPassword
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
+              ),
+              onPressed: () => setState(() => _showPassword = !_showPassword),
+            ),
+          ),
+          onSubmitted: (_) => _passwordAction(),
+        ),
+        const SizedBox(height: 18),
+        FilledButton(
+          onPressed: _busy ? null : _passwordAction,
+          child: Text(
+            _busy
+                ? tr('signin.checking')
+                : creating
+                ? tr('signin.create')
+                : tr('signin.signIn'),
+          ),
+        ),
+        if (!widget.session.otpEnabled)
+          TextButton(
+            onPressed: () => setState(() {
+              _mode = creating ? 'password' : 'create';
+              _error = null;
+            }),
+            child: Text(
+              creating ? tr('signin.haveAccount') : tr('signin.newHere'),
+            ),
+          ),
+        if (_googleLink == null) ...[
+          const SizedBox(height: 10),
+          OutlinedButton.icon(
+            onPressed: _busy ? null : _google,
+            style: OutlinedButton.styleFrom(
+              backgroundColor: AppColors.surface,
+              foregroundColor: AppColors.ink,
+              minimumSize: const Size.fromHeight(56),
+            ),
+            icon: const _GoogleMark(),
+            label: Text(tr('signin.google')),
+          ),
+        ],
+      ],
+    );
+  }
+
+  void _passwordAction() {
+    if (_mode == 'create' && _password.text.length < 8) {
+      setState(() => _error = tr('signin.short'));
+      return;
+    }
+    _run(
+      () => _mode == 'create'
+          ? widget.session.registerWithPassword(
+              name: _name.text.trim(),
+              mobile: _mobile.text,
+              password: _password.text,
+              googleLinkToken: _googleLink?.linkToken,
+            )
+          : widget.session.passwordLogin(_mobile.text, _password.text),
+    );
+  }
 
   Widget _codeStep(TextTheme text) => Column(
     key: const ValueKey('code'),

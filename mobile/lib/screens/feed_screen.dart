@@ -108,7 +108,8 @@ class _FeedScreenState extends State<FeedScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final p = widget.session.me!.profile!;
+    final me = widget.session.me!;
+    final p = me.profile;
     final isTagPage = widget.tag != null;
 
     final header = <Widget>[
@@ -158,7 +159,11 @@ class _FeedScreenState extends State<FeedScreen> {
           padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
           child: Row(
             children: [
-              Initials(p.fullName, photoUrl: p.photoUrl, size: 44),
+              Initials(
+                p?.fullName ?? me.name ?? '',
+                photoUrl: p?.photoUrl,
+                size: 44,
+              ),
               const SizedBox(width: 12),
               const Expanded(
                 child: Text(
@@ -1380,8 +1385,9 @@ class _ComposeScreenState extends State<ComposeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final p = widget.session.me!.profile!;
-    final vibhags = p.vibhags;
+    final me = widget.session.me!;
+    final p = me.profile;
+    final vibhags = p?.vibhags ?? const [];
     final left = 500 - _text.text.characters.length;
 
     return Scaffold(
@@ -1437,8 +1443,8 @@ class _ComposeScreenState extends State<ComposeScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Initials(
-                              p.fullName,
-                              photoUrl: p.photoUrl,
+                              p?.fullName ?? me.name ?? '',
+                              photoUrl: p?.photoUrl,
                               size: 44,
                             ),
                             const SizedBox(width: 12),
@@ -1571,17 +1577,18 @@ class _ComposeScreenState extends State<ComposeScreen> {
                     runSpacing: 8,
                     children: [
                       PillChip(
-                        label: 'All members',
+                        label: 'Everyone',
                         icon: Icons.public,
                         selected: _audience == 'members',
                         onTap: () => setState(() => _audience = 'members'),
                       ),
-                      PillChip(
-                        label: 'My district',
-                        icon: Icons.place_outlined,
-                        selected: _audience == 'area',
-                        onTap: () => setState(() => _audience = 'area'),
-                      ),
+                      if (p?.orgUnitId != null)
+                        PillChip(
+                          label: 'My district',
+                          icon: Icons.place_outlined,
+                          selected: _audience == 'area',
+                          onTap: () => setState(() => _audience = 'area'),
+                        ),
                       for (final v in vibhags)
                         PillChip(
                           label: v.name,
