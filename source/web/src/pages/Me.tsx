@@ -65,7 +65,12 @@ export default function Me() {
       <h2 style={{ fontSize: 28, fontWeight: 800, marginBottom: 16 }}>My passes</h2>
       {passes.loading && !passes.data ? <Skeleton h={300} n={1} /> : passes.data?.length ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 24 }}>
-          {passes.data.map((p) => <PassCard key={p.registration_id} title={p.event.title} venue={p.event.venue} starts={p.event.starts_at} name={p.name} kind={p.kind} token={p.token} status={p.status} />)}
+          {passes.data.map((p) => (
+            <div key={p.registration_id} style={{ display: 'grid', gap: 10 }}>
+              <PassCard title={p.event.title} venue={p.event.venue} starts={p.event.starts_at} name={p.name} kind={p.kind} token={p.token} status={p.status} />
+              <Link to={`/events/${p.event.id}`} className="btn block">Event details <Icon name="arrow" size={16} /></Link>
+            </div>
+          ))}
         </div>
       ) : (
         <Reveal>

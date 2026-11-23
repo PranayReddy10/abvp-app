@@ -25,11 +25,10 @@ class MembershipController extends Controller
             'full_name' => $profile?->full_name,
             'date_of_birth' => $profile?->date_of_birth,
             'org_unit_id' => $profile?->org_unit_id,
-            'photo' => $profile?->photo_path,
         ])->filter(fn ($v) => blank($v))->keys();
 
         if ($missing->isNotEmpty()) {
-            throw new ApiException('PROFILE_INCOMPLETE', 'Complete your name, date of birth, unit and photo before applying. Missing: '.$missing->implode(', '));
+            throw new ApiException('PROFILE_INCOMPLETE', 'Complete your name, date of birth and district before applying. Missing: '.$missing->implode(', '));
         }
 
         $existing = $user->application;

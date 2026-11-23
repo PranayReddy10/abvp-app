@@ -55,7 +55,21 @@ class EventController extends Controller
             throw new ApiException('NOT_FOUND', 'Not found.', 404);
         }
 
-        return $this->ok($this->publicCard($event) + ['description' => $event->description]);
+        return $this->ok($this->publicCard($event) + [
+            'description' => $event->description,
+            'venue_map_url' => $event->venue_map_url ?: $this->mapUrl($event),
+            'helpline' => $event->helpline_phone,
+        ]);
+    }
+
+    /** A Google Maps link from the venue pin, or a search for the venue name. */
+    private function mapUrl(Event $e): ?string
+    {
+        if ($e->venue_lat !== null && $e->venue_lng !== null) {
+            return "https://www.google.com/maps/search/?api=1&query={$e->venue_lat},{$e->venue_lng}";
+        }
+
+        return $e->venue ? 'https://www.google.com/maps/search/?api=1&query='.rawurlencode($e->venue) : null;
     }
 
     private function publicCard(Event $e): array
@@ -176,7 +190,8 @@ class EventController extends Controller
         if ($detail) {
             $data += [
                 'description' => $e->description,
-                'venue_map_url' => $e->venue_map_url,
+                'venue_map_url' => $e->venue_map_url ?: $this->mapUrl($e),
+                'helpline' => $e->helpline_phone,
                 'requires_approval' => $e->requires_approval,
                 // Instructions and the contact person are for people who are coming.
                 'instructions' => $active ? $e->instructions : null,

@@ -188,4 +188,14 @@ class MembershipFlowTest extends TestCase
             MemberProfile::orderBy('id')->pluck('member_id')->all(),
         );
     }
+
+    public function test_photo_is_optional_when_applying(): void
+    {
+        $u = \App\Models\User::create(['mobile' => '+919811144455']);
+        \Laravel\Sanctum\Sanctum::actingAs($u);
+        $district = \App\Models\OrgUnit::where('type', 'district')->first();
+        $this->patchJson('/api/v1/me/profile', ['full_name' => 'No Photo', 'date_of_birth' => '2004-01-01', 'org_unit_id' => $district->id])->assertOk();
+        $this->postJson('/api/v1/membership/application', ['confirm' => true])->assertCreated()
+            ->assertJsonPath('data.application.status', 'submitted');
+    }
 }

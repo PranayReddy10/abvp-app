@@ -337,3 +337,22 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
 .choice.on { border-color: var(--saffron); background: var(--soft); color: var(--deep) }
 .trend { display: flex; justify-content: space-between; gap: 10px; border: 0; background: var(--bg); border-radius: 12px; padding: 10px 12px; font: inherit; cursor: pointer; text-align: left }
 .trend:hover { background: var(--soft) }
+.ev-hero { position: relative; border-radius: 26px; overflow: hidden }
+.ev-hero .ev-cover { border-radius: 0 }
+.ev-hero .ev-cover::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 25%, rgba(10,12,20,.78)) }
+.ev-hero-text { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; padding: 26px; color: #fff; display: grid; gap: 10px; justify-items: start }
+.ev-hero-text h1 { font-size: clamp(26px, 4vw, 44px); font-weight: 800; line-height: 1.1 }
+.ev-facts { display: flex; gap: 8px 18px; flex-wrap: wrap; font-weight: 600; opacity: .95 }
+.ev-facts span { display: inline-flex; gap: 6px; align-items: center }
+.ev-block { display: grid; gap: 14px }
+.ev-block h2 { font-size: 20px; font-weight: 800; display: flex; gap: 10px; align-items: center }
+.ev-ic { width: 34px; height: 34px; border-radius: 11px; display: grid; place-items: center; background: var(--soft); color: var(--deep) }
+.ev-days { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px }
+.ev-day { display: grid; gap: 2px; padding: 12px 14px; border-radius: 16px; background: var(--bg) }
+.ev-day small { color: var(--muted) }
+.ev-guide { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px }
+.ev-guide-tile { display: grid; gap: 4px; justify-items: start; padding: 14px; border-radius: 18px; background: var(--bg); color: inherit; text-decoration: none; transition: transform .2s var(--ease), background .2s }
+.ev-guide-tile:hover { transform: translateY(-2px); background: var(--soft) }
+.ev-guide-tile .ic { width: 40px; height: 40px; border-radius: 13px; display: grid; place-items: center; color: #fff; margin-bottom: 4px }
+.ev-news { display: grid; gap: 4px; padding: 12px 0; border-bottom: 1px solid var(--line); color: inherit; text-decoration: none }
+.ev-news:last-child { border: 0 }

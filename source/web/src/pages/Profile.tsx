@@ -180,7 +180,7 @@ export default function Profile() {
 
         <PasswordCard hasPassword={!!me.has_password} onDone={refresh} />
         <MembershipCard status={status} approved={approved} note={me.application?.decision_note ?? null} office={me.application?.reviewing_office ?? null}
-          missing={[!me.profile?.full_name && 'name', !me.profile?.date_of_birth && 'date of birth', !me.profile?.org_unit && 'district', !me.profile?.photo_url && 'photo'].filter(Boolean) as string[]}
+          missing={[!me.profile?.full_name && 'name', !me.profile?.date_of_birth && 'date of birth', !me.profile?.org_unit && 'district'].filter(Boolean) as string[]}
           onDone={refresh} />
       </div>
     </div>
