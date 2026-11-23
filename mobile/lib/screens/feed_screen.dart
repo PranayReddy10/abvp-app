@@ -160,7 +160,9 @@ class _FeedScreenState extends State<FeedScreen> {
           child: Row(
             children: [
               Initials(
-                p?.fullName ?? me.name ?? '',
+                (p?.fullName.isNotEmpty == true
+                    ? p!.fullName
+                    : (me.name ?? '')),
                 photoUrl: p?.photoUrl,
                 size: 44,
               ),
@@ -1443,7 +1445,9 @@ class _ComposeScreenState extends State<ComposeScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Initials(
-                              p?.fullName ?? me.name ?? '',
+                              (p?.fullName.isNotEmpty == true
+                                  ? p!.fullName
+                                  : (me.name ?? '')),
                               photoUrl: p?.photoUrl,
                               size: 44,
                             ),

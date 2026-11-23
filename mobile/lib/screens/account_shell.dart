@@ -190,6 +190,13 @@ class AccountMeScreen extends StatelessWidget {
                                 color: AppColors.muted,
                               ),
                             ),
+                            if (p?.memberId != null)
+                              Text(
+                                'ID ${p!.memberId}',
+                                style: text.bodySmall?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
                             if (p?.orgUnitLabel != null)
                               Text(p!.orgUnitLabel!, style: text.bodySmall),
                           ],
