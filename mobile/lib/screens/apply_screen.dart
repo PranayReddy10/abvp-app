@@ -161,10 +161,7 @@ class _ApplyScreenState extends State<ApplyScreen> {
     final areaId =
         (_unit ?? _district)?.id ?? widget.session.me?.profile?.orgUnitId;
     if (areaId == null) {
-      return setState(() => _error = 'Choose your state, district and unit.');
-    }
-    if (_photo == null && _existingPhoto == null) {
-      return setState(() => _error = 'Add a clear photo of your face.');
+      return setState(() => _error = 'Choose your state and district.');
     }
     if (!_confirm) {
       return setState(() => _error = 'Confirm that your details are correct.');
@@ -369,7 +366,7 @@ class _ApplyScreenState extends State<ApplyScreen> {
             ),
             const SizedBox(height: 6),
             Text(
-              'A clear, front-facing photo. Only you and reviewing officers can see it before approval.',
+              'Optional. A clear, front-facing photo helps your office recognise you. Only you and reviewing officers see it before approval.',
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 20),
