@@ -54,6 +54,8 @@ Route::prefix('v1')->group(function () {
     // Conference guide: open to everyone, signed in or not (guests have no list).
     Route::middleware('throttle:60,1')->group(function () {
         Route::get('guide/events', [GuideController::class, 'myEvents']);
+        Route::get('public/events', [EventController::class, 'publicIndex']);
+        Route::get('public/events/{event}', [EventController::class, 'publicShow']);
         Route::get('guide/prants', [GuideController::class, 'prants']);
         Route::get('events/{event}/guide', [GuideController::class, 'hub']);
         Route::get('events/{event}/guide/{kind}', [GuideController::class, 'section']);

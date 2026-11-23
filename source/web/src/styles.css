@@ -286,3 +286,54 @@ textarea.input { height: auto; min-height: 90px; padding: 14px 16px; resize: ver
 }
 .nav-links .only-sm { display: none }
 @media (max-width: 560px) { .nav-links.open .only-sm { display: block } }
+
+/* Profile, events */
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px }
+select.input { appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%); background-position: calc(100% - 22px) 22px, calc(100% - 16px) 22px; background-size: 6px 6px; background-repeat: no-repeat; padding-right: 40px }
+.input:disabled { opacity: .65; cursor: not-allowed }
+.bad-text { color: var(--bad) !important }
+.avatar-edit { flex: none; position: relative; border: 0; padding: 0; background: none; cursor: pointer; border-radius: 50%; box-shadow: 0 0 0 4px rgba(255,255,255,.35) }
+.avatar-edit .cam { position: absolute; right: -2px; bottom: -2px; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: #fff; color: var(--ink); box-shadow: 0 4px 12px rgba(0,0,0,.25) }
+.avatar-edit:disabled { opacity: .6 }
+.sticky-save { position: sticky; bottom: 14px; z-index: 5; display: flex; gap: 10px; padding: 12px; border-radius: 20px; background: color-mix(in srgb, var(--surface) 88%, transparent); backdrop-filter: blur(10px); box-shadow: var(--shadow) }
+.status-pill { display: inline-flex; align-items: center; height: 34px; padding: 0 14px; border-radius: 999px; font-weight: 700; font-size: 14px; background: var(--bg); color: var(--muted) }
+.status-pill.info { background: var(--info-soft); color: var(--info) }
+.status-pill.ok { background: var(--ok-soft); color: var(--ok) }
+.status-pill.bad { background: var(--bad-soft); color: var(--bad) }
+.status-pill.warn { background: var(--soft); color: var(--deep) }
+.nudge { display: flex; gap: 16px; align-items: center; margin-bottom: 22px; color: inherit; text-decoration: none; transition: transform .25s var(--ease) }
+.nudge:hover { transform: translateY(-2px) }
+.nudge .ic { width: 48px; height: 48px; border-radius: 16px; display: grid; place-items: center; color: #fff; flex: none }
+.ev-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 22px }
+.ev-card { padding: 12px; height: 100% }
+.ev-cover { position: relative; overflow: hidden; border-radius: 18px; color: #fff }
+.ev-date { position: absolute; left: 14px; top: 14px; z-index: 2; display: grid; place-items: center; width: 58px; height: 62px; border-radius: 16px; background: rgba(255,255,255,.95); color: var(--ink); font-size: 12px; font-weight: 700; text-transform: uppercase; box-shadow: 0 8px 20px -8px rgba(0,0,0,.4) }
+.ev-date b { font-size: 24px; line-height: 1 }
+.ev-detail { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 30px; margin-top: 26px }
+@media (max-width: 860px) { .ev-detail { grid-template-columns: 1fr } .ev-detail aside { position: static !important } }
+
+/* Community */
+.feed-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 24px; align-items: start }
+.feed-layout .trends { position: sticky; top: 96px }
+@media (max-width: 900px) { .feed-layout { grid-template-columns: 1fr } .feed-layout .trends { position: static; order: -1 } }
+.post.clickable { cursor: pointer; transition: box-shadow .2s var(--ease) }
+.post.clickable:hover { box-shadow: 0 1px 2px rgba(20,22,31,.05), 0 24px 46px -24px rgba(20,22,31,.45) }
+.post .acts button.on-green { color: var(--ok) }
+.post .acts button:hover { background: var(--bg) }
+.photo-btn { border: 0; padding: 0; background: none; cursor: zoom-in; display: block }
+.tagged { background: none; border: 0; padding: 0; font: inherit; cursor: pointer }
+.tagged:hover { text-decoration: underline }
+.icon-btn.sm { width: 34px; height: 34px; font-size: 18px; line-height: 1 }
+.pop { position: absolute; right: 0; top: 40px; z-index: 10; min-width: 180px; background: var(--surface); border-radius: 16px; box-shadow: 0 18px 40px -12px rgba(20,22,31,.35), 0 0 0 1px var(--line); padding: 6px; display: grid }
+.pop button { display: flex; gap: 10px; align-items: center; border: 0; background: none; padding: 10px 12px; border-radius: 10px; font: inherit; font-weight: 600; cursor: pointer; text-align: left; color: var(--ink) }
+.pop button:hover { background: var(--bg) }
+.x-btn { position: absolute; top: 6px; right: 6px; width: 28px; height: 28px; border-radius: 50%; border: 0; background: rgba(0,0,0,.6); color: #fff; font-size: 18px; cursor: pointer }
+.scrim { position: fixed; inset: 0; z-index: 70; background: rgba(13,15,23,.55); backdrop-filter: blur(4px); display: grid; place-items: center; padding: 16px }
+.modal { position: relative; width: min(620px, 100%); max-height: min(86vh, 900px); overflow-y: auto; background: var(--surface); border-radius: 28px; padding: 26px; box-shadow: 0 40px 80px -30px rgba(0,0,0,.5) }
+.reply { display: flex; gap: 10px; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid var(--line) }
+.lightbox { max-width: 94vw; max-height: 90vh; border-radius: 18px; box-shadow: 0 30px 60px -20px rgba(0,0,0,.6) }
+.toast { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%); z-index: 90; background: var(--ink); color: #fff; padding: 12px 20px; border-radius: 999px; font-weight: 700; box-shadow: 0 16px 34px -12px rgba(0,0,0,.5) }
+.choice { text-align: left; border: 1.5px solid var(--line); background: var(--surface); border-radius: 14px; padding: 12px 16px; font: inherit; font-weight: 600; cursor: pointer; transition: all .2s var(--ease) }
+.choice.on { border-color: var(--saffron); background: var(--soft); color: var(--deep) }
+.trend { display: flex; justify-content: space-between; gap: 10px; border: 0; background: var(--bg); border-radius: 12px; padding: 10px 12px; font: inherit; cursor: pointer; text-align: left }
+.trend:hover { background: var(--soft) }

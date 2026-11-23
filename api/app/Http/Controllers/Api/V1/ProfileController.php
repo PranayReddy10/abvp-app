@@ -44,7 +44,22 @@ class ProfileController extends Controller
             'links.*.url' => ['required_with:links', 'url:https', 'max:255'],
             'vibhag_ids' => ['nullable', 'array', 'max:10'],
             'vibhag_ids.*' => ['integer', Rule::exists('vibhags', 'id')->where('is_active', true)],
+            // Account details shown on the website and in sign-up.
+            'email' => ['nullable', 'email', 'max:190'],
+            'prant' => ['nullable', 'string', 'max:80'],
+            'occupation' => ['nullable', 'string', 'max:80'],
         ]);
+        foreach (['email', 'prant', 'occupation'] as $field) {
+            if (array_key_exists($field, $data)) {
+                $user->{$field} = $data[$field];
+            }
+        }
+        if (array_key_exists('gender', $data) || array_key_exists('institution', $data)) {
+            $user->gender = $data['gender'] ?? $user->gender;
+            $user->institution = $data['institution'] ?? $user->institution;
+        }
+        $user->save();
+        $data = collect($data)->except(['email', 'prant', 'occupation'])->all();
 
         if (isset($data['org_unit_id'])) {
             $unit = OrgUnit::find($data['org_unit_id']);

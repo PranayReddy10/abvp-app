@@ -212,7 +212,7 @@ class EventsTest extends TestCase
         $this->assertSame('offline', EventRegistration::where('status', 'registered')->first()->check_in_method);
     }
 
-    public function test_guests_are_invited_by_mobile_and_see_only_their_invitation(): void
+    public function test_guests_are_invited_by_mobile_and_find_their_invitation(): void
     {
         $admin = $this->admin();
         $id = $this->createEvent($admin, ['capacity' => 1]);
@@ -228,7 +228,7 @@ class EventsTest extends TestCase
         $guest = User::where('mobile', '+919123456789')->first();
         Sanctum::actingAs($guest);
         $this->getJson('/api/v1/auth/me')->assertJsonPath('data.is_guest', true);
-        $this->getJson('/api/v1/events')->assertJsonCount(1, 'data')->assertJsonPath('data.0.my_registration.kind', 'guest');
+        $this->getJson('/api/v1/events?mine=1')->assertJsonCount(1, 'data')->assertJsonPath('data.0.my_registration.kind', 'guest');
         $this->assertStringStartsWith('EP1.', $this->getJson('/api/v1/me/passes')->json('data.0.token'));
         $this->getJson('/api/v1/members/M1')->assertStatus(403);
     }
@@ -267,5 +267,28 @@ class EventsTest extends TestCase
 
         $this->assertNull($svc->registrationFromToken(str_replace('.16.', '.17.', $token)));
         $this->assertNull($svc->registrationFromToken('EP1.16.'.str_repeat('a', 16)));
+    }
+
+    public function test_everyone_sees_published_events_but_only_members_register(): void
+    {
+        $id = $this->createEvent($this->admin());
+        $this->getJson('/api/v1/public/events')->assertOk()->assertJsonPath('data.0.id', $id)->assertJsonMissingPath('data.0.instructions');
+        $this->getJson("/api/v1/public/events/$id")->assertOk()->assertJsonPath('data.title', 'Telangana Pranth Adhiveshan');
+
+        $delegate = User::create(['mobile' => '+919811100077', 'name' => 'Delegate']);
+        Sanctum::actingAs($delegate);
+        $this->getJson('/api/v1/events')->assertOk()->assertJsonPath('data.0.id', $id)->assertJsonPath('data.0.eligible', false);
+        $this->getJson("/api/v1/events/$id")->assertOk()->assertJsonPath('data.instructions', null);
+        $this->postJson("/api/v1/events/$id/register")->assertStatus(403)->assertJsonPath('error.code', 'NOT_ELIGIBLE');
+    }
+
+    public function test_profile_update_saves_account_details_and_area(): void
+    {
+        $u = User::create(['mobile' => '+919811100078']);
+        Sanctum::actingAs($u);
+        $district = OrgUnit::where('type', 'district')->first();
+        $this->patchJson('/api/v1/me/profile', ['full_name' => 'Kiran Kumar', 'email' => 'kiran@example.com', 'prant' => 'Telangana', 'occupation' => 'Student', 'org_unit_id' => $district->id])
+            ->assertOk()->assertJsonPath('data.org_unit.id', $district->id);
+        $this->getJson('/api/v1/auth/me')->assertJsonPath('data.email', 'kiran@example.com')->assertJsonPath('data.prant', 'Telangana')->assertJsonPath('data.name', 'Kiran Kumar');
     }
 }

@@ -8,8 +8,29 @@ export interface Me {
   occupation: string | null
   gender: string | null
   is_member: boolean
-  profile: { full_name: string; member_id: string | null; photo_url: string | null; verified?: boolean } | null
+  has_password?: boolean
+  profile: Profile | null
+  application: { status: string; submitted_at: string | null; decision_note: string | null; reviewing_office: string | null } | null
 }
+
+export interface Profile {
+  full_name: string
+  member_id: string | null
+  photo_url: string | null
+  verified?: boolean
+  gender?: string | null
+  date_of_birth?: string | null
+  org_unit?: { id: number; name: string; label: string } | null
+  institution?: string | null
+  course?: string | null
+  study_year?: string | null
+  bio?: string | null
+  membership_status?: string
+  vibhags?: { id: number; name: string; code: string }[]
+}
+
+export interface OrgUnit { id: number; parent_id: number | null; type: string; name: string; children_count?: number }
+export interface Vibhag { id: number; name: string; code: string; description: string | null }
 
 export interface GuideEvent {
   id: number

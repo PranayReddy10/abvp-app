@@ -28,8 +28,8 @@ class EventController extends Controller
                 fn ($q) => $q->where('ends_at', '>=', now())->orderBy('starts_at'),
                 fn ($q) => $q->where('ends_at', '<', now())->orderByDesc('starts_at'));
 
-        // Members see every published event; guests only the ones they were invited to.
-        if (! $user->isApprovedMember() || $request->boolean('mine')) {
+        // Everyone signed in sees every published event (who may register is decided by the event's rules).
+        if ($request->boolean('mine')) {
             $query->whereIn('id', $mineIds);
         } else {
             $query->where(fn ($q) => $q->where('status', 'published')->orWhereIn('id', $mineIds));
@@ -40,12 +40,48 @@ class EventController extends Controller
         return $this->ok($query->limit(100)->get()->map(fn (Event $e) => $this->present($e, $user, $regs->get($e->id))));
     }
 
+    /** Upcoming published events for anyone, signed in or not (the website's Events page). */
+    public function publicIndex()
+    {
+        $events = Event::where('status', 'published')->where('ends_at', '>=', now())
+            ->with('orgUnit')->orderBy('starts_at')->limit(60)->get();
+
+        return $this->ok($events->map(fn (Event $e) => $this->publicCard($e)));
+    }
+
+    public function publicShow(Event $event)
+    {
+        if ($event->status !== 'published') {
+            throw new ApiException('NOT_FOUND', 'Not found.', 404);
+        }
+
+        return $this->ok($this->publicCard($event) + ['description' => $event->description]);
+    }
+
+    private function publicCard(Event $e): array
+    {
+        return [
+            'id' => $e->id,
+            'title' => $e->title,
+            'category' => $e->category,
+            'category_label' => Event::CATEGORIES[$e->category] ?? $e->category,
+            'starts_at' => $e->starts_at->toIso8601String(),
+            'ends_at' => $e->ends_at->toIso8601String(),
+            'venue' => $e->venue,
+            'organised_by' => $e->orgUnit?->name,
+            'cover_url' => $e->cover_path ? URL::temporarySignedRoute('media.event', now()->addDay(), ['event' => $e->id]) : null,
+            'guide_enabled' => (bool) $e->guide_enabled,
+            'delegate_registration_open' => (bool) $e->delegate_registration_open,
+            'registration_open' => $e->registrationOpen(),
+        ];
+    }
+
     public function show(Request $request, Event $event)
     {
         $user = $request->user();
         $reg = Reg::where('event_id', $event->id)->where('user_id', $user->id)->first();
 
-        if ($event->status === 'draft' || (! $user->isApprovedMember() && ! $reg)) {
+        if ($event->status === 'draft' || (! $reg && $event->status !== 'published')) {
             throw new ApiException('NOT_FOUND', 'Not found.', 404);
         }
 
@@ -120,6 +156,8 @@ class EventController extends Controller
             'organised_by' => $e->orgUnit?->name,
             'cover_url' => $e->cover_path ? URL::temporarySignedRoute('media.event', now()->addDay(), ['event' => $e->id]) : null,
             'status' => $e->status,
+            'guide_enabled' => (bool) $e->guide_enabled,
+            'delegate_registration_open' => (bool) $e->delegate_registration_open,
             'eligible' => $eligible,
             'eligibility' => $why,
             'registration_open' => $e->registrationOpen(),

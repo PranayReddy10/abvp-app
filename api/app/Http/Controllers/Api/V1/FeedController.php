@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 
-/** Community feed for approved members: posts, photos, likes, comments, reposts, follows. */
+/** Community feed for everyone who signs in (members and conference guests): posts, photos, likes, comments, reposts, follows. */
 class FeedController extends Controller
 {
     public const REPORT_REASONS = ['abuse' => 'Abusive or hateful', 'false_info' => 'False information', 'spam' => 'Spam', 'private_info' => "Shares someone's private details", 'other' => 'Something else'];
@@ -69,6 +69,9 @@ class FeedController extends Controller
         ]);
         $viewer = $this->member($request);
 
+        if ($data['audience'] === 'area' && ! $viewer->profile?->orgUnit) {
+            throw new ApiException('AREA_REQUIRED', 'Choose your district in your profile to post to your area.', 422);
+        }
         if ($data['audience'] === 'vibhag' && ! $viewer->vibhags()->where('vibhags.id', $data['vibhag_id'])->exists()) {
             throw new ApiException('NOT_IN_VIBHAG', 'You can post to a Vibhag only after joining it.', 403);
         }
@@ -105,7 +108,7 @@ class FeedController extends Controller
         });
 
         if ($original && $original->user_id !== $viewer->id) {
-            AppNotification::sendMany([$original->user_id], 'post_repost', $viewer->profile->full_name.' reposted your post', Str::limit((string) $original->body, 80), ['post_id' => $original->id]);
+            AppNotification::sendMany([$original->user_id], 'post_repost', $this->nameOf($viewer).' reposted your post', Str::limit((string) $original->body, 80), ['post_id' => $original->id]);
         }
 
         return $this->ok($this->present(new \Illuminate\Database\Eloquent\Collection([$post->fresh()]), $viewer)[0], 201);
@@ -180,7 +183,7 @@ class FeedController extends Controller
             return $c;
         });
         if ($post->user_id !== $viewer->id) {
-            AppNotification::sendMany([$post->user_id], 'post_comment', $viewer->profile->full_name.' replied to your post', Str::limit($data['body'], 80), ['post_id' => $post->id]);
+            AppNotification::sendMany([$post->user_id], 'post_comment', $this->nameOf($viewer).' replied to your post', Str::limit($data['body'], 80), ['post_id' => $post->id]);
         }
 
         return $this->ok(['id' => $c->id, 'body' => $c->body, 'author' => $this->person($viewer), 'is_mine' => true, 'at' => $c->created_at->toIso8601String()], 201);
@@ -235,7 +238,7 @@ class FeedController extends Controller
         $deleted = DB::table('follows')->where('follower_id', $viewer->id)->where('followee_id', $target->id)->delete();
         if (! $deleted) {
             DB::table('follows')->insertOrIgnore(['follower_id' => $viewer->id, 'followee_id' => $target->id, 'created_at' => now()]);
-            AppNotification::sendMany([$target->id], 'new_follower', $viewer->profile->full_name.' started following you', null, ['member_id' => $viewer->profile->member_id]);
+            AppNotification::sendMany([$target->id], 'new_follower', $this->nameOf($viewer).' started following you', null, ['member_id' => $viewer->profile?->member_id]);
         }
 
         return $this->ok(['following' => ! $deleted, 'followers' => DB::table('follows')->where('followee_id', $target->id)->count()]);
@@ -261,14 +264,20 @@ class FeedController extends Controller
         ];
     }
 
+    /** The community is open to everyone who has signed in; posting needs a name others can see. */
     private function member(Request $request): User
     {
         $u = $request->user();
-        if (! $u->isApprovedMember()) {
-            throw new ApiException('NOT_A_MEMBER', 'The community feed is for approved members.', 403);
+        if ($request->isMethod('post') && blank($u->profile?->full_name ?? $u->name)) {
+            throw new ApiException('NAME_REQUIRED', 'Add your name to your profile before posting.', 422);
         }
 
         return $u;
+    }
+
+    private function nameOf(User $u): string
+    {
+        return (string) ($u->profile?->full_name ?? $u->name ?? 'Someone');
     }
 
     private function person(?User $u): array

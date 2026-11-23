@@ -123,7 +123,12 @@ The demo data (`php artisan db:seed --class=DemoSeeder`) includes a filled guide
 - **Delegate registration** (both website and API; the app can use the same API): four animated steps – about you (prant, gender, food, emergency contact), travel (train/bus/flight, number, arrival point from the guide's desks, arrival and departure time, pickup), stay, review – then a QR pass. Organisers open it with the **Delegate registration** switch in admin → event → Guide. Travel and stay go straight into the event's Logistics tab; delegates appear in Registrations as "delegate". If the event is full and a waitlist is on, new delegates are waitlisted.
 - **My space:** passes with QR (the same pass works at the gate scanner), shortcuts, details.
 - **Help desk:** chat (new replies every 5 seconds) or a ticket with category and location; the same conversations the admin Help desk answers.
-- **Community** for approved members: read, like and post.
+- **One community for everyone who signs in** (members, delegates, guests): posts with up to 4 photos, hashtags and trending tags, replies, likes, reposts, delete your own, report others (several reports hide a post until an admin reviews it). Post to everyone, your district or a Vibhag you joined.
+- **Events** (`/events`): every published upcoming event, open to visitors (`GET public/events`); signed-in people see whether they can register, register or cancel, and get the QR pass. Registration for member events still needs approved membership.
+- **Edit profile** (`/me/edit`): name, email, date of birth, gender, college, course, photo, **area** (state → district), Vibhags, password, and **Apply for membership** with its status and the office's note.
+- **Password sign-in** next to the SMS code, and password sign-up when codes are switched off in Settings → Sign-in.
+
+The mobile app (on the `mobile` branch) matches: Code / Password tabs on sign-in, password sign-up when codes are off, set or change the password under Me, and everyone who is not yet a member gets Home (events + guide), Community, Pass and Me straight away – membership is applied for from Me.
 
 ## Design
 

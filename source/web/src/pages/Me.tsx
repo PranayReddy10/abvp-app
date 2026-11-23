@@ -22,7 +22,8 @@ export default function Me() {
     e && { to: `/guide/${e.id}`, kind: 'stay', icon: 'sparkle' as const, t: 'Conference guide', s: 'Stay, transport, food, emergency' },
     e?.delegate_registration_open && { to: `/conference/${e.id}/register`, kind: 'arrival', icon: 'ticket' as const, t: registered ? 'My registration' : 'Register as delegate', s: registered ? 'See or edit your details' : 'Get your pass in minutes' },
     e && { to: `/support/${e.id}`, kind: 'support', icon: 'support' as const, t: 'Help desk', s: 'Chat or raise a ticket' },
-    { to: '/community', kind: 'exhibit', icon: 'chat' as const, t: 'Community', s: me.is_member ? 'Share work from your unit' : 'For members' },
+    { to: '/events', kind: 'office', icon: 'calendar' as const, t: 'Events', s: 'Upcoming programmes near you' },
+    { to: '/community', kind: 'exhibit', icon: 'chat' as const, t: 'Community', s: 'Posts, photos and updates' },
   ].filter(Boolean) as { to: string; kind: string; icon: 'sparkle'; t: string; s: string }[]
 
   return (
@@ -33,11 +34,22 @@ export default function Me() {
           <div>
             <p style={{ opacity: .85, fontSize: 18 }}>{hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'},</p>
             <h1>{first || 'Welcome'} 👋</h1>
-            <p style={{ opacity: .85 }}>{[me.prant, me.institution].filter(Boolean).join(' · ') || me.mobile}</p>
+            <p style={{ opacity: .85 }}>{[me.profile?.org_unit?.label ?? me.prant, me.institution].filter(Boolean).join(' · ') || me.mobile}</p>
           </div>
-          <span className="chip" style={{ background: 'rgba(255,255,255,.18)', color: '#fff' }}>{me.is_member ? `Member · ${me.profile?.member_id ?? ''}` : 'Account'}</span>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+            <span className="chip" style={{ background: 'rgba(255,255,255,.18)', color: '#fff' }}>{me.is_member ? `Member · ${me.profile?.member_id ?? ''}` : 'Account'}</span>
+            <Link to="/me/edit" className="btn glass sm"><Icon name="edit" size={16} /> Edit profile</Link>
+          </div>
         </div>
       </div>
+
+      {!me.profile?.org_unit && (
+        <Link to="/me/edit#area" className="card nudge">
+          <span className="ic" style={{ background: grad('stay') }}><Icon name="pin" size={22} /></span>
+          <span style={{ flex: 1 }}><b>Add your area</b><span className="muted" style={{ display: 'block', fontSize: 14 }}>Choose your state and district so you see events and posts near you, and can apply for membership.</span></span>
+          <Icon name="arrow" />
+        </Link>
+      )}
 
       <div className="tiles" style={{ marginBottom: 34 }}>
         {actions.map((a, i) => (
@@ -70,10 +82,12 @@ export default function Me() {
         <div><span>Name</span><b>{nameOf(me) || '–'}</b></div>
         <div><span>Mobile</span><b>{me.mobile}</b></div>
         <div><span>Email</span><b>{me.email ?? '–'}</b></div>
-        <div><span>Prant</span><b>{me.prant ?? '–'}</b></div>
+        <div><span>Area</span><b>{me.profile?.org_unit?.label ?? me.prant ?? '–'}</b></div>
+        <div><span>Vibhags</span><b>{me.profile?.vibhags?.map((v) => v.name).join(', ') || '–'}</b></div>
         <div><span>College / organisation</span><b>{me.institution ?? '–'}</b></div>
-        <div><span>Membership</span><b>{me.is_member ? 'Approved member' : 'Not a member yet – apply in the ABVP Connect app'}</b></div>
+        <div><span>Membership</span><b>{me.is_member ? 'Approved member' : me.profile?.membership_status === 'submitted' ? 'Applied – with your district office' : <Link to="/me/edit" style={{ color: 'var(--deep)' }}>Not a member yet – apply</Link>}</b></div>
       </div>
+      <Link to="/me/edit" className="btn primary" style={{ marginTop: 20, marginRight: 10 }}><Icon name="edit" size={18} /> Edit profile</Link>
       <button className="btn" style={{ marginTop: 20 }} onClick={signOut}><Icon name="logout" size={18} /> Sign out</button>
     </div>
   )

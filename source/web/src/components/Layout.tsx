@@ -46,6 +46,7 @@ function Nav() {
         <nav className={`nav-links ${open ? 'open' : ''}`} aria-label="Main">
           {conf && <NavLink to={`/guide/${conf.event.id}`}>Conference guide</NavLink>}
           {conf?.event.delegate_registration_open && <NavLink to={`/conference/${conf.event.id}/register`}>Register</NavLink>}
+          <NavLink to="/events">Events</NavLink>
           <NavLink to="/community">Community</NavLink>
           {me && <NavLink to="/me">My space</NavLink>}
           {!me && <NavLink to="/login" className="only-sm">Sign in</NavLink>}
@@ -91,6 +92,7 @@ function Footer() {
           <Link to="/signup">Sign up</Link>
           <Link to="/login">Sign in</Link>
           <Link to="/me">My space</Link>
+          <Link to="/events">Events</Link>
         </div>
       </div>
       <div className="wrap" style={{ marginTop: 30, fontSize: 13, opacity: .6 }}>© {new Date().getFullYear()} Akhil Bharatiya Vidyarthi Parishad</div>

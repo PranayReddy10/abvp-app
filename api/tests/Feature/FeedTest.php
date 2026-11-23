@@ -81,12 +81,18 @@ class FeedTest extends TestCase
         $this->assertSame(['SFD only'], collect($this->getJson('/api/v1/feed')->json('data'))->pluck('body')->all());
     }
 
-    public function test_only_approved_members_use_the_feed(): void
+    public function test_everyone_signed_in_uses_the_community(): void
     {
         $applicant = $this->member('Applicant', approved: false);
         Sanctum::actingAs($applicant);
-        $this->getJson('/api/v1/feed')->assertStatus(403)->assertJsonPath('error.code', 'NOT_A_MEMBER');
-        $this->createPost($applicant, ['body' => 'hi'])->assertStatus(403);
+        $this->getJson('/api/v1/feed')->assertOk();
+        $this->createPost($applicant, ['body' => 'hi from a delegate'])->assertStatus(201);
+
+        // A brand-new account with no name cannot post until it adds one.
+        $nameless = \App\Models\User::create(['mobile' => '+919811100099']);
+        Sanctum::actingAs($nameless);
+        $this->getJson('/api/v1/feed')->assertOk();
+        $this->createPost($nameless, ['body' => 'hi'])->assertStatus(422)->assertJsonPath('error.code', 'NAME_REQUIRED');
     }
 
     public function test_like_comment_repost_and_follow(): void
