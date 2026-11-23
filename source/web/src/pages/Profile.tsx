@@ -41,7 +41,7 @@ export default function Profile() {
     loaded.current = true
     const p = me.profile
     setF({
-      full_name: p?.full_name ?? me.name ?? '', email: me.email ?? '', gender: p?.gender ?? me.gender ?? '', date_of_birth: p?.date_of_birth ?? '',
+      full_name: p?.full_name || me.name || '', email: me.email ?? '', gender: p?.gender ?? me.gender ?? '', date_of_birth: p?.date_of_birth ?? '',
       occupation: me.occupation ?? 'Student', institution: p?.institution ?? me.institution ?? '', course: p?.course ?? '', study_year: p?.study_year ?? '',
       prant: me.prant ?? '', bio: p?.bio ?? '',
     })

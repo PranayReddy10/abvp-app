@@ -269,9 +269,11 @@ class EventsTest extends TestCase
         $this->assertNull($svc->registrationFromToken('EP1.16.'.str_repeat('a', 16)));
     }
 
-    public function test_everyone_sees_published_events_but_only_members_register(): void
+    public function test_everyone_sees_and_registers_unless_the_event_is_members_only(): void
     {
-        $id = $this->createEvent($this->admin());
+        $admin = $this->admin();
+        $id = $this->createEvent($admin);
+        $this->patchJson("/api/v1/admin/events/$id", ['members_only' => true])->assertOk();
         $this->getJson('/api/v1/public/events')->assertOk()->assertJsonPath('data.0.id', $id)->assertJsonMissingPath('data.0.instructions');
         $this->getJson("/api/v1/public/events/$id")->assertOk()->assertJsonPath('data.title', 'Telangana Pranth Adhiveshan');
 
@@ -280,6 +282,40 @@ class EventsTest extends TestCase
         $this->getJson('/api/v1/events')->assertOk()->assertJsonPath('data.0.id', $id)->assertJsonPath('data.0.eligible', false);
         $this->getJson("/api/v1/events/$id")->assertOk()->assertJsonPath('data.instructions', null);
         $this->postJson("/api/v1/events/$id/register")->assertStatus(403)->assertJsonPath('error.code', 'NOT_ELIGIBLE');
+
+        // Open to everyone (the default): the same account registers and is confirmed at once.
+        Sanctum::actingAs($admin);
+        $this->patchJson("/api/v1/admin/events/$id", ['members_only' => false])->assertOk();
+        Sanctum::actingAs($delegate);
+        $this->postJson("/api/v1/events/$id/register")->assertCreated()->assertJsonPath('data.my_registration.status', 'registered');
+    }
+
+    public function test_switching_approval_off_confirms_everyone_waiting(): void
+    {
+        $admin = $this->admin();
+        $id = $this->createEvent($admin, ['requires_approval' => true]);
+        $m = $this->member('Waiting Member');
+        Sanctum::actingAs($m);
+        $this->postJson("/api/v1/events/$id/register")->assertCreated()->assertJsonPath('data.my_registration.status', 'pending');
+
+        Sanctum::actingAs($admin);
+        $this->patchJson("/api/v1/admin/events/$id", ['requires_approval' => false])->assertOk();
+        Sanctum::actingAs($m);
+        $this->getJson("/api/v1/events/$id")->assertJsonPath('data.my_registration.status', 'registered');
+
+        $late = $this->member('Late Member');
+        Sanctum::actingAs($late);
+        $this->postJson("/api/v1/events/$id/register")->assertCreated()->assertJsonPath('data.my_registration.status', 'registered');
+    }
+
+    public function test_every_new_account_gets_a_member_id(): void
+    {
+        $this->postJson('/api/v1/auth/send-otp', ['mobile' => '9876533333'])->assertOk();
+        $id = $this->postJson('/api/v1/auth/verify-otp', ['mobile' => '9876533333', 'code' => '123456'])->assertOk()->json('data.user.profile.member_id');
+        $this->assertMatchesRegularExpression('/^ABVP-[A-Z]+-\d{6}$/', $id);
+        $this->postJson('/api/v1/auth/send-otp', ['mobile' => '9876533333'])->assertOk();
+        $this->postJson('/api/v1/auth/verify-otp', ['mobile' => '9876533333', 'code' => '123456'])->assertOk()->assertJsonPath('data.user.profile.member_id', $id);
+        $this->postJson('/api/v1/auth/register', ['mobile' => '9876533334', 'code' => '000000', 'name' => 'X'])->assertStatus(422); // wrong code: no account
     }
 
     public function test_profile_update_saves_account_details_and_area(): void

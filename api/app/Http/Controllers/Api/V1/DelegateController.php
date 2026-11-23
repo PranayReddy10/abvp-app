@@ -37,7 +37,7 @@ class DelegateController extends Controller
             'open' => $event->delegate_registration_open && $event->ends_at->isFuture(),
             'registration' => $reg && ! in_array($reg->status, [Reg::CANCELLED, Reg::REJECTED], true) ? $this->present($reg, $travel) : null,
             // Pre-fill from the sign-up details.
-            'prefill' => ['full_name' => $user->profile?->full_name ?? $user->name, 'gender' => $user->profile?->gender ?? $user->gender, 'prant' => $user->prant, 'institution' => $user->profile?->institution ?? $user->institution],
+            'prefill' => ['full_name' => $user->profile?->full_name ?: $user->name, 'gender' => $user->profile?->gender ?? $user->gender, 'prant' => $user->prant, 'institution' => $user->profile?->institution ?? $user->institution],
             'options' => [
                 'prants' => config('abvp.prants'),
                 'arrival_points' => GuideItem::where('event_id', $event->id)->where('kind', 'arrival')->orderBy('sort')->pluck('title'),

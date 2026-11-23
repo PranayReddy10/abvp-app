@@ -69,7 +69,7 @@ class LogisticsService
             $gender = $t->user->profile?->gender;
             $room = $rooms->first(fn ($r) => $r->used < $r->capacity && ($r->stay->for_gender === 'any' || $r->stay->for_gender === $gender));
             if (! $room) {
-                $left[] = $t->user->profile?->full_name ?? $t->user->name;
+                $left[] = $t->user->profile?->full_name ?: $t->user->name;
                 continue;
             }
             RoomAllocation::create(['event_id' => $event->id, 'room_id' => $room->id, 'user_id' => $t->user_id]);

@@ -96,8 +96,15 @@ class EventController extends Controller
         $data = $this->validated($request, partial: true);
 
         $before = $event->only(['starts_at', 'ends_at', 'venue']);
-        DB::transaction(function () use ($event, $data) {
+        $approvedNow = [];
+        DB::transaction(function () use ($event, $data, &$approvedNow) {
+            $wasApproval = $event->requires_approval;
             $event->update(collect($data)->except(['rules', 'org_unit_id'])->all());
+            // Approval switched off: everyone still waiting is confirmed.
+            if ($wasApproval && ! $event->requires_approval) {
+                $approvedNow = Reg::where('event_id', $event->id)->where('status', Reg::PENDING)->pluck('user_id')->all();
+                Reg::where('event_id', $event->id)->where('status', Reg::PENDING)->update(['status' => Reg::REGISTERED]);
+            }
             if (array_key_exists('rules', $data)) {
                 $this->syncRules($event, $data['rules'] ?? []);
             }
@@ -105,6 +112,10 @@ class EventController extends Controller
                 $this->events->promoteWaitlist($event->fresh());
             }
         });
+
+        if ($approvedNow) {
+            AppNotification::sendMany($approvedNow, 'event_registration_decided', "Confirmed: {$event->title}", null, ['event_id' => $event->id]);
+        }
 
         // Tell registered people when the time or place changes.
         $event->refresh();
@@ -330,6 +341,7 @@ class EventController extends Controller
             'registration_closes_at' => ['nullable', 'date'],
             'capacity' => ['nullable', 'integer', 'min:1', 'max:200000'],
             'requires_approval' => ['sometimes', 'boolean'],
+            'members_only' => ['sometimes', 'boolean'],
             'waitlist_enabled' => ['sometimes', 'boolean'],
             'contact_name' => ['nullable', 'string', 'max:120'],
             'contact_phone' => ['nullable', 'string', 'max:20'],
@@ -394,6 +406,7 @@ class EventController extends Controller
             'registration_closes_at' => $e->registration_closes_at?->toIso8601String(),
             'capacity' => $e->capacity,
             'requires_approval' => $e->requires_approval,
+            'members_only' => $e->members_only,
             'waitlist_enabled' => $e->waitlist_enabled,
             'contact_name' => $e->contact_name,
             'contact_phone' => $e->contact_phone,

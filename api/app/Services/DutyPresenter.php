@@ -21,10 +21,10 @@ class DutyPresenter
             'status' => $d->status,
             'status_note' => $d->status_note,
             'team' => $d->team ? ['id' => $d->team->id, 'name' => $d->team->name] : null,
-            'assignee' => ['name' => $d->assignee?->profile?->full_name ?? $d->assignee?->name, 'member_id' => $d->assignee?->profile?->member_id, 'verified' => $badge($d->assignee)],
+            'assignee' => ['name' => $d->assignee?->profile?->full_name ?: $d->assignee?->name, 'member_id' => $d->assignee?->profile?->member_id, 'verified' => $badge($d->assignee)],
             // The person to report to. Their number is shared only with the duty holder.
             'report_to' => $report ? [
-                'name' => $report->profile?->full_name ?? $report->name,
+                'name' => $report->profile?->full_name ?: $report->name,
                 'verified' => $badge($report),
                 'phone' => $withPhone ? $report->mobile : null,
             ] : null,
@@ -42,14 +42,14 @@ class DutyPresenter
 
         $rows = collect();
         if ($lead && $lead->id !== $d->assignee_id) {
-            $rows->push(['name' => $lead->profile?->full_name ?? $lead->name, 'role' => 'Team lead', 'duty' => null, 'location' => null,
+            $rows->push(['name' => $lead->profile?->full_name ?: $lead->name, 'role' => 'Team lead', 'duty' => null, 'location' => null,
                 'phone' => $lead->mobile, 'verified' => (bool) $lead->profile?->isVerified()]);
         }
         foreach ($others as $o) {
             if ($o->assignee_id === $lead?->id) {
                 continue;
             }
-            $rows->push(['name' => $o->assignee->profile?->full_name ?? $o->assignee->name, 'role' => 'Teammate', 'duty' => $o->title,
+            $rows->push(['name' => $o->assignee->profile?->full_name ?: $o->assignee->name, 'role' => 'Teammate', 'duty' => $o->title,
                 'location' => $o->location, 'phone' => $o->assignee->mobile, 'verified' => (bool) $o->assignee->profile?->isVerified()]);
         }
 

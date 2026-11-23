@@ -27,7 +27,7 @@ class RoleAssignmentController extends Controller
             'id' => $r->id,
             'role' => $r->role,
             'label' => config("abvp.roles.{$r->role}.label"),
-            'member' => ['name' => $r->user->profile?->full_name ?? $r->user->name, 'member_id' => $r->user->profile?->member_id],
+            'member' => ['name' => $r->user->profile?->full_name ?: $r->user->name, 'member_id' => $r->user->profile?->member_id],
             'org_unit' => $r->orgUnit->label() ?: $r->orgUnit->name,
             'vibhag' => $r->vibhag?->name,
             'ends_on' => $r->ends_on?->toDateString(),

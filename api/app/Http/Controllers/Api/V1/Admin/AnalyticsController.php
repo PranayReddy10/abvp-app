@@ -254,7 +254,7 @@ class AnalyticsController extends Controller
                 ? Carbon::parse($submitted[$e->membership_application_id])->diffInHours($e->created_at) / 24 : null)->filter();
 
             return [
-                'name' => $g->first()->actor?->profile?->full_name ?? $g->first()->actor?->name,
+                'name' => $g->first()->actor?->profile?->full_name ?: $g->first()->actor?->name,
                 'decisions' => $g->count(),
                 'approved' => $g->where('action', 'approved')->count(),
                 'returned' => $g->where('action', 'returned')->count(),

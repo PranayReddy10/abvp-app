@@ -31,7 +31,7 @@ export default function Account() {
       <div className="page-head">
         <div>
           <h1>My account</h1>
-          <p className="muted" style={{ margin: '4px 0 0' }}>{me?.profile?.full_name ?? me?.name} · {me?.mobile}</p>
+          <p className="muted" style={{ margin: '4px 0 0' }}>{me?.profile?.full_name || me?.name} · {me?.mobile}</p>
         </div>
       </div>
       <div className="grid2">

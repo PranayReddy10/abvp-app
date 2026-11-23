@@ -37,7 +37,7 @@ export default function Me() {
             <p style={{ opacity: .85 }}>{[me.profile?.org_unit?.label ?? me.prant, me.institution].filter(Boolean).join(' · ') || me.mobile}</p>
           </div>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-            <span className="chip" style={{ background: 'rgba(255,255,255,.18)', color: '#fff' }}>{me.is_member ? `Member · ${me.profile?.member_id ?? ''}` : 'Account'}</span>
+            <span className="chip" style={{ background: 'rgba(255,255,255,.18)', color: '#fff' }}>{me.is_member ? `Member · ${me.profile?.member_id ?? ''}` : me.profile?.member_id ? `ID · ${me.profile.member_id}` : 'Account'}</span>
             <Link to="/me/edit" className="btn glass sm"><Icon name="edit" size={16} /> Edit profile</Link>
           </div>
         </div>
@@ -85,6 +85,7 @@ export default function Me() {
       <h2 style={{ fontSize: 28, fontWeight: 800, margin: '40px 0 16px' }}>My details</h2>
       <div className="review" style={{ maxWidth: 640 }}>
         <div><span>Name</span><b>{nameOf(me) || '–'}</b></div>
+        <div><span>ID</span><b>{me.profile?.member_id ?? '–'}</b></div>
         <div><span>Mobile</span><b>{me.mobile}</b></div>
         <div><span>Email</span><b>{me.email ?? '–'}</b></div>
         <div><span>Area</span><b>{me.profile?.org_unit?.label ?? me.prant ?? '–'}</b></div>

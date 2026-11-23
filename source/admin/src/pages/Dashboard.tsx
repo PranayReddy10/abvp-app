@@ -23,7 +23,7 @@ export default function Dashboard() {
   const { me } = useAuth()
   const { data: d, error, loading } = useFetch<D>('/admin/dashboard')
   const max = Math.max(1, ...(d?.pending_by_unit.map((u) => u.pending) ?? [1]))
-  const first = (me?.profile?.full_name ?? me?.name ?? '').split(' ')[0]
+  const first = (me?.profile?.full_name || me?.name || '').split(' ')[0]
   const hour = new Date().getHours()
   const greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
 

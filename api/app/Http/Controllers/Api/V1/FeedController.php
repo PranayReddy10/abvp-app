@@ -268,7 +268,7 @@ class FeedController extends Controller
     private function member(Request $request): User
     {
         $u = $request->user();
-        if ($request->isMethod('post') && blank($u->profile?->full_name ?? $u->name)) {
+        if ($request->isMethod('post') && blank($u->profile?->full_name ?: $u->name)) {
             throw new ApiException('NAME_REQUIRED', 'Add your name to your profile before posting.', 422);
         }
 
@@ -277,7 +277,7 @@ class FeedController extends Controller
 
     private function nameOf(User $u): string
     {
-        return (string) ($u->profile?->full_name ?? $u->name ?? 'Someone');
+        return (string) ($u->profile?->full_name ?: $u->name ?? 'Someone');
     }
 
     private function person(?User $u): array
@@ -285,7 +285,7 @@ class FeedController extends Controller
         $p = $u?->profile;
 
         return [
-            'name' => $p?->full_name ?? $u?->name,
+            'name' => $p?->full_name ?: $u?->name,
             'member_id' => $p?->member_id,
             'verified' => (bool) $p?->isVerified(),
             'place' => $p?->orgUnit?->name,

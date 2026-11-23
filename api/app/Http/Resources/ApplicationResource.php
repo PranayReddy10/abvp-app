@@ -32,7 +32,7 @@ class ApplicationResource extends JsonResource
             'org_unit' => ['id' => $this->orgUnit->id, 'name' => $this->orgUnit->name, 'label' => $this->orgUnit->label()],
             'applicant' => [
                 'user_id' => $this->user->id,
-                'name' => $profile?->full_name ?? $this->user->name,
+                'name' => $profile?->full_name ?: $this->user->name,
                 'mobile' => $this->detailed ? $this->user->mobile : Mobile::mask($this->user->mobile),
                 'institution' => $profile?->institution,
             ],
@@ -43,7 +43,7 @@ class ApplicationResource extends JsonResource
             $data['history'] = $this->events->map(fn ($e) => [
                 'action' => $e->action,
                 'note' => $e->note,
-                'actor' => $e->actor?->profile?->full_name ?? $e->actor?->name,
+                'actor' => $e->actor?->profile?->full_name ?: $e->actor?->name,
                 'at' => $e->created_at?->toIso8601String(),
             ]);
         }

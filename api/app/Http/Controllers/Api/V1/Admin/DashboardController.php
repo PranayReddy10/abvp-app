@@ -41,7 +41,7 @@ class DashboardController extends Controller
             ->latest('id')->limit(8)->get()
             ->map(fn ($e) => [
                 'action' => $e->action,
-                'actor' => $e->actor?->profile?->full_name ?? $e->actor?->name,
+                'actor' => $e->actor?->profile?->full_name ?: $e->actor?->name,
                 'at' => $e->created_at?->toIso8601String(),
             ]);
 

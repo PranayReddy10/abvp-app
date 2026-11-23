@@ -171,6 +171,7 @@ class AuthController extends Controller
             'mobile_verified_at' => $user->mobile_verified_at ?? ($verified ? now() : null),
             'last_login_at' => now(),
         ])->save();
+        app(\App\Services\AccountIds::class)->ensure($user);
         $token = $user->createToken($request->input('device_name', 'app'), ['*'], now()->addDays(60));
 
         return $this->ok([

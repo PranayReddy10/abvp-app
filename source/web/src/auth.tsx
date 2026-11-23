@@ -47,4 +47,4 @@ export function useAuth(): AuthState {
 
 /** Display name: profile name for members, sign-up name otherwise. */
 // eslint-disable-next-line react-refresh/only-export-components
-export const nameOf = (m: Me | null) => m?.profile?.full_name ?? m?.name ?? ''
+export const nameOf = (m: Me | null) => m?.profile?.full_name || m?.name || ''

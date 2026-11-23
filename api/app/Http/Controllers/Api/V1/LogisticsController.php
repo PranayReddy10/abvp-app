@@ -188,7 +188,7 @@ class LogisticsController extends Controller
                 $p = $s->points->first();
 
                 return [
-                    'name' => $s->user->profile?->full_name ?? $s->user->name,
+                    'name' => $s->user->profile?->full_name ?: $s->user->name,
                     'purpose' => $s->purpose,
                     'expires_at' => $s->expires_at->toIso8601String(),
                     'last_seen' => $p?->recorded_at->toIso8601String(),

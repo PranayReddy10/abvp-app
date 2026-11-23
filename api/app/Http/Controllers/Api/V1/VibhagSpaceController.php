@@ -95,7 +95,7 @@ class VibhagSpaceController extends Controller
         return $this->ok($page->getCollection()->map(fn (VibhagPost $p) => [
             'id' => $p->id,
             'body' => $p->body,
-            'author' => $p->author?->profile?->full_name ?? $p->author?->name,
+            'author' => $p->author?->profile?->full_name ?: $p->author?->name,
             'place' => $p->orgUnit?->name,
             'at' => $p->created_at?->toIso8601String(),
         ]), meta: ['page' => $page->currentPage(), 'last_page' => $page->lastPage()]);

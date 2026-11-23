@@ -25,7 +25,7 @@ class AuditLogController extends Controller
         return $this->ok($page->getCollection()->map(fn (AuditLog $l) => [
             'id' => $l->id,
             'action' => $l->action,
-            'actor' => $l->actor?->profile?->full_name ?? $l->actor?->name ?? ($l->subject_type === 'User' && str_starts_with($l->action, 'auth.') ? 'The person themselves' : null),
+            'actor' => $l->actor?->profile?->full_name ?: $l->actor?->name ?? ($l->subject_type === 'User' && str_starts_with($l->action, 'auth.') ? 'The person themselves' : null),
             'subject' => $this->subject($l),
             'after' => $l->after,
             'ip' => $l->ip,

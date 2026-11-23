@@ -21,7 +21,7 @@ class Event extends Model
     protected $fillable = [
         'title', 'description', 'category', 'instructions', 'venue', 'venue_map_url', 'starts_at', 'ends_at',
         'org_unit_id', 'organiser_id', 'registration_opens_at', 'registration_closes_at', 'capacity',
-        'requires_approval', 'waitlist_enabled', 'contact_name', 'contact_phone',
+        'requires_approval', 'members_only', 'waitlist_enabled', 'contact_name', 'contact_phone',
         'guide_enabled', 'venue_lat', 'venue_lng', 'helpline_phone', 'delegate_registration_open',
     ];
 
@@ -35,6 +35,7 @@ class Event extends Model
             'registration_closes_at' => 'datetime',
             'published_at' => 'datetime',
             'requires_approval' => 'boolean',
+            'members_only' => 'boolean',
             'waitlist_enabled' => 'boolean',
         ];
     }

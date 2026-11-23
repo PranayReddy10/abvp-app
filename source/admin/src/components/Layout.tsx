@@ -96,9 +96,9 @@ export default function Layout() {
             <Icon name="bell" size={19} />{waiting > 0 && <i className="dot-badge" />}
           </button>
           <div className="me-chip">
-            <Avatar name={me?.profile?.full_name ?? me?.name} src={me?.profile?.photo_url} size={40} />
+            <Avatar name={me?.profile?.full_name || me?.name} src={me?.profile?.photo_url} size={40} />
             <div className="me-text">
-              <b>{me?.profile?.full_name ?? me?.name}{me?.profile?.verified && <VerifiedBadge size={14} />}</b>
+              <b>{me?.profile?.full_name || me?.name}{me?.profile?.verified && <VerifiedBadge size={14} />}</b>
               <span>{top?.label}</span>
             </div>
           </div>

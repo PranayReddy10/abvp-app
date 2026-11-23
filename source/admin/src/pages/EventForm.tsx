@@ -10,7 +10,7 @@ export interface EventDetail {
   org_unit: { id: number; name: string }; organiser: string | null
   cover_url?: string | null
   registration_opens_at: string | null; registration_closes_at: string | null; capacity: number | null
-  requires_approval: boolean; waitlist_enabled: boolean; contact_name: string | null; contact_phone: string | null
+  requires_approval: boolean; members_only?: boolean; waitlist_enabled: boolean; contact_name: string | null; contact_phone: string | null
   rules: { org_unit_id: number | null; vibhag_id: number | null; label: string }[]
   counts: { members: number; guests: number; pending: number; waitlisted: number; cancelled: number; arrived: number }
 }
@@ -35,7 +35,7 @@ export default function EventForm({ event, onSaved }: { event?: EventDetail; onS
     venue: event?.venue ?? '', venue_map_url: event?.venue_map_url ?? '',
     starts_at: local(event?.starts_at), ends_at: local(event?.ends_at),
     registration_closes_at: local(event?.registration_closes_at), capacity: event?.capacity ? String(event.capacity) : '',
-    requires_approval: event?.requires_approval ?? false, waitlist_enabled: event?.waitlist_enabled ?? true,
+    requires_approval: event?.requires_approval ?? false, members_only: event?.members_only ?? false, waitlist_enabled: event?.waitlist_enabled ?? true,
     instructions: event?.instructions ?? '', contact_name: event?.contact_name ?? '', contact_phone: event?.contact_phone ?? '',
     org_unit_id: event ? String(event.org_unit.id) : '',
     rule_unit: event?.rules[0]?.org_unit_id ? String(event.rules[0].org_unit_id) : '',
@@ -52,7 +52,7 @@ export default function EventForm({ event, onSaved }: { event?: EventDetail; onS
       title: f.title, category: f.category, description: f.description || null, venue: f.venue,
       venue_map_url: f.venue_map_url || null, starts_at: iso(f.starts_at), ends_at: iso(f.ends_at),
       registration_closes_at: iso(f.registration_closes_at), capacity: f.capacity ? Number(f.capacity) : null,
-      requires_approval: f.requires_approval, waitlist_enabled: f.waitlist_enabled,
+      requires_approval: f.requires_approval, members_only: f.members_only, waitlist_enabled: f.waitlist_enabled,
       instructions: f.instructions || null, contact_name: f.contact_name || null, contact_phone: f.contact_phone || null,
       rules: f.rule_unit || f.rule_vibhag ? [{ org_unit_id: f.rule_unit ? Number(f.rule_unit) : null, vibhag_id: f.rule_vibhag ? Number(f.rule_vibhag) : null }] : [],
       ...(event ? {} : { org_unit_id: Number(f.org_unit_id) }),
@@ -97,6 +97,9 @@ export default function EventForm({ event, onSaved }: { event?: EventDetail; onS
         <div className="field"><label htmlFor="ercl">Registration closes</label><input id="ercl" type="datetime-local" className="input" value={f.registration_closes_at} onChange={set('registration_closes_at')} /></div>
       </div>
       <label style={{ display: 'flex', gap: 8, alignItems: 'center' }}><input type="checkbox" checked={f.requires_approval} onChange={(e) => setF({ ...f, requires_approval: e.target.checked })} /> Each registration needs approval</label>
+      <small className="muted" style={{ marginTop: -6 }}>Off: people are confirmed straight away. Switching it off also confirms everyone still waiting.</small>
+      <label style={{ display: 'flex', gap: 8, alignItems: 'center' }}><input type="checkbox" checked={!!f.members_only} onChange={(e) => setF({ ...f, members_only: e.target.checked })} /> Only approved members can register</label>
+      <small className="muted" style={{ marginTop: -6 }}>Off: anyone with an account can register (delegates, students who have not applied yet).</small>
       <label style={{ display: 'flex', gap: 8, alignItems: 'center' }}><input type="checkbox" checked={f.waitlist_enabled} onChange={(e) => setF({ ...f, waitlist_enabled: e.target.checked })} /> Keep a waitlist when seats are full</label>
 
       <h3 style={{ marginTop: 6 }}>For people who are coming</h3>

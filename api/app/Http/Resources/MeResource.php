@@ -17,7 +17,7 @@ class MeResource extends JsonResource
 
         return [
             'id' => $this->id,
-            'name' => $this->profile?->full_name ?? $this->name,
+            'name' => $this->profile?->full_name ?: $this->name,
             'mobile' => $this->mobile,
             'email' => $this->email,
             'prant' => $this->prant,

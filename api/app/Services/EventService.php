@@ -17,16 +17,16 @@ class EventService
     /** @return array{0: bool, 1: string} eligible, and a sentence the member can read */
     public function eligibility(User $user, Event $event): array
     {
-        if (! $user->isApprovedMember()) {
-            return [false, 'Registration is for approved members.'];
+        if ($event->members_only && ! $user->isApprovedMember()) {
+            return [false, 'Only approved members can register for this event.'];
         }
 
         $rules = $event->rules()->with('orgUnit', 'vibhag')->get();
         if ($rules->isEmpty()) {
-            return [true, 'Open to all approved members.'];
+            return [true, $event->members_only ? 'Open to all approved members.' : 'Open to everyone.'];
         }
 
-        $unit = $user->profile->orgUnit;
+        $unit = $user->profile?->orgUnit;
         $vibhags = $user->vibhags()->pluck('vibhags.id')->all();
 
         foreach ($rules as $r) {

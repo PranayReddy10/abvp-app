@@ -52,7 +52,7 @@ class LogisticsController extends Controller
                     'rooms' => $s->rooms->map(fn ($r) => [
                         'id' => $r->id, 'name' => $r->name, 'capacity' => $r->capacity,
                         'people' => $r->allocations->whereNull('checked_out_at')->values()->map(fn ($a) => [
-                            'allocation_id' => $a->id, 'name' => $a->user->profile?->full_name ?? $a->user->name,
+                            'allocation_id' => $a->id, 'name' => $a->user->profile?->full_name ?: $a->user->name,
                             'member_id' => $a->user->profile?->member_id, 'checked_in' => $a->checked_in_at !== null,
                         ]),
                     ]),
@@ -234,7 +234,7 @@ class LogisticsController extends Controller
 
         return $this->ok($rows->map(fn (EventTravel $t) => [
             'id' => $t->id,
-            'name' => $t->user->profile?->full_name ?? $t->user->name,
+            'name' => $t->user->profile?->full_name ?: $t->user->name,
             'mobile' => $t->user->mobile,
             'from' => $t->user->profile?->orgUnit?->name,
             'mode' => $t->mode, 'reference' => $t->reference,

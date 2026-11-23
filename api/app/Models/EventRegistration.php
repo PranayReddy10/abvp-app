@@ -35,6 +35,6 @@ class EventRegistration extends Model
 
     public function displayName(): string
     {
-        return $this->guest_name ?? $this->user?->profile?->full_name ?? $this->user?->name ?? 'Unknown';
+        return $this->guest_name ?? $this->user?->profile?->full_name ?: $this->user?->name ?? 'Unknown';
     }
 }
