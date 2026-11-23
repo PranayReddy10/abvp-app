@@ -129,7 +129,12 @@ class AuthController extends Controller
             $user->forceFill(['google_id' => $google['sub'], 'google_email' => $google['email']]);
         }
 
-        return $this->issue($request, $user, $isNew, ['google_linked' => (bool) $google], verified: $otpOn);
+        $response = $this->issue($request, $user, $isNew, ['google_linked' => (bool) $google], verified: $otpOn);
+        if ($isNew) {
+            Audit::record('auth.signed_up', $user, after: ['name' => $user->name, 'prant' => $user->prant, 'with' => $otpOn ? 'sms code' : 'password']);
+        }
+
+        return $response;
     }
 
     /**

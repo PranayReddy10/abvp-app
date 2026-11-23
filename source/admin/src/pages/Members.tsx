@@ -14,23 +14,103 @@ interface Row {
 }
 interface Detail { user_id: number; mobile: string; profile: Profile; roles: { id: number; label: string; org_unit: string }[]; verified_by: string | null; verification_note: string | null; can_verify: boolean }
 
+interface Account {
+  user_id: number; name: string | null; mobile: string; email: string | null; prant: string | null; area: string | null
+  institution: string | null; occupation: string | null; membership: string; member_id: string | null; profile_id: number | null
+  delegate: boolean; signed_up_at: string | null; last_login_at: string | null; status: string
+}
+
+const ACCOUNT_FILTERS: [string, string][] = [['all', 'Everyone'], ['not_applied', 'Not applied'], ['submitted', 'Applied'], ['approved', 'Members'], ['delegate', 'Delegates']]
+const MEMBERSHIP: Record<string, [string, string]> = {
+  draft: ['Not applied', 'mute'], submitted: ['Applied', 'warn'], more_info_required: ['Needs correction', 'warn'], approved: ['Member', 'ok'], rejected: ['Not approved', 'bad'], suspended: ['Suspended', 'bad'],
+}
+
+/** Everyone who signed up – website, app, Google or delegate registration – member or not. */
+function Accounts() {
+  const [q, setQ] = useState('')
+  const [search, setSearch] = useState('')
+  const [filter, setFilter] = useState('all')
+  const [page, setPage] = useState(1)
+  const { data, meta, error, loading } = useFetch<Account[]>(`/admin/accounts${qs({ q: search, status: filter, page })}`)
+  const lastPage = Number(meta.last_page ?? 1)
+  return (
+    <>
+      <div className="toolbar" style={{ justifyContent: 'space-between', marginBottom: 14 }}>
+        <div className="chips" role="tablist" aria-label="Filter accounts">
+          {ACCOUNT_FILTERS.map(([k, l]) => <button key={k} role="tab" aria-selected={filter === k} className={`chip ${filter === k ? 'on' : ''}`} onClick={() => { setFilter(k); setPage(1) }}>{l}</button>)}
+        </div>
+        <form onSubmit={(e) => { e.preventDefault(); setPage(1); setSearch(q) }}>
+          <input className="input" style={{ width: 280 }} placeholder="Name, mobile or email" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search accounts" />
+        </form>
+      </div>
+      <ErrorBox error={error} />
+      <section className="card">
+        <div className="table-wrap">
+          <table>
+            <thead><tr><th>Name</th><th>Mobile</th><th>Prant / area</th><th>College / work</th><th>Membership</th><th>Signed up</th><th>Last sign-in</th></tr></thead>
+            <tbody>
+              {data?.map((a) => {
+                const [label, tone] = MEMBERSHIP[a.membership] ?? [a.membership, 'mute']
+                return (
+                  <tr key={a.user_id}>
+                    <td>
+                      <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                        <Avatar name={a.name ?? '?'} size={32} />
+                        <div><b>{a.name ?? <span className="muted">No name yet</span>}</b>{a.email && <div className="muted" style={{ fontSize: 12 }}>{a.email}</div>}</div>
+                      </div>
+                    </td>
+                    <td className="mono"><a href={`tel:${a.mobile}`}>{a.mobile}</a></td>
+                    <td>{a.area ?? a.prant ?? <span className="muted">–</span>}</td>
+                    <td>{[a.institution, a.occupation].filter(Boolean).join(' · ') || <span className="muted">–</span>}</td>
+                    <td><span className={`pill ${tone}`}>{label}</span>{a.member_id && <div className="mono muted" style={{ fontSize: 12 }}>{a.member_id}</div>}{a.delegate && <div><span className="pill info" style={{ marginTop: 4 }}>Delegate</span></div>}</td>
+                    <td>{fmtDate(a.signed_up_at)}</td>
+                    <td>{a.last_login_at ? fmtDate(a.last_login_at) : <span className="muted">–</span>}</td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+          {data?.length === 0 && <Empty>No accounts match.</Empty>}
+          {loading && !data && <Skeleton />}
+        </div>
+        <div className="pager">
+          <span className="muted">{String(meta.total ?? 0)} accounts</span>
+          <button className="btn small" disabled={page <= 1} onClick={() => setPage(page - 1)}>Previous</button>
+          <button className="btn small" disabled={page >= lastPage} onClick={() => setPage(page + 1)}>Next</button>
+        </div>
+      </section>
+      <p className="muted" style={{ fontSize: 13, marginTop: 10 }}>Everyone who created an account on the website or app. They show in Approvals once they apply for membership, and under Members once approved.</p>
+    </>
+  )
+}
+
 export default function Members() {
   const [params] = useSearchParams()
+  const [view, setView] = useState<'members' | 'accounts'>(params.get('view') === 'accounts' ? 'accounts' : 'members')
   const [q, setQ] = useState(params.get('q') ?? '')
   const [search, setSearch] = useState(params.get('q') ?? '')
   const [page, setPage] = useState(1)
   const [open, setOpen] = useState<number | null>(null)
-  const { data, meta, error, loading } = useFetch<Row[]>(`/admin/members${qs({ q: search, page })}`)
+  const { data, meta, error, loading } = useFetch<Row[]>(view === 'members' ? `/admin/members${qs({ q: search, page })}` : null)
   const lastPage = Number(meta.last_page ?? 1)
 
   return (
     <main className="content">
       <div className="page-head">
-        <h1>Members</h1>
-        <form onSubmit={(e) => { e.preventDefault(); setPage(1); setSearch(q) }}>
-          <input className="input" style={{ width: 280 }} placeholder="Name, Member ID or mobile" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search members" />
-        </form>
+        <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
+          <h1>{view === 'members' ? 'Members' : 'All accounts'}</h1>
+          <div className="login-tabs" role="tablist" aria-label="Members or all accounts" style={{ minWidth: 300 }}>
+            <button type="button" role="tab" aria-selected={view === 'members'} className={view === 'members' ? 'on' : ''} onClick={() => setView('members')}>Approved members</button>
+            <button type="button" role="tab" aria-selected={view === 'accounts'} className={view === 'accounts' ? 'on' : ''} onClick={() => setView('accounts')}>All accounts</button>
+          </div>
+        </div>
+        {view === 'members' && (
+          <form onSubmit={(e) => { e.preventDefault(); setPage(1); setSearch(q) }}>
+            <input className="input" style={{ width: 280 }} placeholder="Name, Member ID or mobile" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search members" />
+          </form>
+        )}
       </div>
+      {view === 'accounts' ? <Accounts /> : <>
       <ErrorBox error={error} />
       <div className="grid2" style={{ gridTemplateColumns: open ? 'minmax(0,1.5fr) minmax(0,1fr)' : '1fr' }}>
         <section className="card">
@@ -60,6 +140,7 @@ export default function Members() {
         </section>
         {open && <MemberCard id={open} onClose={() => setOpen(null)} />}
       </div>
+      </>}
     </main>
   )
 }

@@ -169,6 +169,7 @@ Route::prefix('v1')->group(function () {
             Route::post('applications/{application}/reject', [Admin\ApplicationController::class, 'reject']);
 
             Route::get('members', [Admin\MemberController::class, 'index']);
+            Route::get('accounts', [Admin\MemberController::class, 'accounts']);
             Route::get('members/{profile}', [Admin\MemberController::class, 'show']);
             Route::post('members/{profile}/verify', [Admin\MemberController::class, 'verify']);
 

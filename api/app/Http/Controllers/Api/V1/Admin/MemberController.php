@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ProfileResource;
 use App\Models\MemberProfile;
+use App\Models\User;
 use App\Services\AccessControl;
 use App\Support\Mobile;
 use Illuminate\Http\Request;
@@ -54,6 +55,76 @@ class MemberController extends Controller
                 'institution' => $p->institution,
                 'vibhags' => $p->user->vibhags->pluck('name'),
                 'approved_at' => $p->approved_at?->toIso8601String(),
+            ]),
+            meta: ['page' => $page->currentPage(), 'total' => $page->total(), 'last_page' => $page->lastPage()],
+        );
+    }
+
+    /**
+     * Every account that signed up (website, app, Google, delegates), member or not.
+     * National admins see all; state admins see accounts in their state (by district
+     * or by the prant chosen at sign-up); district admins see their district.
+     */
+    public function accounts(Request $request)
+    {
+        $data = $request->validate([
+            'q' => ['nullable', 'string', 'max:60'],
+            'status' => ['nullable', 'in:all,not_applied,submitted,approved,delegate'],
+        ]);
+        $this->authorizeIn('members.view');
+        $grants = $this->access->grants($request->user(), 'members.view')->map->orgUnit->filter();
+        $national = $grants->contains(fn ($u) => $u->type === 'national' || $u->parent_id === null);
+
+        $query = User::query()->with('profile.orgUnit')->latest('id');
+        if (! $national) {
+            $paths = $grants->pluck('path')->unique()->values();
+            $states = $grants->where('type', 'state')->pluck('name')->all();
+            $query->where(function ($w) use ($paths, $states) {
+                $w->whereHas('profile', fn ($p) => $p->whereIn('org_unit_id', fn ($sub) => $sub->select('id')->from('org_units')
+                    ->where(function ($o) use ($paths) {
+                        foreach ($paths as $path) {
+                            $o->orWhere('path', 'like', $path.'%');
+                        }
+                    })));
+                if ($states) {
+                    $w->orWhere(fn ($n) => $n->whereIn('prant', $states)
+                        ->where(fn ($x) => $x->whereDoesntHave('profile')->orWhereHas('profile', fn ($p) => $p->whereNull('org_unit_id'))));
+                }
+            });
+        }
+        if ($q = $data['q'] ?? null) {
+            $query->where(fn ($w) => $w->where('name', 'like', "%$q%")->orWhere('mobile', 'like', "%$q%")->orWhere('email', 'like', "%$q%")
+                ->orWhereHas('profile', fn ($p) => $p->where('full_name', 'like', "%$q%")->orWhere('member_id', 'like', "%$q%")));
+        }
+        match ($data['status'] ?? 'all') {
+            'not_applied' => $query->where(fn ($w) => $w->whereDoesntHave('profile')->orWhereHas('profile', fn ($p) => $p->where('membership_status', 'draft'))),
+            'submitted' => $query->whereHas('profile', fn ($p) => $p->whereIn('membership_status', ['submitted', 'more_info_required'])),
+            'approved' => $query->whereHas('profile', fn ($p) => $p->where('membership_status', 'approved')),
+            'delegate' => $query->whereHas('registrations', fn ($r) => $r->where('kind', 'delegate')->where('status', '!=', 'cancelled')),
+            default => null,
+        };
+
+        $page = $query->paginate(25);
+        $delegates = \App\Models\EventRegistration::whereIn('user_id', $page->getCollection()->pluck('id'))
+            ->where('kind', 'delegate')->where('status', '!=', 'cancelled')->pluck('user_id')->flip();
+
+        return $this->ok(
+            $page->getCollection()->map(fn (User $u) => [
+                'user_id' => $u->id,
+                'name' => $u->profile?->full_name ?: ($u->name ?: null),
+                'mobile' => $u->mobile,
+                'email' => $u->email,
+                'prant' => $u->prant,
+                'area' => $u->profile?->orgUnit?->label(),
+                'institution' => $u->profile?->institution ?? $u->institution,
+                'occupation' => $u->occupation,
+                'membership' => $u->profile?->membership_status ?? 'draft',
+                'member_id' => $u->profile?->member_id,
+                'profile_id' => $u->profile?->membership_status === MemberProfile::STATUS_APPROVED ? $u->profile->id : null,
+                'delegate' => $delegates->has($u->id),
+                'signed_up_at' => $u->created_at?->toIso8601String(),
+                'last_login_at' => $u->last_login_at?->toIso8601String(),
+                'status' => $u->status,
             ]),
             meta: ['page' => $page->currentPage(), 'total' => $page->total(), 'last_page' => $page->lastPage()],
         );

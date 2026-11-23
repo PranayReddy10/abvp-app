@@ -46,6 +46,11 @@ class User extends Authenticatable
         return $this->belongsToMany(Vibhag::class, 'member_vibhag')->withPivot('joined_at');
     }
 
+    public function registrations(): HasMany
+    {
+        return $this->hasMany(EventRegistration::class);
+    }
+
     public function roleAssignments(): HasMany
     {
         return $this->hasMany(RoleAssignment::class);

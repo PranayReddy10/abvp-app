@@ -3,6 +3,14 @@ import { Empty, ErrorBox } from '../components/ui'
 import { fmtTime } from '../format'
 import { useFetch } from '../useFetch'
 
+const AUDIT_LABEL: Record<string, string> = {
+  'auth.signed_up': 'Signed up',
+  'auth.password_login': 'Signed in with password',
+  'auth.password_set': 'Set or changed password',
+  'settings.sign_in': 'Changed sign-in settings',
+  'settings.storage': 'Changed photo storage',
+}
+
 interface Row { id: number; action: string; actor: string | null; subject: string | null; after: Record<string, unknown> | null; ip: string | null; at: string }
 
 export default function AuditLog() {
@@ -22,7 +30,7 @@ export default function AuditLog() {
                 <tr key={r.id}>
                   <td>{fmtTime(r.at)}</td>
                   <td>{r.actor ?? 'System'}</td>
-                  <td className="mono">{r.action}</td>
+                  <td>{AUDIT_LABEL[r.action] ?? <span className="mono">{r.action}</span>}</td>
                   <td>{r.subject}</td>
                   <td className="muted" style={{ maxWidth: 360, overflowWrap: 'anywhere' }}>{r.after ? Object.entries(r.after).map(([k, v]) => `${k}: ${String(v)}`).join(' · ') : ''}</td>
                 </tr>
