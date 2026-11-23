@@ -14,21 +14,24 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
 
-/** Reported and hidden posts from members inside the admin's area. */
+/** Community posts inside the admin's area: all of them, the reported ones, and the hidden ones. */
 class ModerationController extends Controller
 {
     public function __construct(private AccessControl $access) {}
 
     public function index(Request $request)
     {
-        $request->validate(['status' => ['nullable', 'in:reported,hidden']]);
+        $request->validate(['status' => ['nullable', 'in:all,reported,hidden'], 'q' => ['nullable', 'string', 'max:60'], 'before' => ['nullable', 'integer']]);
         $this->authorizeIn('feed.moderate');
-        $authors = $this->access->scopeQuery(MemberProfile::query(), $request->user(), 'feed.moderate')->select('user_id');
+        $status = $request->input('status', 'reported');
 
-        $posts = Post::whereIn('user_id', $authors)
-            ->when($request->input('status', 'reported') === 'hidden', fn ($q) => $q->whereNotNull('hidden_at'),
-                fn ($q) => $q->where('reports_count', '>', 0)->whereNull('reviewed_at'))
-            ->with('author.profile.orgUnit')->orderByDesc('reports_count')->latest('id')->limit(100)->get();
+        $posts = Post::query()
+            ->when(! $this->national($request), fn ($q) => $q->whereIn('user_id', $this->access->scopeQuery(MemberProfile::query(), $request->user(), 'feed.moderate')->select('user_id')))
+            ->when($status === 'hidden', fn ($q) => $q->whereNotNull('hidden_at'))
+            ->when($status === 'reported', fn ($q) => $q->where('reports_count', '>', 0)->whereNull('reviewed_at')->orderByDesc('reports_count'))
+            ->when($request->input('q'), fn ($q, $t) => $q->where('body', 'like', "%$t%"))
+            ->when($request->integer('before'), fn ($q, $b) => $q->where('id', '<', $b))
+            ->with('author.profile.orgUnit')->latest('id')->limit(50)->get();
 
         $reports = DB::table('post_reports')->whereIn('post_id', $posts->pluck('id'))->get()->groupBy('post_id');
 
@@ -36,7 +39,9 @@ class ModerationController extends Controller
             'id' => $p->id,
             'body' => $p->body,
             'photo_urls' => collect($p->photos ?? [])->keys()->map(fn ($i) => URL::temporarySignedRoute('media.post', now()->addHour(), ['post' => $p->id, 'index' => $i]))->values(),
-            'author' => ['name' => $p->author->profile?->full_name, 'member_id' => $p->author->profile?->member_id, 'place' => $p->author->profile?->orgUnit?->name, 'verified' => (bool) $p->author->profile?->isVerified()],
+            'author' => ['name' => $p->author->profile?->full_name ?: $p->author->name, 'member_id' => $p->author->profile?->member_id, 'place' => $p->author->profile?->orgUnit?->name ?? $p->author->prant, 'verified' => (bool) $p->author->profile?->isVerified(), 'mobile' => \App\Support\Mobile::mask($p->author->mobile)],
+            'is_repost' => $p->repost_of_id !== null && ! $p->body,
+            'reposts' => $p->reposts_count,
             'audience' => $p->audience,
             'likes' => $p->likes_count, 'comments' => $p->comments_count,
             'reports_count' => $p->reports_count,
@@ -52,7 +57,7 @@ class ModerationController extends Controller
     {
         $data = $request->validate(['action' => ['required', 'in:hide,restore,dismiss'], 'reason' => ['nullable', 'required_if:action,hide', 'string', 'max:200']]);
         $unit = $post->author->profile?->orgUnit;
-        if (! $this->access->canIn($request->user(), 'feed.moderate', $unit)) {
+        if (! $this->national($request) && ! $this->access->canIn($request->user(), 'feed.moderate', $unit)) {
             throw new ApiException('FORBIDDEN_SCOPE', "This member is outside your area.", 403);
         }
 
@@ -67,5 +72,12 @@ class ModerationController extends Controller
         Audit::record('post.'.$data['action'], $post, null, ['reason' => $data['reason'] ?? null]);
 
         return $this->ok(['hidden' => $post->hidden_at !== null]);
+    }
+
+    /** National and super admins look after posts from everyone, including people with no district yet. */
+    private function national(Request $request): bool
+    {
+        return $this->access->grants($request->user(), 'feed.moderate')
+            ->contains(fn ($r) => $r->orgUnit && ($r->orgUnit->type === 'national' || $r->orgUnit->parent_id === null));
     }
 }

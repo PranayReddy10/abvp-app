@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { api, ApiError } from '../api'
 import { Icon, VerifiedBadge } from '../components/icons'
 import { Avatar, Empty, ErrorBox, Skeleton } from '../components/ui'
@@ -9,7 +10,9 @@ interface Flagged {
   id: number
   body: string | null
   photo_urls: string[]
-  author: { name: string | null; member_id: string | null; place: string | null; verified: boolean }
+  author: { name: string | null; member_id: string | null; place: string | null; verified: boolean; mobile?: string }
+  is_repost?: boolean
+  reposts?: number
   audience: string
   likes: number
   comments: number
@@ -22,16 +25,20 @@ interface Flagged {
 }
 
 const TABS = [
+  { key: 'all', label: 'All posts' },
   { key: 'reported', label: 'Reported' },
   { key: 'hidden', label: 'Hidden' },
 ]
 
-const AUDIENCE: Record<string, string> = { members: 'All members', area: 'District only', vibhag: 'Vibhag' }
+const AUDIENCE: Record<string, string> = { members: 'Everyone', area: 'District only', vibhag: 'Vibhag' }
 
 /** Community posts members reported, from authors inside the admin's area. */
 export default function Moderation() {
-  const [status, setStatus] = useState('reported')
-  const list = useFetch<Flagged[]>(`/admin/moderation?status=${status}`)
+  const [params] = useSearchParams()
+  const [status, setStatus] = useState(params.get('status') ?? 'all')
+  const [q, setQ] = useState('')
+  const [search, setSearch] = useState('')
+  const list = useFetch<Flagged[]>(`/admin/moderation?status=${status}${search ? `&q=${encodeURIComponent(search)}` : ''}`)
   const [busy, setBusy] = useState<number | null>(null)
   const [reasons, setReasons] = useState<Record<number, string>>({})
   const [flash, setFlash] = useState<string | null>(null)
@@ -55,9 +62,12 @@ export default function Moderation() {
     <main className="content">
       <div className="page-head">
         <div>
-          <h1>Community moderation</h1>
-          <p className="muted" style={{ margin: '4px 0 0' }}>Posts from members in your area that others reported. Five reports hide a post automatically until someone reviews it.</p>
+          <h1>Community</h1>
+          <p className="muted" style={{ margin: '4px 0 0' }}>Every post in your area – members, delegates and guests. Several reports hide a post automatically until someone reviews it.</p>
         </div>
+        <form onSubmit={(e) => { e.preventDefault(); setSearch(q) }}>
+          <input className="input" style={{ width: 260 }} placeholder="Search post text" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search posts" />
+        </form>
       </div>
       <div className="chips" role="tablist">
         {TABS.map((t) => (
@@ -70,7 +80,7 @@ export default function Moderation() {
       {flash && <div className="notice" role="status">{flash}</div>}
       {!list.data && !list.error && <section className="card"><Skeleton rows={4} /></section>}
       {list.data?.length === 0 && (
-        <section className="card"><Empty>{status === 'reported' ? 'Nothing waiting for review. 🎉' : 'No hidden posts.'}</Empty></section>
+        <section className="card"><Empty>{status === 'all' ? 'No posts yet.' : status === 'reported' ? 'Nothing waiting for review. 🎉' : 'No hidden posts.'}</Empty></section>
       )}
       <div className="mod-list">
         {list.data?.map((p) => (
@@ -79,9 +89,9 @@ export default function Moderation() {
               <Avatar name={p.author.name} size={40} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <b>{p.author.name}</b> {p.author.verified && <VerifiedBadge />}
-                <div className="muted" style={{ fontSize: 12.5 }}>{p.author.member_id} · {p.author.place} · {fmtTime(p.at)} · {AUDIENCE[p.audience] ?? p.audience}</div>
+                <div className="muted" style={{ fontSize: 12.5 }}>{[p.author.member_id ?? 'Not a member', p.author.place, p.author.mobile, fmtTime(p.at), AUDIENCE[p.audience] ?? p.audience].filter(Boolean).join(' · ')}</div>
               </div>
-              {p.hidden ? <span className="pill bad">Hidden</span> : <span className="pill warn">{fmtNum(p.reports_count)} report{p.reports_count === 1 ? '' : 's'}</span>}
+              {p.hidden ? <span className="pill bad">Hidden</span> : p.reports_count > 0 ? <span className="pill warn">{fmtNum(p.reports_count)} report{p.reports_count === 1 ? '' : 's'}</span> : p.is_repost ? <span className="pill mute">Repost</span> : null}
             </header>
             {p.body && <p className="mod-body">{p.body}</p>}
             {p.photo_urls.length > 0 && (
@@ -99,7 +109,7 @@ export default function Moderation() {
                   <input className="input" placeholder="Reason shown to the author (needed to hide)" aria-label={`Reason for hiding post ${p.id}`}
                     value={reasons[p.id] ?? ''} onChange={(e) => setReasons({ ...reasons, [p.id]: e.target.value })} />
                   <button className="btn danger" disabled={busy === p.id || !(reasons[p.id] ?? '').trim()} onClick={() => act(p, 'hide')}>Hide post</button>
-                  <button className="btn" disabled={busy === p.id} onClick={() => act(p, 'dismiss')}>Keep, dismiss reports</button>
+                  {p.reports_count > 0 && <button className="btn" disabled={busy === p.id} onClick={() => act(p, 'dismiss')}>Keep, dismiss reports</button>}
                 </>
               )}
               {p.hidden && <button className="btn good" disabled={busy === p.id} onClick={() => act(p, 'restore')}>Restore post</button>}

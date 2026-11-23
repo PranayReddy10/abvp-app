@@ -26,7 +26,10 @@ class GuideController extends Controller
     /** ABVP prants, for sign-up and registration forms. */
     public function prants()
     {
-        return $this->ok(config('abvp.prants'));
+        // ABVP's prants, plus any state an admin added under Areas.
+        $added = \App\Models\OrgUnit::where('type', 'state')->where('is_active', true)->pluck('name')->all();
+
+        return $this->ok(array_values(array_unique([...config('abvp.prants'), ...$added])));
     }
 
     public function hub(Request $request, Event $event)

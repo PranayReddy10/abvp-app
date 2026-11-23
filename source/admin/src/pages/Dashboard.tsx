@@ -79,7 +79,7 @@ export default function Dashboard() {
             <section className="card">
               <div className="card-head">
                 <div><h3>Recent decisions</h3><p className="sub">Latest approvals, returns and rejections</p></div>
-                {d.reported_posts ? <Link className="pill warn" to="/moderation">{d.reported_posts} reported post{d.reported_posts === 1 ? '' : 's'}</Link> : null}
+                {d.reported_posts ? <Link className="pill warn" to="/moderation?status=reported">{d.reported_posts} reported post{d.reported_posts === 1 ? '' : 's'}</Link> : null}
               </div>
               {d.recent_decisions.length === 0 ? <p className="muted">No decisions yet.</p> : (
                 <div>

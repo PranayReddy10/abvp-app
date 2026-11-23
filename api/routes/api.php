@@ -177,6 +177,8 @@ Route::prefix('v1')->group(function () {
             Route::post('vibhags', [Admin\VibhagController::class, 'store']);
             Route::patch('vibhags/{vibhag}', [Admin\VibhagController::class, 'update']);
 
+            Route::get('org-units', [Admin\OrgUnitController::class, 'index']);
+            Route::post('org-units/import-prants', [Admin\OrgUnitController::class, 'importPrants']);
             Route::post('org-units', [Admin\OrgUnitController::class, 'store']);
             Route::patch('org-units/{orgUnit}', [Admin\OrgUnitController::class, 'update']);
 

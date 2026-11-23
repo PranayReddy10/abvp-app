@@ -19,6 +19,7 @@ import Moderation from './pages/Moderation'
 import Roles from './pages/Roles'
 import Settings from './pages/Settings'
 import Account from './pages/Account'
+import Areas from './pages/Areas'
 import Vibhags from './pages/Vibhags'
 import './styles.css'
 
@@ -46,6 +47,7 @@ function App() {
         <Route path="moderation" element={<Moderation />} />
         <Route path="settings" element={<Settings />} />
         <Route path="account" element={<Account />} />
+        <Route path="areas" element={<Areas />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

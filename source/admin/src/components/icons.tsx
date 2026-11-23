@@ -19,6 +19,7 @@ const P = {
   trend: 'M23 6l-9.5 9.5-5-5L1 18M17 6h6v6',
   clock: 'M12 22a10 10 0 100-20 10 10 0 000 20zM12 6v6l4 2',
   settings: 'M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6',
+  map: 'M9 4L3 6v14l6-2 6 2 6-2V4l-6 2zM9 4v14M15 6v14',
   lock: 'M5 11h14v10H5zM8 11V7a4 4 0 018 0v4',
   flag: 'M4 22V4M4 4h13l-2 4 2 4H4',
   audit: 'M12 8v4l3 2M21 12a9 9 0 11-9-9 9 9 0 019 9z',

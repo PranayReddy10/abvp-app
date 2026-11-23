@@ -63,6 +63,7 @@ export default function Layout() {
         {can('vibhag.post') && <Item to="/updates" icon="updates" label="Vibhag updates" />}
         {can('feed.moderate') && <Item to="/moderation" icon="flag" label="Community" count={dash?.reported_posts} />}
         <h6>Setup</h6>
+        {can('org.manage') && <Item to="/areas" icon="map" label="Areas" />}
         <Item to="/vibhags" icon="vibhags" label="Vibhags" />
         {can('roles.assign') && <Item to="/roles" icon="roles" label="Admins and roles" />}
         {can('audit.view') && <Item to="/audit" icon="audit" label="Audit log" />}
@@ -91,7 +92,7 @@ export default function Layout() {
           <button className="icon-btn" onClick={toggleTheme} title={dark ? 'Light mode' : 'Dark mode'} aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}>
             <Icon name={dark ? 'sun' : 'moon'} size={19} />
           </button>
-          <button className="icon-btn" onClick={() => navigate(dash?.pending_applications ? '/approvals' : '/moderation')} title="Waiting for you" aria-label={`${waiting} items waiting for you`}>
+          <button className="icon-btn" onClick={() => navigate(dash?.pending_applications ? '/approvals' : '/moderation?status=reported')} title="Waiting for you" aria-label={`${waiting} items waiting for you`}>
             <Icon name="bell" size={19} />{waiting > 0 && <i className="dot-badge" />}
           </button>
           <div className="me-chip">

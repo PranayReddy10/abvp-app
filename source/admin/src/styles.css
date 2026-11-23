@@ -564,3 +564,19 @@ tbody tr:hover td { background: var(--surface-2) }
 .login-tabs button.on { background: var(--surface); color: var(--ink); box-shadow: 0 1px 4px rgba(0,0,0,.12) }
 .login-tabs button:focus-visible { outline: 2px solid var(--saffron); outline-offset: 1px }
 .toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface-2) }
+
+/* Areas tree */
+.area-tree { display: grid; gap: 2px }
+.area-children { margin-left: 22px; border-left: 1px dashed var(--line); padding-left: 8px }
+.area-row { display: flex; align-items: center; gap: 10px; padding: 8px 6px; border-radius: 12px; flex-wrap: wrap }
+.area-row:hover { background: var(--surface-2) }
+.area-row.off .area-name b { color: var(--muted); text-decoration: line-through }
+.area-toggle { width: 26px; height: 26px; border-radius: 8px; border: 0; background: none; cursor: pointer; color: var(--muted); font-size: 14px }
+.area-toggle:disabled { cursor: default }
+.area-name { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; min-width: 0 }
+.area-counts { font-size: 12.5px; margin-left: auto }
+.area-actions { display: flex; gap: 6px; opacity: .55; transition: opacity .2s }
+.area-row:hover .area-actions, .area-row:focus-within .area-actions { opacity: 1 }
+.area-form { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; flex: 1 }
+.area-form .input { width: 220px; height: 36px }
+@media (hover: none) { .area-actions { opacity: 1 } }
