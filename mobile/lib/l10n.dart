@@ -102,11 +102,6 @@ const _t = <String, Map<String, String>>{
     'hi': 'पहले से खाता है? साइन इन करें',
     'te': 'ఇప్పటికే ఖాతా ఉందా? సైన్ ఇన్',
   },
-  'signin.codesOff': {
-    'en': 'Sign-in codes are switched off for now. Use your mobile number and password.',
-    'hi': 'साइन-इन कोड अभी बंद हैं। अपना मोबाइल नंबर और पासवर्ड इस्तेमाल करें।',
-    'te': 'సైన్-ఇన్ కోడ్‌లు ప్రస్తుతం ఆపివేయబడ్డాయి. మీ మొబైల్ నంబర్, పాస్‌వర్డ్ ఉపయోగించండి.',
-  },
   'signin.short': {
     'en': 'The password must be at least 8 characters.',
     'hi': 'पासवर्ड कम से कम 8 अक्षर का होना चाहिए।',

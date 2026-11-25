@@ -351,22 +351,6 @@ class _SignInScreenState extends State<SignInScreen> {
         if (widget.session.otpEnabled) ...[
           _modeSwitch(),
           const SizedBox(height: 20),
-        ] else ...[
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: AppColors.saffronSoft,
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Text(
-              tr('signin.codesOff'),
-              style: const TextStyle(
-                color: AppColors.saffronInk,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          const SizedBox(height: 18),
         ],
         if (_error != null) ...[
           ErrorBanner(_error!),
