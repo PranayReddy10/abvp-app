@@ -17,7 +17,7 @@ class NotificationController extends Controller
             'type' => $n->type,
             'title' => $n->title,
             'body' => $n->body,
-            'data' => $n->data,
+            'data' => (object) ($n->data ?: []), // always a JSON object, never []
             'is_read' => $n->read_at !== null,
             'at' => $n->created_at?->toIso8601String(),
         ]), meta: ['unread' => AppNotification::where('user_id', $request->user()->id)->whereNull('read_at')->count()]);
