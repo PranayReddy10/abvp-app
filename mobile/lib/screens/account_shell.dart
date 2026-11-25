@@ -258,43 +258,49 @@ class AccountMeScreen extends StatelessWidget {
                 index: 2,
                 child: Panel(
                   padding: const EdgeInsets.symmetric(vertical: 6),
-                  child: Column(
-                    children: [
-                      ListTile(
-                        leading: const Icon(Icons.edit_outlined),
-                        title: const Text('Edit details, area and photo'),
-                        subtitle: const Text(
-                          'Name, date of birth, district, Vibhags',
+                  child: Material(
+                    type: MaterialType.transparency,
+                    child: Column(
+                      children: [
+                        ListTile(
+                          leading: const Icon(Icons.edit_outlined),
+                          title: const Text('Edit details, area and photo'),
+                          subtitle: const Text(
+                            'Name, date of birth, district, Vibhags',
+                          ),
+                          onTap: () => session.editApplication(true),
                         ),
-                        onTap: () => session.editApplication(true),
-                      ),
-                      ListTile(
-                        leading: const Icon(Icons.lock_outline),
-                        title: Text(
-                          me.hasPassword
-                              ? tr('me.passwordChange')
-                              : tr('me.passwordSet'),
+                        ListTile(
+                          leading: const Icon(Icons.lock_outline),
+                          title: Text(
+                            me.hasPassword
+                                ? tr('me.passwordChange')
+                                : tr('me.passwordSet'),
+                          ),
+                          subtitle: Text(tr('me.passwordHint')),
+                          onTap: () => showPasswordSheet(context, session),
                         ),
-                        subtitle: Text(tr('me.passwordHint')),
-                        onTap: () => showPasswordSheet(context, session),
-                      ),
-                      ListTile(
-                        leading: const Icon(Icons.translate),
-                        title: Text(tr('lang.title')),
-                        onTap: () => showLanguagePicker(
-                          context,
-                          save: (c) => session.api.writeCache('lang', c),
+                        ListTile(
+                          leading: const Icon(Icons.translate),
+                          title: Text(tr('lang.title')),
+                          onTap: () => showLanguagePicker(
+                            context,
+                            save: (c) => session.api.writeCache('lang', c),
+                          ),
                         ),
-                      ),
-                      ListTile(
-                        leading: const Icon(Icons.logout, color: AppColors.bad),
-                        title: const Text(
-                          'Sign out',
-                          style: TextStyle(color: AppColors.bad),
+                        ListTile(
+                          leading: const Icon(
+                            Icons.logout,
+                            color: AppColors.bad,
+                          ),
+                          title: const Text(
+                            'Sign out',
+                            style: TextStyle(color: AppColors.bad),
+                          ),
+                          onTap: session.signOut,
                         ),
-                        onTap: session.signOut,
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),

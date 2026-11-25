@@ -134,7 +134,9 @@ class _SkeletonListState extends State<SkeletonList>
             borderRadius: BorderRadius.circular(r),
           ),
         );
+        // Sized to its rows, so it also works inside another list (the feed, a section).
         return ListView(
+          shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
           children: [
