@@ -843,7 +843,7 @@ footer{padding-block:30px 50px;border-top:1px solid var(--line);color:var(--mute
 
   <div class="browser-scroll">
   <div class="browser">
-    <div class="chrome"><i></i><i></i><i></i><span class="url" id="url">admin.abvpconnect.in/dashboard</span></div>
+    <div class="chrome"><i></i><i></i><i></i><span class="url" id="url">admin.abvpconnect.org/dashboard</span></div>
     <div class="admin">
       <aside class="side">
         <div class="brand"><i><svg><use href="#i-torch"/></svg></i>ABVP Connect</div>
@@ -1074,12 +1074,12 @@ footer{padding-block:30px 50px;border-top:1px solid var(--line);color:var(--mute
     <div class="col">
       <span class="colhead">People use</span>
       <div class="node"><b>Flutter app</b><small>Android and iOS. Caches pass, duties and event details for offline use.</small></div>
-      <div class="node"><b>Admin panel</b><span class="mono">admin.abvpconnect.in</span><small>Static React files, no Node server needed.</small></div>
-      <div class="node"><b>Public website</b><span class="mono">abvpconnect.in</span><small>Download links, event pages, guest invitation links.</small></div>
+      <div class="node"><b>Admin panel</b><span class="mono">admin.abvpconnect.org</span><small>Static React files, no Node server needed.</small></div>
+      <div class="node"><b>Public website</b><span class="mono">abvpconnect.org</span><small>Download links, event pages, guest invitation links.</small></div>
     </div>
     <div class="host">
       <span>Hostinger shared plan</span>
-      <div class="node"><b>Laravel API</b><span class="mono">api.abvpconnect.in → /public only</span><small>REST <span class="mono">/api/v1</span>, roles and scopes checked on every request, audit log.</small></div>
+      <div class="node"><b>Laravel API</b><span class="mono">api.abvpconnect.org → /public only</span><small>REST <span class="mono">/api/v1</span>, roles and scopes checked on every request, audit log.</small></div>
       <div class="node"><b>MySQL (Hostinger, same server)</b><small>My suggestion for the pilot: no outbound-connection risk and nothing extra to pay. Move to managed PostgreSQL or MySQL when you scale.</small></div>
       <div class="node"><b>Cron, every minute</b><span class="mono">schedule:run · queue:work --stop-when-empty</span><small>Sends push and SMS in batches, builds report exports, expires passes.</small></div>
     </div>
@@ -1126,7 +1126,7 @@ footer{padding-block:30px 50px;border-top:1px solid var(--line);color:var(--mute
 <script>
 // Tabs for admin views
 (function(){
-  var urls={dash:"admin.abvpconnect.in/dashboard",appr:"admin.abvpconnect.in/membership/approvals",vib:"admin.abvpconnect.in/vibhags",mtg:"admin.abvpconnect.in/meetings",cc:"admin.abvpconnect.in/events/pranth-adhiveshan-2026/live"};
+  var urls={dash:"admin.abvpconnect.org/dashboard",appr:"admin.abvpconnect.org/membership/approvals",vib:"admin.abvpconnect.org/vibhags",mtg:"admin.abvpconnect.org/meetings",cc:"admin.abvpconnect.org/events/pranth-adhiveshan-2026/live"};
   var tabs=document.querySelectorAll('[role="tab"]');
   function show(key){
     tabs.forEach(function(t){var k=t.id.slice(2);var on=k===key;t.setAttribute('aria-selected',on);document.getElementById('v-'+k).hidden=!on;});

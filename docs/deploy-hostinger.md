@@ -3,8 +3,8 @@
 This fits a Hostinger **Premium or Business** shared plan (PHP 8.3, SSH, cron, MySQL). Nothing here needs a server that stays running.
 
 ```
-admin.abvpconnect.in  ->  static files from admin/dist
-api.abvpconnect.in    ->  api/public  (Laravel)
+admin.abvpconnect.org  ->  static files from admin/dist
+api.abvpconnect.org    ->  api/public  (Laravel)
 MySQL                 ->  Hostinger's own database on the same account
 Photos                ->  DigitalOcean Spaces (optional at first; local private storage works for the pilot)
 Cron (every minute)   ->  php artisan schedule:run
@@ -22,8 +22,8 @@ In hPanel:
 
 In **Domains › Subdomains**, create `api` and `admin`. Then change each one's document root:
 
-- `api.abvpconnect.in` → `/home/USER/domains/abvpconnect.in/abvp-app/api/public`
-- `admin.abvpconnect.in` → `/home/USER/domains/abvpconnect.in/public_html/admin` (or wherever you upload `admin/dist`)
+- `api.abvpconnect.org` → `/home/USER/domains/abvpconnect.org/abvp-app/api/public`
+- `admin.abvpconnect.org` → `/home/USER/domains/abvpconnect.org/public_html/admin` (or wherever you upload `admin/dist`)
 
 The Laravel code (including `.env`) must stay outside any public folder. Only `api/public` is served.
 
@@ -34,7 +34,7 @@ Turn on **SSL** for both sub-domains (free Let's Encrypt in hPanel).
 Over SSH:
 
 ```bash
-cd ~/domains/abvpconnect.in
+cd ~/domains/abvpconnect.org
 git clone https://github.com/PranayReddy10/abvp-app.git
 cd abvp-app/api
 composer install --no-dev --optimize-autoloader
@@ -47,8 +47,8 @@ Edit `.env`:
 ```
 APP_ENV=production
 APP_DEBUG=false
-APP_URL=https://api.abvpconnect.in
-ADMIN_URL=https://admin.abvpconnect.in
+APP_URL=https://api.abvpconnect.org
+ADMIN_URL=https://admin.abvpconnect.org
 
 DB_CONNECTION=mysql
 DB_HOST=localhost
@@ -81,7 +81,7 @@ php artisan route:cache
 In **Advanced › Cron Jobs**, add a job that runs every minute:
 
 ```
-cd /home/USER/domains/abvpconnect.in/abvp-app/api && php artisan schedule:run >> /dev/null 2>&1
+cd /home/USER/domains/abvpconnect.org/abvp-app/api && php artisan schedule:run >> /dev/null 2>&1
 ```
 
 This clears old OTP codes and expired sign-ins, and sends meeting reminders (a day before and 15 minutes before). Without it, reminders do not go out.
@@ -92,7 +92,7 @@ On your own computer:
 
 ```bash
 cd admin
-echo "VITE_API_URL=https://api.abvpconnect.in/api/v1" > .env.production
+echo "VITE_API_URL=https://api.abvpconnect.org/api/v1" > .env.production
 npm ci
 npm run build
 ```
@@ -103,7 +103,7 @@ Upload everything inside `admin/dist` (including the hidden `.htaccess`) to the 
 
 ```bash
 cd mobile
-flutter build appbundle --dart-define=API_URL=https://api.abvpconnect.in/api/v1
+flutter build appbundle --dart-define=API_URL=https://api.abvpconnect.org/api/v1
 ```
 
 Upload `build/app/outputs/bundle/release/app-release.aab` to the Play Console. Signing keys and store listings are set up once in the Play Console.
@@ -123,7 +123,7 @@ Until DLT is approved, keep `SMS_DRIVER=log` on a staging copy only.
 Members can tap **Continue with Google** in the app and the admin panel. The first time, they also verify their mobile number once; after that Google signs them straight in. Identity in ABVP Connect stays the mobile number.
 
 1. In Google Cloud Console → APIs & Services → Credentials, create OAuth client IDs:
-   - **Web application** (used by the admin panel and as the app's "server client ID"). Add `https://admin.abvpconnect.in` under Authorised JavaScript origins.
+   - **Web application** (used by the admin panel and as the app's "server client ID"). Add `https://admin.abvpconnect.org` under Authorised JavaScript origins.
    - **Android** with the app's package name and the SHA-1 of your Play signing key (from the Play Console).
    - **iOS**, if you publish on iPhone.
 2. API `.env`: put every client ID, comma separated, in `GOOGLE_CLIENT_IDS`, then `php artisan config:cache`.
@@ -146,7 +146,7 @@ The secret is stored encrypted with `APP_KEY` (keep that key safe; if it changes
 ## Updating
 
 ```bash
-cd ~/domains/abvpconnect.in/abvp-app && git pull
+cd ~/domains/abvpconnect.org/abvp-app && git pull
 cd api && composer install --no-dev --optimize-autoloader && php artisan migrate --force && php artisan optimize
 ```
 
@@ -171,9 +171,9 @@ The code does not change. Steps:
 1. Create the VPS with Ubuntu 24.04. Install Nginx, PHP 8.3-FPM (with `pdo_mysql`, `mbstring`, `xml`, `gd`, `zip`, `intl`), MySQL 8 and Composer.
 2. Export the database from hPanel (Databases → phpMyAdmin → Export) and import it on the VPS.
 3. Clone the repository, copy `.env` from shared hosting, change `DB_HOST` to `127.0.0.1`, run `composer install --no-dev -o` and `php artisan migrate --force && php artisan optimize`.
-4. Point Nginx at `api/public` for `api.abvpconnect.in`, add HTTPS with Certbot.
+4. Point Nginx at `api/public` for `api.abvpconnect.org`, add HTTPS with Certbot.
 5. Add one cron line: `* * * * * cd /var/www/abvp-app/api && php artisan schedule:run`. Optionally run `php artisan queue:work` under Supervisor.
 6. Copy `storage/app` (member photos, post photos and event covers, if not on Spaces) to the VPS.
-7. Change the `api` DNS record to the VPS address. The admin panel and the app keep working because they use the same `api.abvpconnect.in` address.
+7. Change the `api` DNS record to the VPS address. The admin panel and the app keep working because they use the same `api.abvpconnect.org` address.
 
 Keep the shared hosting running until the VPS has served one full day without errors, then switch it off.
