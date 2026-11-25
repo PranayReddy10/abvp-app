@@ -5,6 +5,7 @@ import '../theme.dart';
 import '../widgets/format.dart';
 import '../widgets/loader.dart';
 import 'circulars_screen.dart';
+import 'events_screen.dart';
 import 'feed_screen.dart';
 import 'guide/support_screen.dart';
 import 'meeting_screen.dart';
@@ -24,6 +25,8 @@ class NotificationsScreen extends StatelessWidget {
     'post_hidden' => Icons.visibility_off_outlined,
     'new_follower' => Icons.person_add_alt,
     'help_reply' || 'help_request' => Icons.support_agent_rounded,
+    'event_registration_decided' ||
+    'event_changed' => Icons.event_available_outlined,
     _ => Icons.notifications_none,
   };
 
@@ -51,9 +54,11 @@ class NotificationsScreen extends StatelessWidget {
                     const Divider(height: 1, indent: 64),
                 itemBuilder: (context, i) {
                   final n = rows[i] as Map<String, dynamic>;
-                  final data = Map<String, dynamic>.from(
-                    n['data'] as Map? ?? {},
-                  );
+                  // The server may send [] instead of {} when there is nothing extra.
+                  final raw = n['data'];
+                  final data = raw is Map
+                      ? Map<String, dynamic>.from(raw)
+                      : <String, dynamic>{};
                   return ListTile(
                     leading: CircleAvatar(
                       backgroundColor: n['is_read'] == true
@@ -117,6 +122,16 @@ class NotificationsScreen extends StatelessWidget {
                           context,
                           session,
                           data['member_id'] as String,
+                        );
+                      } else if (data['event_id'] != null) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => EventScreen(
+                              session: session,
+                              id: data['event_id'] as int,
+                            ),
+                          ),
                         );
                       } else if (data['circular_id'] != null) {
                         Navigator.push(
