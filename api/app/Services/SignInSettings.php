@@ -35,6 +35,12 @@ class SignInSettings
         ];
     }
 
+    /** Settings → Membership: when off (the default), an application is approved as soon as it is sent. */
+    public static function membershipNeedsApproval(): bool
+    {
+        return rescue(fn () => Setting::value('membership.needs_approval', '0') === '1', false, false);
+    }
+
     public static function googleEnabled(): bool
     {
         return trim((string) config('services.google.client_ids')) !== '';

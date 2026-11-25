@@ -4,6 +4,7 @@ import { ErrorBox, Skeleton } from '../components/ui'
 import { fmtNum } from '../format'
 import { useFetch } from '../useFetch'
 import SignInSettings from '../components/SignInSettings'
+import MembershipSetting from '../components/MembershipSetting'
 
 interface StorageSettings {
   driver: 'local' | 'spaces'
@@ -188,6 +189,7 @@ export default function Settings() {
       </div>
       <div className="grid2" style={{ marginTop: 18 }}>
         <SignInSettings />
+        <MembershipSetting />
       </div>
     </main>
   )

@@ -22,6 +22,8 @@ class MembershipFlowTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        // These tests cover the review workflow, so approval is switched on.
+        \App\Models\Setting::putMany(['membership.needs_approval' => '1']);
         $this->seed(DatabaseSeeder::class);
         Storage::fake('local');
     }
@@ -197,5 +199,21 @@ class MembershipFlowTest extends TestCase
         $this->patchJson('/api/v1/me/profile', ['full_name' => 'No Photo', 'date_of_birth' => '2004-01-01', 'org_unit_id' => $district->id])->assertOk();
         $this->postJson('/api/v1/membership/application', ['confirm' => true])->assertCreated()
             ->assertJsonPath('data.application.status', 'submitted');
+    }
+
+    public function test_with_approval_off_the_application_is_approved_at_once(): void
+    {
+        \App\Models\Setting::putMany(['membership.needs_approval' => '0']);
+        $u = \App\Models\User::create(['mobile' => '+919811144466']);
+        \Laravel\Sanctum\Sanctum::actingAs($u);
+        $district = \App\Models\OrgUnit::where('type', 'district')->first();
+        $this->patchJson('/api/v1/me/profile', ['full_name' => 'Instant Member', 'date_of_birth' => '2003-03-03', 'org_unit_id' => $district->id])->assertOk();
+        $id = $this->getJson('/api/v1/auth/me')->json('data.profile.member_id');
+        $this->postJson('/api/v1/membership/application', ['confirm' => true])->assertCreated()
+            ->assertJsonPath('data.application.status', 'approved')
+            ->assertJsonPath('data.profile.membership_status', 'approved')
+            ->assertJsonPath('data.profile.member_id', $id)
+            ->assertJsonPath('data.is_member', true);
+        $this->getJson('/api/v1/me/qr')->assertOk();
     }
 }

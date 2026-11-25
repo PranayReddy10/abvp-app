@@ -56,6 +56,18 @@ class MembershipController extends Controller
 
             $profile->membership_status = MemberProfile::STATUS_SUBMITTED;
             $profile->save();
+
+            // Approval switched off in Settings → Membership: approved straight away.
+            if (! \App\Services\SignInSettings::membershipNeedsApproval()) {
+                $application = $user->application()->first();
+                $profile->membership_status = MemberProfile::STATUS_APPROVED;
+                $profile->approved_at = now();
+                $profile->member_id ??= app(\App\Services\MemberIdGenerator::class)->next($profile->orgUnit);
+                $profile->save();
+                $application->forceFill(['status' => Application::APPROVED, 'decided_at' => now(), 'decision_note' => null])->save();
+                $application->events()->create(['actor_id' => null, 'action' => 'approved', 'note' => 'Approved automatically (approval is switched off)']);
+                \App\Services\Audit::record('membership.approved', $application, null, ['member_id' => $profile->member_id, 'automatic' => true]);
+            }
         });
 
         return $this->ok(new MeResource($user->fresh()->load('profile.orgUnit', 'vibhags', 'responsibilities', 'application.events', 'application.orgUnit')), 201);

@@ -29,6 +29,7 @@ class SignInSettingsController extends Controller
                 'has_key' => (bool) $key,
             ],
             'google_enabled' => SignInSettings::googleEnabled(),
+            'membership_needs_approval' => SignInSettings::membershipNeedsApproval(),
             'admins_with_password' => \App\Models\User::whereNotNull('password')
                 ->whereHas('roleAssignments')->count(),
         ]);
@@ -38,38 +39,45 @@ class SignInSettingsController extends Controller
     {
         $this->authorizeIn('settings.manage');
         $data = $request->validate([
-            'otp_enabled' => ['required', 'boolean'],
-            'sms_driver' => ['required', 'in:'.implode(',', SignInSettings::DRIVERS)],
+            'otp_enabled' => ['sometimes', 'boolean'],
+            'sms_driver' => ['sometimes', 'in:'.implode(',', SignInSettings::DRIVERS)],
             'msg91_key' => ['nullable', 'string', 'max:120'],
             'msg91_template' => ['nullable', 'string', 'max:60'],
+            'membership_needs_approval' => ['sometimes', 'boolean'],
         ]);
         $user = $request->user();
+        $values = [];
 
-        // Turning codes off must not lock out the person doing it.
-        if (! $data['otp_enabled'] && $user->password === null) {
-            throw new ApiException('PASSWORD_FIRST', 'Set your own password under My account before switching off sign-in with a code, or you could lock yourself out.', 422);
-        }
-        if ($data['sms_driver'] === 'msg91') {
-            $key = ($data['msg91_key'] ?? null) ?: SignInSettings::msg91()['auth_key'];
-            $template = ($data['msg91_template'] ?? null) ?: SignInSettings::msg91()['template_id'];
-            if (! $key || ! $template) {
-                throw new ApiException('MSG91_INCOMPLETE', 'Enter the MSG91 auth key and the DLT-approved OTP template ID.', 422);
+        if (array_key_exists('otp_enabled', $data)) {
+            // Turning codes off must not lock out the person doing it.
+            if (! $data['otp_enabled'] && $user->password === null) {
+                throw new ApiException('PASSWORD_FIRST', 'Set your own password under My account before switching off sign-in with a code, or you could lock yourself out.', 422);
             }
+            $values['auth.otp_enabled'] = $data['otp_enabled'] ? '1' : '0';
         }
-
-        $before = ['otp_enabled' => SignInSettings::otpEnabled(), 'sms_driver' => SignInSettings::smsDriver()];
-        $values = [
-            'auth.otp_enabled' => $data['otp_enabled'] ? '1' : '0',
-            'sms.driver' => $data['sms_driver'],
-        ];
+        if (array_key_exists('sms_driver', $data)) {
+            if ($data['sms_driver'] === 'msg91') {
+                $key = ($data['msg91_key'] ?? null) ?: SignInSettings::msg91()['auth_key'];
+                $template = ($data['msg91_template'] ?? null) ?: SignInSettings::msg91()['template_id'];
+                if (! $key || ! $template) {
+                    throw new ApiException('MSG91_INCOMPLETE', 'Enter the MSG91 auth key and the DLT-approved OTP template ID.', 422);
+                }
+            }
+            $values['sms.driver'] = $data['sms_driver'];
+        }
         if (! empty($data['msg91_key'])) {
             $values['sms.msg91_key_secret'] = trim($data['msg91_key']);
         }
         if (! empty($data['msg91_template'])) {
             $values['sms.msg91_template'] = trim($data['msg91_template']);
         }
+        if (array_key_exists('membership_needs_approval', $data)) {
+            $values['membership.needs_approval'] = $data['membership_needs_approval'] ? '1' : '0';
+        }
+
+        $before = ['otp_enabled' => SignInSettings::otpEnabled(), 'sms_driver' => SignInSettings::smsDriver(), 'membership_needs_approval' => SignInSettings::membershipNeedsApproval()];
         Setting::putMany($values, $user->id);
-        Audit::record('settings.sign_in', null, $before, ['otp_enabled' => (bool) $data['otp_enabled'], 'sms_driver' => $data['sms_driver']]);
+        Audit::record('settings.sign_in', null, $before, collect($values)->except('sms.msg91_key_secret')->all());
 
         return $this->show();
     }
