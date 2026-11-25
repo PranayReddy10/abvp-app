@@ -13,7 +13,9 @@ class _SignedOutSession extends Session {
 
 void main() {
   testWidgets('signed-out users see the sign-in screen', (tester) async {
-    await tester.pumpWidget(AbvpConnectApp(session: _SignedOutSession()));
+    await tester.pumpWidget(
+      AbvpConnectApp(session: _SignedOutSession(), splash: false),
+    );
 
     expect(find.text('ABVP Connect'), findsOneWidget);
     expect(find.text('Sign in'), findsOneWidget);
@@ -30,7 +32,9 @@ class _CodesOffSession extends _SignedOutSession {
 
 void signInModes() {
   testWidgets('a password tab sits next to the SMS code', (tester) async {
-    await tester.pumpWidget(AbvpConnectApp(session: _SignedOutSession()));
+    await tester.pumpWidget(
+      AbvpConnectApp(session: _SignedOutSession(), splash: false),
+    );
     await tester.tap(find.text('Password'));
     await tester.pumpAndSettle();
     expect(find.text('Send code'), findsNothing);
@@ -40,7 +44,9 @@ void signInModes() {
   testWidgets(
     'with codes switched off, only password sign-in and sign-up show',
     (tester) async {
-      await tester.pumpWidget(AbvpConnectApp(session: _CodesOffSession()));
+      await tester.pumpWidget(
+        AbvpConnectApp(session: _CodesOffSession(), splash: false),
+      );
       await tester.pumpAndSettle();
       expect(find.text('Send code'), findsNothing);
       expect(find.text('Code by SMS'), findsNothing);

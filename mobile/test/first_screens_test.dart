@@ -91,7 +91,7 @@ Future<void> _openEveryTab(WidgetTester tester, {required bool member}) async {
   final s = _Fresh(api, member ? SessionStage.member : SessionStage.account)
     ..me = Me(_me(member: member))
     ..guideLandingShown = true;
-  await tester.pumpWidget(AbvpConnectApp(session: s));
+  await tester.pumpWidget(AbvpConnectApp(session: s, splash: false));
   Future<void> settle() async {
     for (var i = 0; i < 20; i++) {
       await tester.pump(const Duration(milliseconds: 100));

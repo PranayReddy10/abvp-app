@@ -8,6 +8,7 @@ import 'screens/account_shell.dart';
 import 'screens/guest_shell.dart';
 import 'screens/member_shell.dart';
 import 'screens/sign_in_screen.dart';
+import 'screens/splash_screen.dart';
 import 'screens/status_screen.dart';
 import 'state/session.dart';
 import 'theme.dart';
@@ -28,8 +29,11 @@ Future<void> main() async {
 }
 
 class AbvpConnectApp extends StatelessWidget {
-  const AbvpConnectApp({super.key, required this.session});
+  const AbvpConnectApp({super.key, required this.session, this.splash = true});
   final Session session;
+
+  /// Play the animated ABVP opening first (off in widget tests).
+  final bool splash;
 
   @override
   Widget build(BuildContext context) {
@@ -43,21 +47,69 @@ class AbvpConnectApp extends StatelessWidget {
         supportedLocales: [for (final l in appLanguages) Locale(l.code)],
         localizationsDelegates: GlobalMaterialLocalizations.delegates,
         theme: buildTheme(),
-        home: ListenableBuilder(
-          listenable: session,
-          builder: (context, _) => switch (session.stage) {
-            SessionStage.loading => const Scaffold(
-              body: Center(child: CircularProgressIndicator()),
-            ),
-            SessionStage.signedOut => SignInScreen(session: session),
-            SessionStage.applying => ApplyScreen(session: session),
-            SessionStage.waiting => StatusScreen(session: session),
-            SessionStage.member => MemberShell(session: session),
-            SessionStage.guest => GuestShell(session: session),
-            SessionStage.account => AccountShell(session: session),
-          },
+        home: _SplashGate(
+          enabled: splash,
+          session: session,
+          child: ListenableBuilder(
+            listenable: session,
+            builder: (context, _) => switch (session.stage) {
+              SessionStage.loading => const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              ),
+              SessionStage.signedOut => SignInScreen(session: session),
+              SessionStage.applying => ApplyScreen(session: session),
+              SessionStage.waiting => StatusScreen(session: session),
+              SessionStage.member => MemberShell(session: session),
+              SessionStage.guest => GuestShell(session: session),
+              SessionStage.account => AccountShell(session: session),
+            },
+          ),
         ),
       ),
+    );
+  }
+}
+
+/// Shows [AbvpSplash] once per launch, then fades into the app as soon as both the animation
+/// has played and the session has finished loading.
+class _SplashGate extends StatefulWidget {
+  const _SplashGate({
+    required this.enabled,
+    required this.session,
+    required this.child,
+  });
+  final bool enabled;
+  final Session session;
+  final Widget child;
+
+  @override
+  State<_SplashGate> createState() => _SplashGateState();
+}
+
+class _SplashGateState extends State<_SplashGate> {
+  late bool _played = !widget.enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: widget.session,
+      builder: (context, _) {
+        final show =
+            !_played ||
+            widget.session.stage == SessionStage.loading && widget.enabled;
+        return AnimatedSwitcher(
+          duration: const Duration(milliseconds: 600),
+          switchInCurve: Curves.easeOut,
+          child: show
+              ? AbvpSplash(
+                  key: const ValueKey('splash'),
+                  onDone: () {
+                    if (mounted) setState(() => _played = true);
+                  },
+                )
+              : KeyedSubtree(key: const ValueKey('app'), child: widget.child),
+        );
+      },
     );
   }
 }

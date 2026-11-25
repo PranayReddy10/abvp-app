@@ -127,19 +127,23 @@ class _SignInScreenState extends State<SignInScreen> {
                 children: [
                   Row(
                     children: [
+                      // The ABVP emblem in a soft white ring.
                       Container(
-                        width: 58,
-                        height: 58,
+                        width: 64,
+                        height: 64,
+                        padding: const EdgeInsets.all(3),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.16),
-                          borderRadius: BorderRadius.circular(18),
-                          border: Border.all(color: Colors.white24),
-                        ),
-                        child: const Icon(
-                          Icons.local_fire_department,
                           color: Colors.white,
-                          size: 32,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.18),
+                              blurRadius: 14,
+                              offset: const Offset(0, 6),
+                            ),
+                          ],
                         ),
+                        child: Image.asset('assets/brand/emblem.png'),
                       ),
                       const Spacer(),
                       LanguageButton(
