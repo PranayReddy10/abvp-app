@@ -170,6 +170,9 @@ Route::prefix('v1')->group(function () {
 
             Route::get('members', [Admin\MemberController::class, 'index']);
             Route::get('accounts', [Admin\MemberController::class, 'accounts']);
+            Route::get('accounts/{user}', [Admin\AccountController::class, 'show']);
+            Route::post('accounts/{user}/block', [Admin\AccountController::class, 'block']);
+            Route::delete('accounts/{user}', [Admin\AccountController::class, 'destroy']);
             Route::get('members/{profile}', [Admin\MemberController::class, 'show']);
             Route::post('members/{profile}/verify', [Admin\MemberController::class, 'verify']);
 

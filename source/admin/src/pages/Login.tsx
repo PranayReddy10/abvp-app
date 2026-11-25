@@ -87,13 +87,14 @@ export default function Login() {
   return (
     <main className="login">
       <section className="brand-panel" aria-hidden="true">
+        <img src="/abvp-logo.png" alt="" className="brand-panel-logo" />
         <h2>ABVP Connect</h2>
         <p>Membership, Vibhags, meetings, events and event-day operations for every office, in one place.</p>
         <p style={{ fontSize: 14 }}>एक सदस्य · एक पहचान · हर कार्यक्रम</p>
       </section>
       <div className="form-side">
       <div className="box">
-        <img src="/favicon.svg" alt="" width={44} height={44} />
+        <img src="/abvp-emblem.png" alt="ABVP" width={64} height={64} style={{ borderRadius: '50%', boxShadow: '0 8px 20px -8px rgba(19,35,91,.45)' }} />
         <div style={{ display: 'grid', gap: 4 }}>
           <h1>ABVP Connect Admin</h1>
           <p className="muted">Sign in with the mobile number your admin role is linked to.</p>

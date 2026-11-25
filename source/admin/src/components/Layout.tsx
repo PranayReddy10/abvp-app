@@ -48,7 +48,7 @@ export default function Layout() {
   return (
     <div className="shell">
       <aside className="side" aria-label="Main">
-        <div className="brand"><span className="brand-mark"><img src="/favicon.svg" alt="" /></span><span>ABVP Connect<small>Admin panel</small></span></div>
+        <div className="brand"><span className="brand-mark"><img src="/abvp-emblem.png" alt="" /></span><span>ABVP Connect<small>Admin panel</small></span></div>
         <h6>Main</h6>
         <Item to="/" end icon="dashboard" label="Dashboard" />
         {can('analytics.view') && <Item to="/analytics" icon="chart" label="Analysis" />}

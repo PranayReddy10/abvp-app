@@ -1,0 +1,178 @@
+<?php
+
+namespace App\Http\Controllers\Api\V1\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Http\Resources\ProfileResource;
+use App\Models\AppNotification;
+use App\Models\EventRegistration;
+use App\Models\Post;
+use App\Models\PostComment;
+use App\Models\User;
+use App\Services\AccessControl;
+use App\Services\Audit;
+use App\Support\ApiException;
+use App\Support\Mobile;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+
+/**
+ * One account in the admin panel: see everything about it, block or unblock it, or delete it.
+ * National admins act on every account; state and district admins on accounts in their area.
+ */
+class AccountController extends Controller
+{
+    public function __construct(private AccessControl $access) {}
+
+    public function show(Request $request, User $user)
+    {
+        $this->guard($request, $user, 'members.view');
+        $user->load('profile.orgUnit', 'vibhags', 'responsibilities', 'application.events', 'application.orgUnit');
+        $regs = EventRegistration::where('user_id', $user->id)->with('event:id,title,starts_at')->latest('id')->limit(20)->get();
+
+        return $this->ok([
+            'user_id' => $user->id,
+            'name' => $user->profile?->full_name ?: $user->name,
+            'mobile' => $user->mobile,
+            'email' => $user->email,
+            'prant' => $user->prant,
+            'occupation' => $user->occupation,
+            'gender' => $user->profile?->gender ?? $user->gender,
+            'institution' => $user->profile?->institution ?? $user->institution,
+            'status' => $user->status,
+            'has_password' => $user->password !== null,
+            'google_linked' => (bool) $user->google_id,
+            'mobile_verified' => $user->mobile_verified_at !== null,
+            'signed_up_at' => $user->created_at?->toIso8601String(),
+            'last_login_at' => $user->last_login_at?->toIso8601String(),
+            'profile' => $user->profile ? new ProfileResource($user->profile) : null,
+            'application' => $user->application ? [
+                'status' => $user->application->status,
+                'submitted_at' => $user->application->submitted_at?->toIso8601String(),
+                'decision_note' => $user->application->decision_note,
+                'office' => $user->application->orgUnit?->label(),
+            ] : null,
+            'roles' => $user->roleAssignments()->active()->with('orgUnit')->get()->map(fn ($r) => [
+                'label' => config("abvp.roles.{$r->role}.label"),
+                'org_unit' => $r->orgUnit?->label() ?: $r->orgUnit?->name,
+            ]),
+            'events' => $regs->map(fn ($r) => [
+                'title' => $r->event?->title,
+                'starts_at' => $r->event?->starts_at?->toIso8601String(),
+                'kind' => $r->kind,
+                'status' => $r->status,
+            ]),
+            'posts' => Post::where('user_id', $user->id)->count(),
+            'can_manage' => $this->canManage($request->user(), $user),
+        ]);
+    }
+
+    /** Block (or unblock) an account: it cannot sign in, and its open sessions end at once. */
+    public function block(Request $request, User $user)
+    {
+        $data = $request->validate(['blocked' => ['required', 'boolean'], 'reason' => ['nullable', 'string', 'max:300']]);
+        $this->guardManage($request, $user);
+        if ($user->status === 'deleted') {
+            throw new ApiException('ACCOUNT_DELETED', 'This account was deleted.', 409);
+        }
+        $user->forceFill(['status' => $data['blocked'] ? 'suspended' : 'active'])->save();
+        if ($data['blocked']) {
+            $user->tokens()->delete();
+        }
+        Audit::record($data['blocked'] ? 'account.blocked' : 'account.unblocked', $user, null, ['reason' => $data['reason'] ?? null]);
+
+        return $this->ok(['status' => $user->status]);
+    }
+
+    /**
+     * Delete an account. Personal details, photo, posts, comments, likes and follows go; the
+     * mobile number is freed so the person can register again. Event and audit history keep a
+     * placeholder ("Deleted account") so reports stay correct.
+     */
+    public function destroy(Request $request, User $user)
+    {
+        $this->guardManage($request, $user);
+        $label = ($user->profile?->full_name ?: $user->name).' · '.Mobile::mask($user->mobile);
+
+        DB::transaction(function () use ($user) {
+            if ($photo = $user->profile?->photo_path) {
+                rescue(fn () => Storage::disk(config('abvp.media_disk'))->delete($photo), null, false);
+            }
+            Post::where('user_id', $user->id)->get()->each(fn (Post $p) => $p->delete());
+            PostComment::where('user_id', $user->id)->delete();
+            DB::table('post_likes')->where('user_id', $user->id)->delete();
+            DB::table('follows')->where('follower_id', $user->id)->orWhere('followee_id', $user->id)->delete();
+            AppNotification::where('user_id', $user->id)->delete();
+            $user->vibhags()->detach();
+            $user->roleAssignments()->delete();
+            $user->responsibilities()->delete();
+            $user->tokens()->delete();
+            $user->profile?->delete();
+            $user->forceFill([
+                'name' => 'Deleted account',
+                'mobile' => 'deleted:'.$user->id,
+                'email' => null,
+                'password' => null,
+                'password_set_at' => null,
+                'google_id' => null,
+                'google_email' => null,
+                'prant' => null,
+                'institution' => null,
+                'occupation' => null,
+                'gender' => null,
+                'mobile_verified_at' => null,
+                'status' => 'deleted',
+            ])->save();
+        });
+        Audit::record('account.deleted', $user, ['account' => $label]);
+
+        return $this->ok(['deleted' => true]);
+    }
+
+    private function guard(Request $request, User $user, string $permission): void
+    {
+        $this->authorizeIn($permission);
+        if (! $this->inArea($request->user(), $user, $permission)) {
+            throw new ApiException('FORBIDDEN_SCOPE', 'This account is outside your area.', 403);
+        }
+    }
+
+    private function guardManage(Request $request, User $user): void
+    {
+        $this->guard($request, $user, 'accounts.manage');
+        if (! $this->canManage($request->user(), $user)) {
+            throw new ApiException('PROTECTED_ACCOUNT', $user->id === $request->user()->id
+                ? 'You cannot block or delete your own account.'
+                : 'This person has an admin role. Remove their role first, or ask a super admin.', 403);
+        }
+    }
+
+    /** Not yourself; admins only by a super admin; super admins never from here. */
+    private function canManage(User $admin, User $user): bool
+    {
+        if ($admin->id === $user->id || ! $this->access->can($admin, 'accounts.manage')) {
+            return false;
+        }
+        $roles = $user->roleAssignments()->active()->pluck('role');
+        if ($roles->contains('super_admin')) {
+            return false;
+        }
+
+        return $roles->isEmpty() || $this->access->rolesOf($admin)->contains('role', 'super_admin');
+    }
+
+    private function inArea(User $admin, User $user, string $permission): bool
+    {
+        $grants = $this->access->grants($admin, $permission)->map->orgUnit->filter();
+        if ($grants->contains(fn ($u) => $u->type === 'national' || $u->parent_id === null)) {
+            return true;
+        }
+        $unit = $user->profile?->orgUnit;
+        if ($unit && $grants->contains(fn ($g) => $g->contains($unit))) {
+            return true;
+        }
+
+        return ! $unit && $user->prant && $grants->contains(fn ($g) => $g->type === 'state' && $g->name === $user->prant);
+    }
+}

@@ -17,7 +17,7 @@ export function useConference() {
 export function Brand() {
   return (
     <Link to="/" className="brand" aria-label="ABVP Connect home">
-      <span className="mark"><svg width="22" height="22" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M12 22c4 0 7-2.7 7-6.8 0-3.4-2.2-5.9-4-7.7-.4 2.3-1.6 3.5-3 4 .5-3.4-1-6.6-3.5-9 0 4-4.5 6.6-4.5 12.2C4 19.3 8 22 12 22z" /></svg></span>
+      <span className="mark"><img src="/abvp-emblem.png" alt="" width={38} height={38} /></span>
       ABVP Connect
     </Link>
   )
@@ -77,7 +77,7 @@ function Footer() {
     <footer>
       <div className="wrap">
         <div style={{ display: 'grid', gap: 10, maxWidth: 360 }}>
-          <div className="brand" style={{ color: '#fff' }}><span className="mark"><Icon name="fire" size={20} /></span>ABVP Connect</div>
+          <div className="brand" style={{ color: '#fff' }}><span className="mark"><img src="/abvp-emblem.png" alt="" width={38} height={38} /></span>ABVP Connect</div>
           <p className="hi" style={{ fontSize: 17 }}>एक सदस्य · एक पहचान · हर कार्यक्रम</p>
           <p style={{ fontSize: 14 }}>The conference guide, delegate registration, passes and help desk – and the online home of ABVP members.</p>
         </div>

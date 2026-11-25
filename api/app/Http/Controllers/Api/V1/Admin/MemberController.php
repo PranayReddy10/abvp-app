@@ -75,7 +75,7 @@ class MemberController extends Controller
         $grants = $this->access->grants($request->user(), 'members.view')->map->orgUnit->filter();
         $national = $grants->contains(fn ($u) => $u->type === 'national' || $u->parent_id === null);
 
-        $query = User::query()->with('profile.orgUnit')->latest('id');
+        $query = User::query()->with('profile.orgUnit')->where('status', '!=', 'deleted')->latest('id');
         if (! $national) {
             $paths = $grants->pluck('path')->unique()->values();
             $states = $grants->where('type', 'state')->pluck('name')->all();

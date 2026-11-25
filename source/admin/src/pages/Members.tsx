@@ -31,7 +31,8 @@ function Accounts() {
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('all')
   const [page, setPage] = useState(1)
-  const { data, meta, error, loading } = useFetch<Account[]>(`/admin/accounts${qs({ q: search, status: filter, page })}`)
+  const [open, setOpen] = useState<number | null>(null)
+  const { data, meta, error, loading, reload } = useFetch<Account[]>(`/admin/accounts${qs({ q: search, status: filter, page })}`)
   const lastPage = Number(meta.last_page ?? 1)
   return (
     <>
@@ -44,6 +45,7 @@ function Accounts() {
         </form>
       </div>
       <ErrorBox error={error} />
+      <div className="grid2" style={{ gridTemplateColumns: open ? 'minmax(0,1.5fr) minmax(0,1fr)' : '1fr', alignItems: 'start' }}>
       <section className="card">
         <div className="table-wrap">
           <table>
@@ -52,17 +54,17 @@ function Accounts() {
               {data?.map((a) => {
                 const [label, tone] = MEMBERSHIP[a.membership] ?? [a.membership, 'mute']
                 return (
-                  <tr key={a.user_id}>
+                  <tr key={a.user_id} className={`click ${open === a.user_id ? 'on' : ''}`} onClick={() => setOpen(a.user_id)}>
                     <td>
                       <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
                         <Avatar name={a.name ?? '?'} size={32} />
                         <div><b>{a.name ?? <span className="muted">No name yet</span>}</b>{a.email && <div className="muted" style={{ fontSize: 12 }}>{a.email}</div>}</div>
                       </div>
                     </td>
-                    <td className="mono"><a href={`tel:${a.mobile}`}>{a.mobile}</a></td>
+                    <td className="mono"><a href={`tel:${a.mobile}`} onClick={(e) => e.stopPropagation()}>{a.mobile}</a></td>
                     <td>{a.area ?? a.prant ?? <span className="muted">–</span>}</td>
                     <td>{[a.institution, a.occupation].filter(Boolean).join(' · ') || <span className="muted">–</span>}</td>
-                    <td><span className={`pill ${tone}`}>{label}</span>{a.member_id && <div className="mono muted" style={{ fontSize: 12 }}>{a.member_id}</div>}{a.delegate && <div><span className="pill info" style={{ marginTop: 4 }}>Delegate</span></div>}</td>
+                    <td>{a.status === 'suspended' && <div><span className="pill bad" style={{ marginBottom: 4 }}>Blocked</span></div>}<span className={`pill ${tone}`}>{label}</span>{a.member_id && <div className="mono muted" style={{ fontSize: 12 }}>{a.member_id}</div>}{a.delegate && <div><span className="pill info" style={{ marginTop: 4 }}>Delegate</span></div>}</td>
                     <td>{fmtDate(a.signed_up_at)}</td>
                     <td>{a.last_login_at ? fmtDate(a.last_login_at) : <span className="muted">–</span>}</td>
                   </tr>
@@ -79,8 +81,103 @@ function Accounts() {
           <button className="btn small" disabled={page >= lastPage} onClick={() => setPage(page + 1)}>Next</button>
         </div>
       </section>
+      {open && <AccountCard key={open} id={open} onClose={() => setOpen(null)} onChanged={reload} />}
+      </div>
       <p className="muted" style={{ fontSize: 13, marginTop: 10 }}>Everyone who created an account on the website or app. They show in Approvals once they apply for membership, and under Members once approved.</p>
     </>
+  )
+}
+
+interface AccountDetail {
+  user_id: number; name: string | null; mobile: string; email: string | null; prant: string | null; occupation: string | null
+  gender: string | null; institution: string | null; status: string; has_password: boolean; google_linked: boolean; mobile_verified: boolean
+  signed_up_at: string | null; last_login_at: string | null; profile: Profile | null
+  application: { status: string; submitted_at: string | null; decision_note: string | null; office: string | null } | null
+  roles: { label: string; org_unit: string }[]; events: { title: string; starts_at: string | null; kind: string; status: string }[]
+  posts: number; can_manage: boolean
+}
+
+/** Everything about one account, with Block / Unblock and Delete. */
+function AccountCard({ id, onClose, onChanged }: { id: number; onClose: () => void; onChanged: () => void }) {
+  const { data, error, reload } = useFetch<AccountDetail>(`/admin/accounts/${id}`)
+  const [reason, setReason] = useState('')
+  const [confirmName, setConfirmName] = useState('')
+  const [deleting, setDeleting] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState<unknown>(null)
+  if (error) return <section className="card"><ErrorBox error={error} /><button className="btn small" onClick={onClose}>Close</button></section>
+  if (!data) return <section className="card"><Skeleton /></section>
+  const p = data.profile
+  const blocked = data.status === 'suspended'
+  const [mLabel, mTone] = MEMBERSHIP[p?.membership_status ?? 'draft'] ?? ['Not applied', 'mute']
+
+  async function block(b: boolean) {
+    setBusy(true); setErr(null)
+    try { await api.post(`/admin/accounts/${id}/block`, { blocked: b, reason: reason || null }); setReason(''); reload(); onChanged() } catch (x) { setErr(x) } finally { setBusy(false) }
+  }
+  async function remove() {
+    setBusy(true); setErr(null)
+    try { await api.del(`/admin/accounts/${id}`); onChanged(); onClose() } catch (x) { setErr(x); setBusy(false) }
+  }
+
+  return (
+    <section className="card account-card" aria-label="Account details">
+      <div className="page-head">
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <Avatar name={data.name ?? '?'} src={p?.photo_url} size={56} />
+          <div>
+            <h2 style={{ fontSize: 18 }} className="name-badge">{data.name ?? 'No name yet'}{p?.verified && <VerifiedBadge size={18} />}</h2>
+            <span className="mono muted">{p?.member_id ?? 'No ID'}</span>
+          </div>
+        </div>
+        <button className="btn small" onClick={onClose}>Close</button>
+      </div>
+      <div className="toolbar">
+        {blocked ? <span className="pill bad">Blocked</span> : <span className="pill ok">Active</span>}
+        <span className={`pill ${mTone}`}>{mLabel}</span>
+        {data.roles.map((r) => <span key={r.label + r.org_unit} className="pill info">{r.label}, {r.org_unit}</span>)}
+      </div>
+
+      <div className="dl"><span>Mobile</span><b className="mono"><a href={`tel:${data.mobile}`}>{data.mobile}</a>{data.mobile_verified ? ' · verified' : ' · not verified'}</b></div>
+      <div className="dl"><span>Email</span><b>{data.email ?? '–'}</b></div>
+      <div className="dl"><span>Area</span><b>{p?.org_unit?.label ?? data.prant ?? '–'}</b></div>
+      <div className="dl"><span>Date of birth · gender</span><b>{[p?.date_of_birth ? fmtDate(p.date_of_birth) : null, data.gender].filter(Boolean).join(' · ') || '–'}</b></div>
+      <div className="dl"><span>College / work</span><b>{[data.institution, p?.course, p?.study_year, data.occupation].filter(Boolean).join(' · ') || '–'}</b></div>
+      <div className="dl"><span>Vibhags</span><b>{p?.vibhags?.map((v) => v.name).join(', ') || '–'}</b></div>
+      {p?.bio && <div className="dl"><span>About</span><b style={{ fontWeight: 500 }}>{p.bio}</b></div>}
+      <div className="dl"><span>Sign-in</span><b>{[data.has_password ? 'Password' : null, data.google_linked ? 'Google' : null, 'SMS code'].filter(Boolean).join(' · ')}</b></div>
+      <div className="dl"><span>Signed up · last sign-in</span><b>{fmtDate(data.signed_up_at)} · {data.last_login_at ? fmtDate(data.last_login_at) : 'never'}</b></div>
+      {data.application && <div className="dl"><span>Membership application</span><b>{data.application.status}{data.application.office ? ` · ${data.application.office}` : ''}{data.application.decision_note ? ` · “${data.application.decision_note}”` : ''}</b></div>}
+      <div className="dl"><span>Events</span>{data.events.length === 0 ? <b>–</b> : data.events.map((e, i) => <b key={i}>{e.title} <span className="muted">({e.kind}, {e.status})</span></b>)}</div>
+      <div className="dl"><span>Community posts</span><b>{data.posts}</b></div>
+
+      <ErrorBox error={err} />
+      {data.can_manage ? (
+        <div className="verify-box">
+          {!blocked ? (
+            <>
+              <span className="muted">Blocking signs them out everywhere and stops them signing in. You can unblock any time.</span>
+              <div className="toolbar">
+                <input className="input" style={{ flex: 1, minWidth: 160 }} placeholder="Reason (kept in the audit log)" value={reason} onChange={(e) => setReason(e.target.value)} aria-label="Reason for blocking" />
+                <button className="btn small danger" disabled={busy} onClick={() => block(true)}>Block account</button>
+              </div>
+            </>
+          ) : <div className="toolbar"><span className="muted" style={{ flex: 1 }}>This account is blocked.</span><button className="btn small good" disabled={busy} onClick={() => block(false)}>Unblock</button></div>}
+          {!deleting ? (
+            <button className="btn small danger" style={{ justifySelf: 'start' }} onClick={() => setDeleting(true)}>Delete account…</button>
+          ) : (
+            <div style={{ display: 'grid', gap: 8 }}>
+              <span className="bad-text" style={{ fontWeight: 600 }}>This deletes their details, photo, posts and comments for good. Their mobile number can register again. Type the name to confirm.</span>
+              <div className="toolbar">
+                <input className="input" style={{ flex: 1, minWidth: 160 }} placeholder={data.name ?? ''} value={confirmName} onChange={(e) => setConfirmName(e.target.value)} aria-label="Type the name to confirm" />
+                <button className="btn small danger" disabled={busy || confirmName.trim() !== (data.name ?? '').trim()} onClick={remove}>Delete for good</button>
+                <button className="btn small" onClick={() => { setDeleting(false); setConfirmName('') }}>Cancel</button>
+              </div>
+            </div>
+          )}
+        </div>
+      ) : <p className="muted" style={{ fontSize: 13 }}>Admins, super admins and your own account cannot be blocked or deleted here.</p>}
+    </section>
   )
 }
 
