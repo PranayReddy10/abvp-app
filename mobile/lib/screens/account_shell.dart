@@ -229,7 +229,7 @@ class AccountMeScreen extends StatelessWidget {
                       const SizedBox(height: 8),
                       Text(
                         app == null
-                            ? 'Members get a member ID and pass, member events and Vibhag spaces. Your district office reviews your application.'
+                            ? 'Members get a member pass, member-only events and Vibhag spaces.'
                             : app.status == 'submitted'
                             ? 'With ${app.reviewingOffice ?? 'your district office'} for review.'
                             : (app.decisionNote ?? ''),
