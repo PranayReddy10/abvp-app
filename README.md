@@ -5,8 +5,8 @@ This repository holds all three parts.
 
 | Folder | What it is | Built with | Runs on |
 |---|---|---|---|
-| `api/` | The server and database rules | Laravel 13, PHP 8.3 | Hostinger shared hosting, `api.abvpconnect.in` |
-| `admin/` | Web admin panel for state, district and Vibhag offices | React 19, Vite | Static files on Hostinger, `admin.abvpconnect.in` |
+| `api/` | The server and database rules | Laravel 13, PHP 8.3 | Hostinger shared hosting, `api.abvpconnect.org` |
+| `admin/` | Web admin panel for state, district and Vibhag offices | React 19, Vite | Static files on Hostinger, `admin.abvpconnect.org` |
 | `mobile/` | Android and iOS app for members | Flutter 3.47 | Play Store and App Store |
 | `docs/` | Design vision and deployment guide | | |
 

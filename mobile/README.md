@@ -4,7 +4,8 @@ Flutter app for Android and iOS.
 
 ```bash
 flutter pub get
-flutter run --dart-define=API_URL=http://10.0.2.2:8000/api/v1
+flutter run                     # uses the live server, api.abvpconnect.org
+flutter run --dart-define=API_URL=http://10.0.2.2:8000/api/v1   # a server on your own computer (Android emulator)
 flutter analyze && flutter test
 ```
 

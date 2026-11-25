@@ -1,8 +1,8 @@
-/// Build with: flutter run --dart-define=API_URL=https://api.abvpconnect.in/api/v1
+/// The live server by default. For a server on your own computer:
+/// flutter run --dart-define=API_URL=http://10.0.2.2:8000/api/v1   (Android emulator)
 const String apiBaseUrl = String.fromEnvironment(
   'API_URL',
-  // Android emulator reaches the host machine on 10.0.2.2.
-  defaultValue: 'http://10.0.2.2:8000/api/v1',
+  defaultValue: 'https://api.abvpconnect.org/api/v1',
 );
 
 /// Google sign-in: the OAuth *web* client ID the API accepts as token audience.
