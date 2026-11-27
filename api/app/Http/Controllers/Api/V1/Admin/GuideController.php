@@ -95,6 +95,11 @@ class GuideController extends Controller
         foreach ($item->photos ?? [] as $path) {
             $disk->delete($path);
         }
+        foreach ($item->videos ?? [] as $v) {
+            if (! empty($v['path'])) {
+                $disk->delete($v['path']);
+            }
+        }
         Audit::record('guide.deleted', $item, ['kind' => $item->kind, 'title' => $item->title]);
         $item->delete();
 
@@ -117,11 +122,53 @@ class GuideController extends Controller
         $this->guard($request, $item->event);
         $request->validate(['photo' => ['required', 'image', 'mimes:jpeg,png,webp', 'max:4096']]);
         $photos = $item->photos ?? [];
-        if (count($photos) >= 8) {
-            throw new ApiException('TOO_MANY_PHOTOS', 'Up to 8 photos per place. Remove one first.', 422);
+        $max = $item->kind === 'gallery' ? 60 : 8;
+        if (count($photos) >= $max) {
+            throw new ApiException('TOO_MANY_PHOTOS', "Up to $max photos here. Remove one first, or start a new album.", 422);
         }
         $photos[] = $request->file('photo')->storeAs('guide/'.$item->event_id, Str::uuid().'.'.$request->file('photo')->extension(), ['disk' => config('abvp.media_disk'), 'visibility' => 'private']);
         $item->forceFill(['photos' => $photos])->save();
+
+        return $this->ok(GuidePresenter::item($item->fresh('contacts.user.profile'), $item->event));
+    }
+
+    /** Gallery videos: upload a short clip (mp4/mov/webm) or add a YouTube or other link. */
+    public function addVideo(Request $request, GuideItem $item)
+    {
+        $this->guard($request, $item->event);
+        $request->validate([
+            'video' => ['nullable', 'required_without:url', 'file', 'mimetypes:video/mp4,video/quicktime,video/webm,video/x-m4v', 'max:102400'],
+            'url' => ['nullable', 'required_without:video', 'url:https,http', 'max:500'],
+            'title' => ['nullable', 'string', 'max:120'],
+        ], ['video.max' => 'Videos can be up to 100 MB. For longer videos, upload to YouTube and add the link.']);
+        $videos = $item->videos ?? [];
+        if (count($videos) >= 30) {
+            throw new ApiException('TOO_MANY_VIDEOS', 'Up to 30 videos per album. Start a new album.', 422);
+        }
+        $row = ['title' => $request->input('title')];
+        if ($request->hasFile('video')) {
+            $f = $request->file('video');
+            $row['path'] = $f->storeAs('guide/'.$item->event_id.'/videos', Str::uuid().'.'.($f->extension() ?: 'mp4'), ['disk' => config('abvp.media_disk'), 'visibility' => 'private']);
+        } else {
+            $row['url'] = $request->string('url')->toString();
+        }
+        $videos[] = $row;
+        $item->forceFill(['videos' => $videos])->save();
+        Audit::record('guide.video_added', $item, null, ['title' => $row['title'], 'link' => $row['url'] ?? null]);
+
+        return $this->ok(GuidePresenter::item($item->fresh('contacts.user.profile'), $item->event));
+    }
+
+    public function removeVideo(Request $request, GuideItem $item, int $index)
+    {
+        $this->guard($request, $item->event);
+        $videos = $item->videos ?? [];
+        abort_unless(isset($videos[$index]), 404);
+        if (! empty($videos[$index]['path'])) {
+            Storage::disk(config('abvp.media_disk'))->delete($videos[$index]['path']);
+        }
+        array_splice($videos, $index, 1);
+        $item->forceFill(['videos' => $videos ?: null])->save();
 
         return $this->ok(GuidePresenter::item($item->fresh('contacts.user.profile'), $item->event));
     }

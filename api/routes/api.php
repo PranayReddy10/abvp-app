@@ -42,6 +42,8 @@ Route::prefix('v1')->group(function () {
         ->middleware('signed')->name('media.photo');
     Route::get('media/circulars/{circular}', [MediaController::class, 'circular'])
         ->middleware('signed')->name('media.circular');
+    Route::get('media/guide-videos/{item}/{index}', [MediaController::class, 'guideVideo'])
+        ->whereNumber('index')->middleware('signed')->name('media.guideVideo');
     Route::get('media/reports/{report}/{index}', [MediaController::class, 'report'])
         ->whereNumber('index')->middleware('signed')->name('media.report');
     Route::get('media/posts/{post}/{index}', [MediaController::class, 'post'])
@@ -256,6 +258,8 @@ Route::prefix('v1')->group(function () {
             Route::delete('guide-items/{item}', [Admin\GuideController::class, 'destroy']);
             Route::post('guide-items/{item}/photos', [Admin\GuideController::class, 'addPhoto']);
             Route::delete('guide-items/{item}/photos/{index}', [Admin\GuideController::class, 'removePhoto'])->whereNumber('index');
+            Route::post('guide-items/{item}/videos', [Admin\GuideController::class, 'addVideo']);
+            Route::delete('guide-items/{item}/videos/{index}', [Admin\GuideController::class, 'removeVideo'])->whereNumber('index');
             Route::get('moderation', [Admin\ModerationController::class, 'index']);
             Route::get('moderation/settings', [Admin\ModerationController::class, 'settings']);
             Route::put('moderation/settings', [Admin\ModerationController::class, 'saveSettings']);

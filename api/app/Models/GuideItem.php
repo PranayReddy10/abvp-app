@@ -8,11 +8,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class GuideItem extends Model
 {
-    protected $fillable = ['event_id', 'kind', 'title', 'subtitle', 'region', 'description', 'location', 'landmark', 'color', 'timings', 'tags', 'steps', 'map_url', 'lat', 'lng', 'distance_km', 'travel_time', 'photos', 'sort'];
+    protected $fillable = ['event_id', 'kind', 'title', 'subtitle', 'region', 'description', 'location', 'landmark', 'color', 'timings', 'tags', 'steps', 'map_url', 'lat', 'lng', 'distance_km', 'travel_time', 'photos', 'videos', 'sort'];
 
     protected function casts(): array
     {
-        return ['tags' => 'array', 'steps' => 'array', 'photos' => 'array', 'lat' => 'float', 'lng' => 'float', 'distance_km' => 'float'];
+        return ['tags' => 'array', 'steps' => 'array', 'photos' => 'array', 'videos' => 'array', 'lat' => 'float', 'lng' => 'float', 'distance_km' => 'float'];
     }
 
     public function event(): BelongsTo

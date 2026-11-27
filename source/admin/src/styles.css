@@ -620,3 +620,6 @@ tr.click.on td { background: var(--surface-2) }
 .mod-settings { display: flex; gap: 16px; align-items: center; margin-bottom: 14px }
 .composer { display: grid; gap: 10px; margin-bottom: 16px }
 .composer textarea { resize: vertical; min-height: 80px }
+.vid-list { display: grid; gap: 8px; margin-bottom: 10px }
+.vid { display: flex; gap: 10px; align-items: center; padding: 8px; border: 1px solid var(--line); border-radius: 12px }
+.vid-thumb { width: 72px; height: 44px; border-radius: 8px; background: #1f1f1f center / cover; color: #fff; display: grid; place-items: center; text-decoration: none; font-size: 16px; flex: none }

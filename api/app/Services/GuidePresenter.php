@@ -35,6 +35,7 @@ class GuidePresenter
             'directions_url' => self::directions($i, $event),
             'photo_urls' => collect($i->photos ?? [])->keys()
                 ->map(fn ($k) => URL::temporarySignedRoute('media.guide', now()->addHours(6), ['item' => $i->id, 'index' => $k]))->values(),
+            'videos' => collect($i->videos ?? [])->map(fn ($v, $k) => self::video($i, $v, $k))->values(),
             'contacts' => $i->contacts->map(fn ($c) => [
                 'id' => $c->id,
                 'name' => $c->name,
@@ -80,6 +81,25 @@ class GuidePresenter
         }
 
         return $i->map_url;
+    }
+
+    /** A gallery video: an uploaded clip (signed link) or a link, with a YouTube thumbnail when we can. */
+    public static function video(GuideItem $i, array $v, int $k): array
+    {
+        $url = ! empty($v['path'])
+            ? URL::temporarySignedRoute('media.guideVideo', now()->addHours(6), ['item' => $i->id, 'index' => $k])
+            : ($v['url'] ?? null);
+        $yt = null;
+        if (! empty($v['url']) && preg_match('~(?:youtu\.be/|youtube\.com/(?:watch\?v=|shorts/|embed/|live/))([A-Za-z0-9_-]{11})~', $v['url'], $m)) {
+            $yt = $m[1];
+        }
+
+        return [
+            'url' => $url,
+            'title' => $v['title'] ?? null,
+            'kind' => ! empty($v['path']) ? 'file' : ($yt ? 'youtube' : 'link'),
+            'thumb_url' => $yt ? "https://img.youtube.com/vi/$yt/hqdefault.jpg" : null,
+        ];
     }
 
     public static function kinds(): array

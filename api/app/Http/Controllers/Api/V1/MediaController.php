@@ -38,6 +38,19 @@ class MediaController extends Controller
         return $this->stream($item->photos[$index] ?? null);
     }
 
+    /** Videos need byte ranges so players can seek: a real file response, or a short-lived Spaces link. */
+    public function guideVideo(\App\Models\GuideItem $item, int $index)
+    {
+        $path = $item->videos[$index]['path'] ?? null;
+        $disk = $path ? MediaStorage::read($path) : null;
+        abort_unless($disk !== null, 404);
+        try {
+            return response()->file($disk->path($path), ['Cache-Control' => 'private, max-age=1800']);
+        } catch (\Throwable) {
+            return redirect()->away($disk->temporaryUrl($path, now()->addHours(2)));
+        }
+    }
+
     public function report(ActivityReport $report, int $index)
     {
         return $this->stream($report->photos[$index] ?? null);

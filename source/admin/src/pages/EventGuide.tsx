@@ -10,7 +10,9 @@ interface Item {
   location: string | null; landmark: string | null; color: string | null; timings: string | null; tags: string[]; steps: string[]
   map_url: string | null; lat: number | null; lng: number | null; distance_km: number | null; distance_is_road: boolean
   travel_time: string | null; photo_urls: string[]; contacts: Contact[]
+  videos?: Video[]
 }
+interface Video { url: string | null; title: string | null; kind: 'file' | 'youtube' | 'link'; thumb_url: string | null }
 interface Kind { kind: string; title: string; hindi: string }
 interface Guide {
   settings: { guide_enabled: boolean; delegate_registration_open?: boolean; venue_lat: number | null; venue_lng: number | null; helpline_phone: string | null }
@@ -102,6 +104,7 @@ export default function GuideTab({ id }: { id: number }) {
                     {i.contacts.length > 0 && <span className="pill mute">{i.contacts.length} contact{i.contacts.length === 1 ? '' : 's'}</span>}
                     {i.distance_km !== null && <span className="pill mute">{i.distance_km} km</span>}
                     {i.photo_urls.length > 0 && <span className="pill mute">{i.photo_urls.length} photo{i.photo_urls.length === 1 ? '' : 's'}</span>}
+                    {(i.videos?.length ?? 0) > 0 && <span className="pill mute">{i.videos!.length} video{i.videos!.length === 1 ? '' : 's'}</span>}
                   </span>
                 </span>
               </button>
@@ -161,6 +164,12 @@ function Editor({ eventId, kinds, prants, item, initial, onClose, onSaved }: {
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<unknown>(null)
   const [photos, setPhotos] = useState<string[]>(item?.photo_urls ?? [])
+  const [videos, setVideos] = useState<Video[]>(item?.videos ?? [])
+  const [vTitle, setVTitle] = useState('')
+  const [vUrl, setVUrl] = useState('')
+  const [progress, setProgress] = useState<string | null>(null)
+  const gallery = d.kind === 'gallery'
+  const maxPhotos = gallery ? 60 : 8
   const kindLabel = kinds.find((k) => k.kind === d.kind)?.title ?? d.kind
   const set = (patch: Partial<Draft>) => setD({ ...d, ...patch })
   const setContact = (i: number, patch: Partial<Contact>) => set({ contacts: d.contacts.map((c, j) => (j === i ? { ...c, ...patch } : c)) })
@@ -185,20 +194,43 @@ function Editor({ eventId, kinds, prants, item, initial, onClose, onSaved }: {
     try {
       if (item) await api.patch(`/admin/guide-items/${item.id}`, body)
       else await api.post(`/admin/events/${eventId}/guide/items`, body)
-      onSaved(item ? `Saved “${d.title}”.` : `Added “${d.title}”. Edit it to add photos.`)
+      onSaved(item ? `Saved “${d.title}”.` : d.kind === 'gallery' ? `Added album “${d.title}”. Open it to add photos and videos.` : `Added “${d.title}”. Edit it to add photos.`)
     } catch (x) { setErr(x) } finally { setBusy(false) }
   }
 
-  async function upload(file?: File) {
-    if (!file || !item) return
-    const form = new FormData()
-    form.append('photo', file)
-    setBusy(true)
+  async function upload(files: File[]) {
+    if (!files.length || !item) return
+    setBusy(true); setErr(null)
     try {
-      const r = await api.post<Item>(`/admin/guide-items/${item.id}/photos`, form)
-      setPhotos(r.data.photo_urls)
-      onSaved('Photo added.', true)
-    } catch (x) { setErr(x) } finally { setBusy(false) }
+      for (const [n, file] of files.slice(0, maxPhotos - photos.length).entries()) {
+        setProgress(`Uploading photo ${n + 1} of ${files.length}…`)
+        const form = new FormData()
+        form.append('photo', file)
+        const r = await api.post<Item>(`/admin/guide-items/${item.id}/photos`, form)
+        setPhotos(r.data.photo_urls)
+      }
+      onSaved(files.length > 1 ? `${files.length} photos added.` : 'Photo added.', true)
+    } catch (x) { setErr(x) } finally { setBusy(false); setProgress(null) }
+  }
+  async function addVideo(file?: File) {
+    if (!item || (!file && !vUrl.trim())) return
+    const form = new FormData()
+    if (file) form.append('video', file)
+    else form.append('url', vUrl.trim())
+    if (vTitle.trim()) form.append('title', vTitle.trim())
+    setBusy(true); setErr(null)
+    if (file) setProgress(`Uploading ${file.name} (${Math.round(file.size / 1048576)} MB)… keep this window open.`)
+    try {
+      const r = await api.post<Item>(`/admin/guide-items/${item.id}/videos`, form)
+      setVideos(r.data.videos ?? []); setVTitle(''); setVUrl('')
+      onSaved('Video added.', true)
+    } catch (x) { setErr(x) } finally { setBusy(false); setProgress(null) }
+  }
+  async function removeVideo(i: number) {
+    if (!item || !confirm('Remove this video?')) return
+    const r = await api.del<Item>(`/admin/guide-items/${item.id}/videos/${i}`)
+    setVideos(r.data.videos ?? [])
+    onSaved('Video removed.', true)
   }
   async function removePhoto(i: number) {
     if (!item) return
@@ -287,8 +319,39 @@ function Editor({ eventId, kinds, prants, item, initial, onClose, onSaved }: {
                 {photos.map((u, i) => (
                   <div key={u} className="ph"><img src={u} alt={`Photo ${i + 1}`} /><button type="button" onClick={() => removePhoto(i)} aria-label={`Remove photo ${i + 1}`}>✕</button></div>
                 ))}
-                {photos.length < 8 && <label className="ph add">+<input type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={(e) => upload(e.target.files?.[0])} /></label>}
+                {photos.length < maxPhotos && <label className="ph add">+<input type="file" accept="image/jpeg,image/png,image/webp" multiple={gallery} hidden onChange={(e) => { upload(Array.from(e.target.files ?? [])); e.target.value = '' }} /></label>}
               </div>
+              {gallery && <small className="muted">Up to {maxPhotos} photos per album – you can pick many at once. {photos.length}/{maxPhotos}</small>}
+              {progress && <div className="notice" role="status">{progress}</div>}
+            </fieldset>
+          )}
+          {item && gallery && (
+            <fieldset className="fs">
+              <legend>Videos</legend>
+              {videos.length > 0 && (
+                <div className="vid-list">
+                  {videos.map((v, i) => (
+                    <div key={i} className="vid">
+                      <a href={v.url ?? '#'} target="_blank" rel="noreferrer" className="vid-thumb" style={v.thumb_url ? { backgroundImage: `url(${v.thumb_url})` } : undefined}>▶</a>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <b>{v.title || (v.kind === 'file' ? 'Video' : 'Video link')}</b>
+                        <div className="muted" style={{ fontSize: 12 }}>{v.kind === 'file' ? 'Uploaded clip' : v.kind === 'youtube' ? 'YouTube' : 'Link'}</div>
+                      </div>
+                      <button type="button" className="btn small" onClick={() => removeVideo(i)}>Remove</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <input className="input" placeholder="Video title (optional) – e.g. Inauguration speech" value={vTitle} onChange={(e) => setVTitle(e.target.value)} aria-label="Video title" />
+              <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                <input className="input" placeholder="YouTube or other video link" value={vUrl} onChange={(e) => setVUrl(e.target.value)} aria-label="Video link" />
+                <button type="button" className="btn" disabled={busy || !vUrl.trim()} onClick={() => addVideo()}>Add link</button>
+              </div>
+              <label className="btn" style={{ marginTop: 8, display: 'inline-flex' }}>
+                ⬆ Upload a video (mp4, up to 100 MB)
+                <input type="file" accept="video/mp4,video/quicktime,video/webm" hidden onChange={(e) => { addVideo(e.target.files?.[0]); e.target.value = '' }} />
+              </label>
+              <small className="muted" style={{ display: 'block', marginTop: 6 }}>Long videos: upload them to YouTube (they can be unlisted) and add the link – they play smoothly on every phone.</small>
             </fieldset>
           )}
         </div>

@@ -229,4 +229,33 @@ class GuideTest extends TestCase
         $this->getJson("/api/v1/help/{$id}")->assertStatus(403);
         $this->postJson("/api/v1/help/{$id}/reply", ['body' => 'hi'])->assertStatus(403);
     }
+
+    public function test_gallery_takes_photos_and_videos(): void
+    {
+        $admin = $this->admin();
+        $event = $this->conference($admin);
+        Sanctum::actingAs($admin);
+        $g = $this->postJson("/api/v1/admin/events/{$event->id}/guide/items", ['kind' => 'gallery', 'title' => 'Day 1 – Inauguration'])->assertCreated()->json('data.id');
+
+        // More than 8 photos are fine in a gallery album.
+        foreach (range(1, 9) as $n) {
+            $this->post("/api/v1/admin/guide-items/{$g}/photos", ['photo' => UploadedFile::fake()->image("p$n.jpg")], ['Accept' => 'application/json'])->assertOk();
+        }
+
+        $this->postJson("/api/v1/admin/guide-items/{$g}/videos", ['url' => 'https://youtu.be/dQw4w9WgXcQ', 'title' => 'Opening speech'])
+            ->assertOk()->assertJsonPath('data.videos.0.kind', 'youtube')
+            ->assertJsonPath('data.videos.0.thumb_url', 'https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg');
+        $res = $this->post("/api/v1/admin/guide-items/{$g}/videos", ['video' => UploadedFile::fake()->create('clip.mp4', 2048, 'video/mp4'), 'title' => 'Shobhayatra'], ['Accept' => 'application/json'])
+            ->assertOk()->assertJsonPath('data.videos.1.kind', 'file');
+        $this->assertStringContainsString('/media/guide-videos/', $res->json('data.videos.1.url'));
+        Storage::disk('local')->assertExists(\App\Models\GuideItem::find($g)->videos[1]['path']);
+        $this->postJson("/api/v1/admin/guide-items/{$g}/videos", ['title' => 'Nothing'])->assertStatus(422);
+
+        // Delegates see the album with its photos and videos.
+        $event->forceFill(['guide_enabled' => true])->save();
+        $this->getJson("/api/v1/events/{$event->id}/guide/gallery")->assertOk()
+            ->assertJsonCount(9, 'data.0.photo_urls')->assertJsonCount(2, 'data.0.videos');
+
+        $this->deleteJson("/api/v1/admin/guide-items/{$g}/videos/0")->assertOk()->assertJsonCount(1, 'data.videos');
+    }
 }
