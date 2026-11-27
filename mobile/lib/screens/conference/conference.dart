@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -635,18 +636,20 @@ class _GhatGrid extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        mainAxisSpacing: 10,
-        crossAxisSpacing: 10,
-        childAspectRatio: 1.45,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        mainAxisExtent: 196,
       ),
       itemCount: ghats.length,
       itemBuilder: (context, i) {
         final g = ghats[i];
         final c = _hex(g['color'] as String?);
-        final pramukh = ((g['heads'] as List).cast<Json>())
+        final heads = (g['heads'] as List).cast<Json>();
+        final pramukh = heads
             .where((h) => h['role'] == 'ghat_pramukh')
-            .map((h) => h['name'])
-            .join(', ');
+            .toList();
+        final counts = g['counts'] as Json;
+        final bg = HSLColor.fromColor(c).withLightness(0.95).toColor();
         return FadeSlideIn(
           index: i,
           child: Pressable(
@@ -664,43 +667,119 @@ class _GhatGrid extends StatelessWidget {
               onChanged();
             },
             child: Container(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(22),
-                gradient: LinearGradient(
-                  colors: [c, Color.lerp(c, Colors.black, 0.3)!],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                color: bg,
+                borderRadius: BorderRadius.circular(26),
+                border: Border.all(color: c.withValues(alpha: 0.14)),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Stack(
                 children: [
-                  Text(
-                    g['name'] as String,
-                    maxLines: 2,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 16,
-                      height: 1.15,
+                  Positioned(
+                    right: -10,
+                    bottom: 34,
+                    child: Icon(
+                      _ghatIcon(g['name'] as String),
+                      size: 70,
+                      color: c.withValues(alpha: 0.07),
                     ),
                   ),
-                  const Spacer(),
-                  if (pramukh.isNotEmpty)
-                    Text(
-                      pramukh,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w600,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: 46,
+                            height: 46,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(15),
+                              gradient: LinearGradient(
+                                colors: [
+                                  Color.lerp(c, Colors.white, 0.2)!,
+                                  Color.lerp(c, Colors.black, 0.15)!,
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: c.withValues(alpha: 0.3),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Icon(
+                              _ghatIcon(g['name'] as String),
+                              color: Colors.white,
+                              size: 24,
+                            ),
+                          ),
+                          const Spacer(),
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.arrow_outward_rounded,
+                              size: 18,
+                              color: AppColors.ink,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  Text(
-                    '${(g['counts'] as Json)['departments']} dept · ${(g['counts'] as Json)['people']} people',
-                    style: const TextStyle(color: Colors.white70, fontSize: 12),
+                      const SizedBox(height: 10),
+                      Text(
+                        g['name'] as String,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 15.5,
+                          height: 1.15,
+                          color: AppColors.ink,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${counts['departments']} departments',
+                        style: TextStyle(
+                          color: Color.lerp(c, Colors.black, 0.2),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const Spacer(),
+                      Row(
+                        children: [
+                          if (heads.isNotEmpty) _AvatarStack(heads),
+                          Expanded(
+                            child: Text(
+                              pramukh.isEmpty
+                                  ? '${counts['people']} people'
+                                  : (pramukh.first['name'] as String)
+                                        .replaceFirst(
+                                          RegExp(r'^(Shri|Kum|Dr|Smt)\.? '),
+                                          '',
+                                        ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.right,
+                              style: const TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.inkSoft,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -712,55 +791,365 @@ class _GhatGrid extends StatelessWidget {
   }
 }
 
-/// One person, with Call and WhatsApp when their number is known.
+/// An icon for each ghat, falling back to the department icons.
+IconData _ghatIcon(String name) {
+  final n = name.toLowerCase();
+  const map = <String, IconData>{
+    'karyalaya': Icons.apartment_rounded,
+    'baithak': Icons.forum_rounded,
+    'yatha': Icons.directions_bus_rounded,
+    'nivas': Icons.hotel_rounded,
+    'bhojan': Icons.restaurant_rounded,
+    'jala': Icons.water_drop_rounded,
+    'nirmaan': Icons.construction_rounded,
+    'karyakram': Icons.theater_comedy_rounded,
+    'dvani': Icons.speaker_rounded,
+    'prachar': Icons.campaign_rounded,
+    'parisar': Icons.place_rounded,
+    'athidi': Icons.emoji_people_rounded,
+    'kosh': Icons.account_balance_wallet_rounded,
+    'karyakarta': Icons.diversity_3_rounded,
+    'aapoorti': Icons.local_shipping_rounded,
+    'pradarshini': Icons.museum_rounded,
+    'shobhayathra': Icons.flag_rounded,
+  };
+  for (final e in map.entries) {
+    if (n.contains(e.key)) return e.value;
+  }
+  return _deptIcon(name);
+}
+
+/// Role colours so a list of people reads at a glance.
+Color _roleColor(String? role) => switch (role) {
+  'ghat_pramukh' || 'pramukh' => AppColors.saffron,
+  'ghat_saha_pramukh' || 'saha_pramukh' => const Color(0xFF7C4DDB),
+  'ghat_palak' => const Color(0xFF0E9F8E),
+  _ => const Color(0xFF2E55C9),
+};
+
+/// One person as a small card. Tap opens their details in a popup.
 class PersonTile extends StatelessWidget {
-  const PersonTile({super.key, required this.p, this.dense = false});
+  const PersonTile({super.key, required this.p, this.dense = false, this.team});
   final Json p;
   final bool dense;
+  final String? team;
 
   @override
   Widget build(BuildContext context) {
     final m = p['mobile'] as String?;
-    return ListTile(
-      dense: dense,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 4),
-      leading: Initials(
-        p['name'] as String,
-        photoUrl: p['photo_url'] as String?,
-        size: dense ? 36 : 44,
-      ),
-      title: Text(
-        p['name'] as String,
-        style: const TextStyle(fontWeight: FontWeight.w700),
-      ),
-      subtitle: Text(
-        [
-          p['role_label'],
-          if (m == null && p['has_mobile'] != true) 'no phone yet',
-        ].join(' · '),
-      ),
-      trailing: m == null
-          ? null
-          : Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  tooltip: 'Call',
-                  icon: const Icon(Icons.call_rounded, color: AppColors.ok),
-                  onPressed: () => _call(m),
+    final rc = _roleColor(p['role'] as String?);
+    return Padding(
+      padding: EdgeInsets.only(bottom: dense ? 6 : 10),
+      child: Pressable(
+        onTap: () => showPersonSheet(context, p, team: team),
+        child: Container(
+          padding: EdgeInsets.all(dense ? 10 : 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF171A2E).withValues(alpha: 0.05),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(2.5),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: rc, width: 2),
                 ),
-                IconButton(
-                  tooltip: 'WhatsApp',
-                  icon: const Icon(
-                    Icons.chat_rounded,
-                    color: Color(0xFF25D366),
-                  ),
-                  onPressed: () => _wa(m),
+                child: Initials(
+                  p['name'] as String,
+                  photoUrl: p['photo_url'] as String?,
+                  size: dense ? 36 : 44,
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      p['name'] as String,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: rc.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            p['role_label'] as String? ?? '',
+                            style: TextStyle(
+                              color: rc,
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        if (p['linked'] == true) ...[
+                          const SizedBox(width: 6),
+                          const Icon(
+                            Icons.verified_rounded,
+                            size: 15,
+                            color: AppColors.ok,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              if (m != null) ...[
+                _RoundIcon(Icons.call_rounded, AppColors.ok, () => _call(m)),
+                const SizedBox(width: 8),
+                _RoundIcon(
+                  Icons.chat_rounded,
+                  const Color(0xFF25D366),
+                  () => _wa(m),
+                ),
+              ] else
+                const Icon(Icons.chevron_right_rounded, color: AppColors.muted),
+            ],
+          ),
+        ),
+      ),
     );
   }
+}
+
+/// A person's details as a popup: photo, role, team, phone, and Call / WhatsApp / Copy.
+Future<void> showPersonSheet(BuildContext context, Json p, {String? team}) {
+  final m = p['mobile'] as String?;
+  final rc = _roleColor(p['role'] as String?);
+  return showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: Colors.transparent,
+    isScrollControlled: true,
+    showDragHandle: false,
+    builder: (ctx) => Container(
+      margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(32),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      rc.withValues(alpha: 0.18),
+                      rc.withValues(alpha: 0.04),
+                    ],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: AppColors.line,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white,
+                        border: Border.all(color: rc, width: 3),
+                      ),
+                      child: Initials(
+                        p['name'] as String,
+                        photoUrl: p['photo_url'] as String?,
+                        size: 88,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      p['name'] as String,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: rc,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        p['role_label'] as String? ?? '',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (team != null)
+                      _InfoRow(Icons.groups_rounded, 'Team', team),
+                    _InfoRow(
+                      Icons.phone_rounded,
+                      'Mobile',
+                      m ??
+                          (p['has_mobile'] == true
+                              ? 'Sign in to see the number'
+                              : 'No phone yet'),
+                    ),
+                    _InfoRow(
+                      p['linked'] == true
+                          ? Icons.verified_rounded
+                          : Icons.phone_android_rounded,
+                      'App',
+                      p['linked'] == true
+                          ? 'Using ABVP Connect'
+                          : 'Not signed in yet',
+                    ),
+                    if (p['note'] != null &&
+                        (p['note'] as String).trim().isNotEmpty)
+                      _InfoRow(
+                        Icons.notes_rounded,
+                        'Note',
+                        p['note'] as String,
+                      ),
+                    if (m != null) ...[
+                      const SizedBox(height: 14),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: FilledButton.icon(
+                              style: FilledButton.styleFrom(
+                                backgroundColor: AppColors.ok,
+                                minimumSize: const Size.fromHeight(50),
+                              ),
+                              onPressed: () => _call(m),
+                              icon: const Icon(Icons.call_rounded),
+                              label: const Text('Call'),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: FilledButton.icon(
+                              style: FilledButton.styleFrom(
+                                backgroundColor: const Color(0xFF25D366),
+                                minimumSize: const Size.fromHeight(50),
+                              ),
+                              onPressed: () => _wa(m),
+                              icon: const Icon(Icons.chat_rounded),
+                              label: const Text('WhatsApp'),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      TextButton.icon(
+                        onPressed: () {
+                          Clipboard.setData(ClipboardData(text: m));
+                          Navigator.pop(ctx);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Number copied')),
+                          );
+                        },
+                        icon: const Icon(Icons.copy_rounded, size: 18),
+                        label: const Text('Copy number'),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+class _InfoRow extends StatelessWidget {
+  const _InfoRow(this.icon, this.label, this.value);
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 8),
+    child: Row(
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: AppColors.ground,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, size: 20, color: AppColors.inkSoft),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(color: AppColors.muted, fontSize: 12),
+              ),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 /// A ghat: its three heads and every department with its people. Heads get their tools here.
@@ -839,7 +1228,11 @@ class GhatScreen extends StatelessWidget {
                     separatorBuilder: (_, _) => const SizedBox(width: 10),
                     itemBuilder: (context, i) => FadeSlideIn(
                       index: i,
-                      child: _HeadCard(p: heads[i], color: c),
+                      child: _HeadCard(
+                        p: heads[i],
+                        color: c,
+                        team: ghat['name'] as String,
+                      ),
                     ),
                   ),
                 ),
@@ -1015,13 +1408,21 @@ Color _deep(Color tint) {
 
 /// One ghat head: Pramukh, Saha Pramukh or Palak.
 class _HeadCard extends StatelessWidget {
-  const _HeadCard({required this.p, required this.color});
+  const _HeadCard({required this.p, required this.color, this.team});
   final Json p;
   final Color color;
+  final String? team;
 
   @override
   Widget build(BuildContext context) {
     final m = p['mobile'] as String?;
+    return Pressable(
+      onTap: () => showPersonSheet(context, p, team: team),
+      child: _card(m),
+    );
+  }
+
+  Widget _card(String? m) {
     return Container(
       width: 150,
       padding: const EdgeInsets.all(12),
@@ -1177,10 +1578,6 @@ class _DeptCard extends StatelessWidget {
         .where((p) => p['role'] == 'pramukh' || p['role'] == 'saha_pramukh')
         .map((p) => p['name'] as String)
         .toList();
-    final reachable = people
-        .where((p) => p['has_mobile'] == true || p['mobile'] != null)
-        .length;
-    final progress = people.isEmpty ? 0.0 : reachable / people.length;
     final bg = _tint(color, shade);
     final ink = _deep(bg);
     final name = dept['name'] as String;
@@ -1282,41 +1679,22 @@ class _DeptCard extends StatelessWidget {
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    Expanded(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: TweenAnimationBuilder<double>(
-                          tween: Tween(begin: 0, end: progress),
-                          duration: const Duration(milliseconds: 900),
-                          curve: Curves.easeOutCubic,
-                          builder: (_, v, _) => LinearProgressIndicator(
-                            value: v,
-                            minHeight: 8,
-                            color: ink,
-                            backgroundColor: Colors.white.withValues(
-                              alpha: 0.8,
-                            ),
-                          ),
+                    if (people.isNotEmpty)
+                      _AvatarStack(people)
+                    else
+                      const Text(
+                        'No one yet',
+                        style: TextStyle(color: AppColors.muted),
+                      ),
+                    const SizedBox(width: 8),
+                    if (people.isNotEmpty)
+                      Text(
+                        '${people.length} ${people.length == 1 ? 'person' : 'people'}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.inkSoft,
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    Text(
-                      people.isEmpty
-                          ? 'No one yet'
-                          : '$reachable of ${people.length} reachable',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.inkSoft,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    if (people.isNotEmpty) _AvatarStack(people),
                     const Spacer(),
                     Container(
                       width: 44,
@@ -1444,21 +1822,14 @@ class DepartmentScreen extends StatelessWidget {
                 if (sorted.isEmpty)
                   const EmptyNote('No one in this department yet.')
                 else
-                  Panel(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
+                  for (var i = 0; i < sorted.length; i++)
+                    FadeSlideIn(
+                      index: i,
+                      child: PersonTile(
+                        p: sorted[i],
+                        team: '$name · $ghatName',
+                      ),
                     ),
-                    child: Column(
-                      children: [
-                        for (var i = 0; i < sorted.length; i++)
-                          FadeSlideIn(
-                            index: i,
-                            child: PersonTile(p: sorted[i]),
-                          ),
-                      ],
-                    ),
-                  ),
               ],
             ),
           ),

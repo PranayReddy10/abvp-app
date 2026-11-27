@@ -291,7 +291,7 @@ void main() {
     }
     expect(find.text('Shri A Shyam Kiran'), findsOneWidget);
     expect(find.text('Adhiveshan office'), findsOneWidget);
-    expect(find.text('1 of 1 reachable'), findsOneWidget);
+    expect(find.textContaining('reachable'), findsNothing);
     expect(tester.takeException(), isNull);
 
     await tester.tap(find.text('Adhiveshan office'));
@@ -300,6 +300,16 @@ void main() {
     }
     expect(find.text('Gowtham'), findsOneWidget);
     expect(find.text('KARYALAYA'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    // Tapping a person opens their details as a popup.
+    await tester.tap(find.text('Gowtham'));
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(find.text('Using ABVP Connect'), findsOneWidget);
+    expect(find.text('Adhiveshan office · Karyalaya'), findsOneWidget);
+    expect(find.text('WhatsApp'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
