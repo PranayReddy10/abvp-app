@@ -162,6 +162,7 @@ final _person = {
   'mobile': '+919800000001',
   'has_mobile': true,
   'linked': true,
+  'member_id': 'ABVP-TS-HYD-000009',
   'note': null,
   'photo_url': null,
 };
@@ -334,6 +335,8 @@ void main() {
     expect(find.text('Using ABVP Connect'), findsOneWidget);
     expect(find.text('Adhiveshan office · Karyalaya'), findsOneWidget);
     expect(find.text('WhatsApp'), findsOneWidget);
+    expect(find.text('View profile'), findsOneWidget);
+    expect(find.text('Follow'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

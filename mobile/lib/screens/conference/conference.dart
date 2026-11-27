@@ -15,6 +15,7 @@ import '../../widgets/loader.dart';
 import '../../widgets/motion.dart';
 import '../duties_screen.dart';
 import '../edit_profile_screen.dart';
+import '../feed_screen.dart' show MemberProfileScreen;
 import '../guide/guide_hub.dart';
 import '../guide/guide_sections.dart';
 import '../guide/support_screen.dart';
@@ -1690,7 +1691,14 @@ Color _roleColor(String? role) => switch (role) {
 
 /// One person as a small card. Tap opens their details in a popup.
 class PersonTile extends StatelessWidget {
-  const PersonTile({super.key, required this.p, this.dense = false, this.team});
+  const PersonTile({
+    super.key,
+    required this.p,
+    this.dense = false,
+    this.team,
+    this.session,
+  });
+  final Session? session;
   final Json p;
   final bool dense;
   final String? team;
@@ -1702,7 +1710,7 @@ class PersonTile extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.only(bottom: dense ? 6 : 10),
       child: Pressable(
-        onTap: () => showPersonSheet(context, p, team: team),
+        onTap: () => showPersonSheet(context, p, team: team, session: session),
         child: Container(
           padding: EdgeInsets.all(dense ? 10 : 12),
           decoration: BoxDecoration(
@@ -1797,7 +1805,12 @@ class PersonTile extends StatelessWidget {
 }
 
 /// A person's details as a popup: photo, role, team, phone, and Call / WhatsApp / Copy.
-Future<void> showPersonSheet(BuildContext context, Json p, {String? team}) {
+Future<void> showPersonSheet(
+  BuildContext context,
+  Json p, {
+  String? team,
+  Session? session,
+}) {
   final m = p['mobile'] as String?;
   final rc = _roleColor(p['role'] as String?);
   return showModalBottomSheet<void>(
@@ -1916,6 +1929,15 @@ Future<void> showPersonSheet(BuildContext context, Json p, {String? team}) {
                         'Note',
                         p['note'] as String,
                       ),
+                    if (session != null &&
+                        p['member_id'] != null &&
+                        p['member_id'] != session.me?.profile?.memberId) ...[
+                      const SizedBox(height: 10),
+                      _ProfileActions(
+                        session: session,
+                        memberId: p['member_id'] as String,
+                      ),
+                    ],
                     if (m != null) ...[
                       const SizedBox(height: 14),
                       Row(
@@ -1967,6 +1989,100 @@ Future<void> showPersonSheet(BuildContext context, Json p, {String? team}) {
       ),
     ),
   );
+}
+
+/// Follow and View profile, for people who use the app.
+class _ProfileActions extends StatefulWidget {
+  const _ProfileActions({required this.session, required this.memberId});
+  final Session session;
+  final String memberId;
+
+  @override
+  State<_ProfileActions> createState() => _ProfileActionsState();
+}
+
+class _ProfileActionsState extends State<_ProfileActions> {
+  bool? _following;
+  bool _busy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final r =
+          await widget.session.api.get('/members/${widget.memberId}') as Json?;
+      final social = (r?['social'] as Json?) ?? {};
+      if (mounted) setState(() => _following = social['is_following'] == true);
+    } catch (_) {
+      if (mounted) setState(() => _following = false);
+    }
+  }
+
+  Future<void> _toggle() async {
+    setState(() => _busy = true);
+    try {
+      final r = await widget.session.api.post(
+        '/members/${widget.memberId}/follow',
+      ) as Json;
+      if (mounted) setState(() => _following = r['following'] == true);
+    } on ApiException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(e.message)));
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final following = _following == true;
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size.fromHeight(48),
+            ),
+            onPressed: () {
+              final nav = Navigator.of(context);
+              nav.pop();
+              nav.push(
+                MaterialPageRoute(
+                  builder: (_) => MemberProfileScreen(
+                    session: widget.session,
+                    memberId: widget.memberId,
+                  ),
+                ),
+              );
+            },
+            icon: const Icon(Icons.person_rounded),
+            label: const Text('View profile'),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: FilledButton.icon(
+            style: FilledButton.styleFrom(
+              minimumSize: const Size.fromHeight(48),
+              backgroundColor: following ? AppColors.saffronSoft : null,
+              foregroundColor: following ? AppColors.saffronDeep : null,
+            ),
+            onPressed: _busy || _following == null ? null : _toggle,
+            icon: Icon(
+              following ? Icons.check_rounded : Icons.person_add_alt_1_rounded,
+            ),
+            label: Text(following ? 'Following' : 'Follow'),
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class _InfoRow extends StatelessWidget {
@@ -2081,7 +2197,7 @@ class GhatScreen extends StatelessWidget {
                 const _Heading('Ghat heads'),
                 const SizedBox(height: 10),
                 SizedBox(
-                  height: 150,
+                  height: 172,
                   child: ListView.separated(
                     padding: EdgeInsets.zero,
                     scrollDirection: Axis.horizontal,
@@ -2093,6 +2209,7 @@ class GhatScreen extends StatelessWidget {
                         p: heads[i],
                         color: c,
                         team: ghat['name'] as String,
+                        session: session,
                       ),
                     ),
                   ),
@@ -2269,7 +2386,13 @@ Color _deep(Color tint) {
 
 /// One ghat head: Pramukh, Saha Pramukh or Palak.
 class _HeadCard extends StatelessWidget {
-  const _HeadCard({required this.p, required this.color, this.team});
+  const _HeadCard({
+    required this.p,
+    required this.color,
+    this.team,
+    this.session,
+  });
+  final Session? session;
   final Json p;
   final Color color;
   final String? team;
@@ -2278,14 +2401,14 @@ class _HeadCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final m = p['mobile'] as String?;
     return Pressable(
-      onTap: () => showPersonSheet(context, p, team: team),
+      onTap: () => showPersonSheet(context, p, team: team, session: session),
       child: _card(m),
     );
   }
 
   Widget _card(String? m) {
     return Container(
-      width: 150,
+      width: 172,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -2310,9 +2433,13 @@ class _HeadCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             p['name'] as String,
-            maxLines: 1,
+            maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontWeight: FontWeight.w800),
+            style: const TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 14,
+              height: 1.2,
+            ),
           ),
           Text(
             p['role_label'] as String? ?? '',
@@ -2688,6 +2815,7 @@ class DepartmentScreen extends StatelessWidget {
                       index: i,
                       child: PersonTile(
                         p: sorted[i],
+                        session: session,
                         team: '$name · $ghatName',
                       ),
                     ),
@@ -3386,7 +3514,7 @@ class _TeamSearch extends SearchDelegate<void> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  PersonTile(p: p, dense: true),
+                  PersonTile(p: p, dense: true, session: session),
                   Padding(
                     padding: const EdgeInsets.only(left: 52, bottom: 4),
                     child: Text(
