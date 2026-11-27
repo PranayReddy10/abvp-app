@@ -6,7 +6,9 @@ use App\Models\Event;
 use App\Models\EventTeam;
 use App\Models\EventTeamMember;
 use App\Models\User;
+use App\Support\ApiException;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Who belongs where in the conference volunteer tree, and what they may do.
@@ -23,9 +25,31 @@ class ConferenceTeams
     /** The national conference people see in the app: the next published conference that has not ended. */
     public static function current(): ?Event
     {
-        return Event::where('status', 'published')->where('category', 'conference')->where('ends_at', '>=', now()->subDay())
-            ->withCount(['teams as ghat_count' => fn ($q) => $q->whereNull('parent_id')->where('kind', 'ghat')])
+        $q = Event::where('status', 'published')->where('category', 'conference')->where('ends_at', '>=', now()->subDay());
+        if (! self::ready()) {
+            return $q->orderBy('starts_at')->first();
+        }
+
+        return $q->withCount(['teams as ghat_count' => fn ($q) => $q->whereNull('parent_id')->where('kind', 'ghat')])
             ->orderByDesc('ghat_count')->orderBy('starts_at')->first();
+    }
+
+    private static ?bool $ready = null;
+
+    /** Whether the server's database has the team tree (the 2026_11_27 migration has run). */
+    public static function ready(): bool
+    {
+        return self::$ready ??= Schema::hasTable('event_team_members') && Schema::hasTable('event_team_messages')
+            && Schema::hasColumn('event_teams', 'kind') && Schema::hasColumn('meetings', 'event_team_id');
+    }
+
+    /** Stop with a clear message instead of a server error when the migration has not run. */
+    public static function ensureReady(): void
+    {
+        if (! self::ready()) {
+            self::$ready = null; // check again next time
+            throw new ApiException('SETUP_NEEDED', 'The conference team tables are not on the server yet. On the server run: cd api && php artisan migrate --force && php artisan abvp:load-conference-teams && php artisan optimize', 503);
+        }
     }
 
     public function isAdmin(User $user, Event $event): bool

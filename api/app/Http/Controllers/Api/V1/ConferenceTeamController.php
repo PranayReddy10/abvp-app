@@ -47,6 +47,7 @@ class ConferenceTeamController extends Controller
         if ($event->status !== 'published') {
             throw new ApiException('NOT_FOUND', 'Not found.', 404);
         }
+        ConferenceTeams::ensureReady();
         $viewer = $request->user('sanctum');
 
         return $this->ok([
@@ -64,6 +65,7 @@ class ConferenceTeamController extends Controller
         if (! $event) {
             return $this->ok(['event' => null, 'places' => [], 'chats' => [], 'meetings' => [], 'tasks' => [], 'announcements' => []]);
         }
+        ConferenceTeams::ensureReady();
         $places = $this->teams->placesOf($user, $event);
         $isAdmin = $this->teams->isAdmin($user, $event);
 

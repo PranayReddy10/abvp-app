@@ -8,9 +8,11 @@ use App\Models\Event;
 use App\Models\EventTeam;
 use App\Models\EventTeamMember;
 use App\Services\Audit;
+use App\Services\ConferenceTeams;
 use App\Support\ApiException;
 use App\Support\Mobile;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 
 /** Admin panel: build the conference tree (ghats and departments), import and export it. */
@@ -19,6 +21,7 @@ class ConferenceTeamAdminController extends Controller
     public function index(Request $request, Event $event)
     {
         $this->authorizeIn('events.manage', $event->orgUnit);
+        ConferenceTeams::ensureReady();
         $ghats = ConferenceTeamController::present($event, true);
         $people = collect($ghats)->flatMap(fn ($g) => collect($g['heads'])->merge(collect($g['departments'])->flatMap(fn ($d) => $d['people'])));
 
@@ -34,6 +37,17 @@ class ConferenceTeamAdminController extends Controller
                 'no_phone' => $people->where('has_mobile', false)->count(),
             ],
         ]);
+    }
+
+    /** Load the ghats, departments and names from the organising sheets (safe to repeat). */
+    public function loadSheet(Request $request, Event $event)
+    {
+        $this->authorizeIn('events.manage', $event->orgUnit);
+        ConferenceTeams::ensureReady();
+        Artisan::call('abvp:load-conference-teams', ['--event' => $event->id, '--keep-details' => ! $request->boolean('set_details')]);
+        Audit::record('conference_team.load_sheet', $event);
+
+        return $this->index($request, $event->fresh());
     }
 
     /** Add a ghat (no parent) or a department (parent = a ghat). */

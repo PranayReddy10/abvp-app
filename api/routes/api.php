@@ -229,6 +229,7 @@ Route::prefix('v1')->group(function () {
             Route::get('events/{event}/teams', [Admin\OperationsController::class, 'teams']);
             Route::get('events/{event}/conference-teams', [Admin\ConferenceTeamAdminController::class, 'index']);
             Route::post('events/{event}/conference-teams', [Admin\ConferenceTeamAdminController::class, 'store']);
+            Route::post('events/{event}/conference-teams/load-sheet', [Admin\ConferenceTeamAdminController::class, 'loadSheet']);
             Route::post('events/{event}/conference-teams/import', [Admin\ConferenceTeamAdminController::class, 'import']);
             Route::get('events/{event}/conference-teams/export', [Admin\ConferenceTeamAdminController::class, 'export']);
             Route::patch('conference-teams/{team}', [Admin\ConferenceTeamAdminController::class, 'update']);

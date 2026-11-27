@@ -27,6 +27,13 @@ export default function ConferenceTeam() {
   const [q, setQ] = useState('')
   const [missing, setMissing] = useState(false)
   const [tool, setTool] = useState<'import' | 'ghat' | null>(null)
+  const [loadingSheet, setLoadingSheet] = useState(false)
+  const [sheetErr, setSheetErr] = useState<unknown>(null)
+  const loadSheet = async () => {
+    if (!id || !confirm('Load the 17 ghats, their departments and the names from the organising sheets? Nothing is duplicated and phones already entered stay as they are.')) return
+    setLoadingSheet(true); setSheetErr(null)
+    try { await api.post(`/admin/events/${id}/conference-teams/load-sheet`); tree.reload() } catch (e) { setSheetErr(e) } finally { setLoadingSheet(false) }
+  }
 
   const term = q.trim().toLowerCase()
   const match = (p: Person) => (!missing || !p.has_mobile) && (!term || p.name.toLowerCase().includes(term) || (p.mobile ?? '').includes(term))
@@ -39,7 +46,7 @@ export default function ConferenceTeam() {
   }), [tree.data, term, missing])
   const selected = tree.data?.ghats.find((g) => g.id === open) ?? null
 
-  if (conf.data === null) return <main className="content"><h1>Conference team</h1><Empty>No published conference yet. Create it under Events first.</Empty></main>
+  if (!conf.loading && !conf.error && conf.data === null) return <main className="content"><h1>Conference team</h1><Empty>No published conference yet. Create it under Events first.</Empty></main>
   const t = tree.data?.totals
 
   return (
@@ -47,15 +54,16 @@ export default function ConferenceTeam() {
       <div className="page-head">
         <div>
           <h1>Conference team</h1>
-          <p className="muted" style={{ margin: '4px 0 0' }}>{tree.data ? `${tree.data.event.title} · ${fmtDate(tree.data.event.starts_at)} – ${fmtDate(tree.data.event.ends_at)}` : 'Loading…'}</p>
+          <p className="muted" style={{ margin: '4px 0 0' }}>{tree.data ? `${tree.data.event.title} · ${fmtDate(tree.data.event.starts_at)} – ${fmtDate(tree.data.event.ends_at)}` : conf.error || tree.error ? '' : 'Loading…'}</p>
         </div>
         <div className="toolbar">
+          {id && <button className="btn" disabled={loadingSheet} onClick={loadSheet}>{loadingSheet ? 'Loading…' : 'Load from sheet'}</button>}
           <button className="btn" onClick={() => setTool(tool === 'ghat' ? null : 'ghat')}>+ Ghat</button>
           <button className="btn" onClick={() => setTool(tool === 'import' ? null : 'import')}>Import CSV</button>
           {id && <button className="btn" onClick={() => download(`/admin/events/${id}/conference-teams/export`, 'conference-team.csv')}>Download CSV</button>}
         </div>
       </div>
-      <ErrorBox error={conf.error ?? tree.error} />
+      <ErrorBox error={conf.error ?? tree.error ?? sheetErr} />
       {t && (
         <div className="ct-stats">
           <div><b>{t.ghats}</b><span>Ghats</span></div>
@@ -71,7 +79,7 @@ export default function ConferenceTeam() {
 
       <div className="grid2" style={{ gridTemplateColumns: selected ? 'minmax(0,1.25fr) minmax(0,1fr)' : '1fr', alignItems: 'start' }}>
         <section className="ct-grid">
-          {!tree.data ? <Skeleton rows={6} /> : ghats.filter((x) => x.visible).map(({ g, departments }) => (
+          {!tree.data ? (conf.error || tree.error ? null : <Skeleton rows={6} />) : tree.data.ghats.length === 0 ? <Empty>No ghats yet. Press “Load from sheet” to add the 17 ghats and names from the organising sheets.</Empty> : ghats.filter((x) => x.visible).map(({ g, departments }) => (
             <button key={g.id} className={`ct-card ${open === g.id ? 'on' : ''}`} style={{ ['--c' as string]: g.color ?? '#E3620C' }} onClick={() => setOpen(open === g.id ? null : g.id)}>
               <div className="ct-card-head">
                 <b>{g.name}</b>

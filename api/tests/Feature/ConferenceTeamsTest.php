@@ -205,4 +205,13 @@ class ConferenceTeamsTest extends TestCase
         Sanctum::actingAs($this->admin('district_admin', 'Hyderabad'));
         $this->getJson("/api/v1/admin/events/{$this->event->id}/conference-teams")->assertStatus(403);
     }
+
+    public function test_admin_can_load_the_sheet_from_the_panel(): void
+    {
+        EventTeam::where('event_id', $this->event->id)->delete();
+        Sanctum::actingAs($this->admin('super_admin', 'Bharat'));
+        $this->postJson("/api/v1/admin/events/{$this->event->id}/conference-teams/load-sheet")
+            ->assertOk()->assertJsonPath('data.totals.ghats', count(LoadConferenceTeams::SHEET));
+        $this->getJson('/api/v1/conference')->assertOk()->assertJsonPath('data.id', $this->event->id);
+    }
 }
