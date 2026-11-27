@@ -27,8 +27,8 @@ class ModerationController extends Controller
 
         $posts = Post::query()
             ->when(! $this->national($request), fn ($q) => $q->whereIn('user_id', $this->access->scopeQuery(MemberProfile::query(), $request->user(), 'feed.moderate')->select('user_id')))
-            ->when($status === 'hidden', fn ($q) => $q->whereNotNull('hidden_at')->whereNull('pending_at'))
-            ->when($status === 'pending', fn ($q) => $q->whereNotNull('pending_at')->whereNotNull('hidden_at'))
+            ->when($status === 'hidden', fn ($q) => Post::canHoldForApproval() ? $q->whereNotNull('hidden_at')->whereNull('pending_at') : $q->whereNotNull('hidden_at'))
+            ->when($status === 'pending', fn ($q) => Post::canHoldForApproval() ? $q->whereNotNull('pending_at')->whereNotNull('hidden_at') : $q->whereRaw('1 = 0'))
             ->when($status === 'reported', fn ($q) => $q->where('reports_count', '>', 0)->whereNull('reviewed_at')->orderByDesc('reports_count'))
             ->when($request->input('q'), fn ($q, $t) => $q->where('body', 'like', "%$t%"))
             ->when($request->integer('before'), fn ($q, $b) => $q->where('id', '<', $b))
@@ -63,10 +63,10 @@ class ModerationController extends Controller
             throw new ApiException('FORBIDDEN_SCOPE', "This member is outside your area.", 403);
         }
 
-        $wasPending = $post->pending_at !== null;
+        $wasPending = Post::canHoldForApproval() && $post->pending_at !== null;
         match ($data['action']) {
-            'hide' => $post->forceFill(['hidden_at' => now(), 'hidden_by' => $request->user()->id, 'hidden_reason' => $data['reason'], 'reviewed_at' => now(), 'pending_at' => null])->save(),
-            'restore', 'approve' => $post->forceFill(['hidden_at' => null, 'hidden_by' => null, 'hidden_reason' => null, 'reviewed_at' => now(), 'pending_at' => null])->save(),
+            'hide' => $post->forceFill(['hidden_at' => now(), 'hidden_by' => $request->user()->id, 'hidden_reason' => $data['reason'], 'reviewed_at' => now()] + ($wasPending ? ['pending_at' => null] : []))->save(),
+            'restore', 'approve' => $post->forceFill(['hidden_at' => null, 'hidden_by' => null, 'hidden_reason' => null, 'reviewed_at' => now()] + ($wasPending ? ['pending_at' => null] : []))->save(),
             'dismiss' => $post->forceFill(['reviewed_at' => now()])->save(),
         };
         if ($data['action'] === 'hide') {
@@ -85,9 +85,13 @@ class ModerationController extends Controller
     {
         $this->authorizeIn('feed.moderate');
 
+        $ready = Post::canHoldForApproval();
+
         return $this->ok([
             'approval_required' => Post::approvalRequired(),
-            'pending' => Post::whereNotNull('pending_at')->whereNotNull('hidden_at')->count(),
+            'pending' => $ready ? Post::whereNotNull('pending_at')->whereNotNull('hidden_at')->count() : 0,
+            // False until `php artisan migrate --force` has added posts.pending_at on the server.
+            'ready' => $ready,
         ]);
     }
 
@@ -95,6 +99,9 @@ class ModerationController extends Controller
     {
         $this->authorizeIn('feed.moderate');
         $data = $request->validate(['approval_required' => ['required', 'boolean']]);
+        if ($data['approval_required'] && ! Post::canHoldForApproval()) {
+            throw new ApiException('SETUP_NEEDED', 'The server needs its database update first. On the server run: cd api && php artisan migrate --force && php artisan optimize', 503);
+        }
         \App\Models\Setting::putMany(['community.approval_required' => $data['approval_required'] ? '1' : '0'], $request->user()->id);
         Audit::record('community.settings', null, null, $data);
 

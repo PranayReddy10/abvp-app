@@ -87,7 +87,7 @@ class FeedController extends Controller
         $disk = config('abvp.media_disk');
         $photos = collect($request->file('photos', []))->map(fn ($f) => $f->storeAs('posts/'.now()->format('Y/m'), Str::uuid().'.'.$f->extension(), ['disk' => $disk, 'visibility' => 'private']))->all();
 
-        $needsApproval = Post::approvalRequired()
+        $needsApproval = Post::approvalRequired() && Post::canHoldForApproval()
             && ! app(\App\Services\AccessControl::class)->can($viewer, 'feed.moderate');
 
         $post = DB::transaction(function () use ($data, $viewer, $photos, $original, $needsApproval) {

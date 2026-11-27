@@ -40,7 +40,7 @@ export default function Moderation() {
   const [status, setStatus] = useState(params.get('status') ?? 'all')
   const [q, setQ] = useState('')
   const [search, setSearch] = useState('')
-  const settings = useFetch<{ approval_required: boolean; pending: number }>('/admin/moderation/settings')
+  const settings = useFetch<{ approval_required: boolean; pending: number; ready?: boolean }>('/admin/moderation/settings')
   const list = useFetch<Flagged[]>(`/admin/moderation?status=${status}${search ? `&q=${encodeURIComponent(search)}` : ''}`)
   const [busy, setBusy] = useState<number | null>(null)
   const [reasons, setReasons] = useState<Record<number, string>>({})
@@ -89,9 +89,15 @@ export default function Moderation() {
               ? 'On: new posts from members wait here until an admin approves them. Admins’ own posts go live straight away.'
               : 'Off: posts go live straight away. Reports still hide a post until someone reviews it.'}
           </div>
+          {settings.data?.ready === false && (
+            <div className="notice" style={{ marginTop: 8 }}>
+              The server needs its database update before approval can be switched on. On the server run:
+              <code style={{ display: 'block', marginTop: 4 }}>cd ~/domains/abvpconnect.org/public_html/api && php artisan migrate --force && php artisan optimize</code>
+            </div>
+          )}
         </div>
         <button type="button" role="switch" aria-checked={!!settings.data?.approval_required} aria-label="Posts need approval"
-          className={`switch ${settings.data?.approval_required ? 'on' : ''}`} disabled={!settings.data} onClick={toggleApproval}><i /></button>
+          className={`switch ${settings.data?.approval_required ? 'on' : ''}`} disabled={settings.loading} onClick={toggleApproval}><i /></button>
       </section>
       <Composer onPosted={() => { setStatus('all'); list.reload() }} />
       <div className="chips" role="tablist">
@@ -101,7 +107,7 @@ export default function Moderation() {
           </button>
         ))}
       </div>
-      <ErrorBox error={list.error ?? error} />
+      <ErrorBox error={settings.error ?? list.error ?? error} />
       {flash && <div className="notice" role="status">{flash}</div>}
       {!list.data && !list.error && <section className="card"><Skeleton rows={4} /></section>}
       {list.data?.length === 0 && (

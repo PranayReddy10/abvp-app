@@ -51,6 +51,14 @@ class Post extends Model
         return rescue(fn () => \App\Models\Setting::value('community.approval_required', '0') === '1', false, false);
     }
 
+    private static ?bool $hasPending = null;
+
+    /** Whether the posts.pending_at column exists (the 2026_11_28 migration has run). */
+    public static function canHoldForApproval(): bool
+    {
+        return self::$hasPending ??= \Illuminate\Support\Facades\Schema::hasColumn('posts', 'pending_at');
+    }
+
     public function scopeVisibleTo(Builder $q, User $viewer): Builder
     {
         $unit = $viewer->profile?->orgUnit;
