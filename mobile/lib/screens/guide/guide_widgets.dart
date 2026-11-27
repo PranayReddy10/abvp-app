@@ -64,8 +64,8 @@ const guideKinds = <String, GuideKind>{
   ),
   'gallery': GuideKind(
     Icons.photo_library_rounded,
-    Color(0xFFB57BFF),
-    Color(0xFF6D3BD6),
+    Color(0xFFF59A4C),
+    Color(0xFFC24F06),
   ),
   'support': GuideKind(
     Icons.support_agent_rounded,

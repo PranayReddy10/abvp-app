@@ -267,6 +267,7 @@ const _t = <String, Map<String, String>>{
   'kind.exhibit': {'en': 'Exhibition', 'hi': 'प्रदर्शनी', 'te': 'ప్రదర్శన'},
   'kind.gallery': {'en': 'Gallery', 'hi': 'चित्र दीर्घा', 'te': 'గ్యాలరీ'},
   'sec.albums': {'en': '{n} albums', 'hi': '{n} एल्बम', 'te': '{n} ఆల్బమ్‌లు'},
+  'sec.album': {'en': '1 album', 'hi': '1 एल्बम', 'te': '1 ఆల్బమ్'},
   'kind.facility': {'en': 'Campus', 'hi': 'परिसर', 'te': 'ప్రాంగణం'},
   'kind.tourist': {
     'en': 'Tourist places',

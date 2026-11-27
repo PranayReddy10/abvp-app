@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../api/api_client.dart';
 import '../../l10n.dart';
@@ -224,7 +225,9 @@ class _GuideSectionScreenState extends State<GuideSectionScreen> {
                                     })
                                   : tr(
                                       widget.kind == 'gallery'
-                                          ? 'sec.albums'
+                                          ? (count == 1
+                                                ? 'sec.album'
+                                                : 'sec.albums')
                                           : 'sec.places',
                                       {'n': count},
                                     ),
@@ -276,12 +279,16 @@ class _GuideSectionScreenState extends State<GuideSectionScreen> {
       for (final a in albums)
         ...((a['photo_urls'] as List?) ?? []).cast<String>(),
     ];
-    if (all.isEmpty) return [EmptyNote(tr('sec.empty'))];
+    final anyVideo = albums.any(
+      (a) => ((a['videos'] as List?) ?? []).isNotEmpty,
+    );
+    if (all.isEmpty && !anyVideo) return [EmptyNote(tr('sec.empty'))];
     var offset = 0;
     final out = <Widget>[];
     for (final a in albums) {
       final photos = ((a['photo_urls'] as List?) ?? []).cast<String>();
-      if (photos.isEmpty) continue;
+      final videos = ((a['videos'] as List?) ?? []).cast<Json>();
+      if (photos.isEmpty && videos.isEmpty) continue;
       final start = offset;
       offset += photos.length;
       out.add(
@@ -307,6 +314,19 @@ class _GuideSectionScreenState extends State<GuideSectionScreen> {
                       style: const TextStyle(color: AppColors.muted),
                     ),
                   ),
+                if (videos.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    height: 132,
+                    child: ListView.separated(
+                      padding: EdgeInsets.zero,
+                      scrollDirection: Axis.horizontal,
+                      itemCount: videos.length,
+                      separatorBuilder: (_, _) => const SizedBox(width: 10),
+                      itemBuilder: (context, i) => _VideoTile(video: videos[i]),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 10),
                 GridView.builder(
                   padding: EdgeInsets.zero,
@@ -1902,6 +1922,119 @@ class _PhotoViewerState extends State<_PhotoViewer> {
           ),
         ),
       ),
+    ),
+  );
+}
+
+/// A video in the gallery: YouTube thumbnail or a saffron tile, a play button and the title.
+/// Opens in the phone's video player or the YouTube app.
+class _VideoTile extends StatelessWidget {
+  const _VideoTile({required this.video});
+  final Json video;
+
+  @override
+  Widget build(BuildContext context) {
+    final thumb = video['thumb_url'] as String?;
+    final url = video['url'] as String?;
+    final title = video['title'] as String?;
+    return GestureDetector(
+      onTap: url == null
+          ? null
+          : () =>
+                launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication),
+      child: SizedBox(
+        width: 200,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: SizedBox(
+                height: 108,
+                width: 200,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    if (thumb != null)
+                      Image.network(
+                        thumb,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) => const _VideoBg(),
+                      )
+                    else
+                      const _VideoBg(),
+                    Container(color: Colors.black.withValues(alpha: 0.18)),
+                    Center(
+                      child: Container(
+                        width: 46,
+                        height: 46,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.92),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.play_arrow_rounded,
+                          size: 32,
+                          color: AppColors.saffronDeep,
+                        ),
+                      ),
+                    ),
+                    if (video['kind'] == 'youtube')
+                      Positioned(
+                        left: 8,
+                        top: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE62117),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Text(
+                            'YouTube',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              title?.isNotEmpty == true ? title! : 'Video',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _VideoBg extends StatelessWidget {
+  const _VideoBg();
+
+  @override
+  Widget build(BuildContext context) => const DecoratedBox(
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        colors: [Color(0xFFF59A4C), AppColors.saffronDeep],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+    ),
+    child: Align(
+      alignment: Alignment(0.8, 0.8),
+      child: Icon(Icons.movie_rounded, color: Colors.white54, size: 28),
     ),
   );
 }
