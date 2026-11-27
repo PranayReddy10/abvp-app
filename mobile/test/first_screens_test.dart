@@ -82,7 +82,7 @@ Future<void> _openEveryTab(WidgetTester tester, {required bool member}) async {
           : path.endsWith('/events/9/teams')
           ? _tree
           : path.endsWith('/events/9/delegate')
-          ? _delegate
+          ? {..._delegate, 'open': _delegateOpen}
           : path.contains('/teams/') && path.endsWith('/messages')
           ? _chat
           : path.endsWith('/me/qr')
@@ -374,6 +374,35 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('My pass asks for the delegate form before there is a pass', (
+    tester,
+  ) async {
+    await _openEveryTab(tester, member: false);
+    await tester.tap(find.text('My pass'));
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(find.text('No pass yet'), findsOneWidget);
+    await tester.tap(find.text('Fill the form'));
+    for (var i = 0; i < 15; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(find.text('Delegate registration'), findsOneWidget);
+  });
+
+  testWidgets('Delegate explains clearly when registration is closed', (
+    tester,
+  ) async {
+    _delegateOpen = false;
+    addTearDown(() => _delegateOpen = true);
+    await _openEveryTab(tester, member: false);
+    await tester.tap(find.text('Delegate'));
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(find.text('Delegate registration is not open yet'), findsOneWidget);
+  });
+
   testWidgets('Home starts with my details and quick buttons', (tester) async {
     await _openEveryTab(tester, member: true);
     expect(find.text('Fresh Person'), findsWidgets);
@@ -383,6 +412,8 @@ void main() {
     }
   });
 }
+
+var _delegateOpen = true;
 
 final _delegate = {
   'event': _conference,

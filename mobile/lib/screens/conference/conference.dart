@@ -115,7 +115,8 @@ class ConferenceHome extends StatelessWidget {
                 index: 2,
                 child: _QuickButtons(
                   session: session,
-                  conf: d.conference!,
+                  data: d,
+                  onChanged: reload,
                   onShowPass: onShowPass,
                 ),
               ),
@@ -498,16 +499,132 @@ class _WaveState extends State<_Wave> with SingleTickerProviderStateMixin {
   );
 }
 
+/// Delegate: the form the first time (when registration is open), then the guide or the pass.
+Future<void> _openDelegate(
+  BuildContext context,
+  Session session,
+  _HomeData data,
+  Future<void> Function() onChanged, {
+  VoidCallback? onShowPass,
+  bool thenPass = false,
+}) async {
+  final conf = data.conference!;
+  final id = conf['id'] as int;
+  if (!data.isDelegate) {
+    final d = data.delegate;
+    if (d == null || d['open'] != true) {
+      await _registrationClosed(context, session);
+      return;
+    }
+    final done = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            DelegateFormScreen(session: session, eventId: id, data: d),
+      ),
+    );
+    await onChanged();
+    if (done != true || !context.mounted) return;
+  }
+  if (!context.mounted) return;
+  if (!thenPass && conf['guide_enabled'] == true) {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => GuideHub(session: session, eventId: id),
+      ),
+    );
+  } else {
+    onShowPass != null ? onShowPass() : await openMyPass(context, session);
+  }
+}
+
+/// Registration is switched off for the event: say so clearly (and tell admins where to switch it on).
+Future<void> _registrationClosed(BuildContext context, Session session) {
+  final perms = ((session.me?.json['permissions'] as List?) ?? [])
+      .cast<String>();
+  final admin = perms.contains('events.manage');
+  return showDialog<void>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      icon: const Icon(
+        Icons.event_busy_rounded,
+        size: 36,
+        color: AppColors.saffron,
+      ),
+      title: const Text('Delegate registration is not open yet'),
+      content: Text(
+        admin
+            ? 'Switch it on in the admin panel: Events → the conference → Guide → "Delegate registration". The form opens here straight away after that.'
+            : 'The form opens here as soon as registration starts. You will get a notification.',
+      ),
+      actions: [
+        FilledButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('OK'),
+        ),
+      ],
+    ),
+  );
+}
+
+/// My pass: delegates see their pass; everyone else is asked to fill the delegate form first.
+Future<void> _openPass(
+  BuildContext context,
+  Session session,
+  _HomeData data,
+  Future<void> Function() onChanged, {
+  VoidCallback? onShowPass,
+}) async {
+  if (data.isDelegate) {
+    onShowPass != null ? onShowPass() : await openMyPass(context, session);
+    return;
+  }
+  final go = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      icon: const Icon(Icons.badge_rounded, size: 36, color: Color(0xFF3E8BF0)),
+      title: const Text('No pass yet'),
+      content: const Text(
+        'Your conference pass is made when you fill the delegate form. Fill it once and your pass with its QR code appears here.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: const Text('Later'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(ctx, true),
+          child: const Text('Fill the form'),
+        ),
+      ],
+    ),
+  );
+  if (go == true && context.mounted) {
+    await _openDelegate(
+      context,
+      session,
+      data,
+      onChanged,
+      onShowPass: onShowPass,
+      thenPass: true,
+    );
+  }
+}
+
 /// Round buttons: guide, my pass, gallery, helpline.
 class _QuickButtons extends StatelessWidget {
   const _QuickButtons({
     required this.session,
-    required this.conf,
+    required this.data,
+    required this.onChanged,
     this.onShowPass,
   });
   final Session session;
-  final Json conf;
+  final _HomeData data;
+  final Future<void> Function() onChanged;
   final VoidCallback? onShowPass;
+  Json get conf => data.conference!;
 
   @override
   Widget build(BuildContext context) {
@@ -575,8 +692,13 @@ class _QuickButtons extends StatelessWidget {
           Icons.qr_code_2_rounded,
           'My pass',
           const [Color(0xFFF08A3C), Color(0xFFC24F06)],
-          () =>
-              onShowPass != null ? onShowPass!() : openMyPass(context, session),
+          () => _openPass(
+            context,
+            session,
+            data,
+            onChanged,
+            onShowPass: onShowPass,
+          ),
         ),
         b(
           Icons.photo_library_rounded,
@@ -742,43 +864,8 @@ class _SideTiles extends StatelessWidget {
   final VoidCallback? onShowPass;
   final Future<void> Function() onChanged;
 
-  /// First time: the delegate form. After that: the guide (or the pass until the guide opens).
-  Future<void> _delegate(BuildContext context) async {
-    final conf = data.conference!;
-    final id = conf['id'] as int;
-    final guide = conf['guide_enabled'] == true;
-    if (!data.isDelegate) {
-      final d = data.delegate;
-      if (d == null || d['open'] != true) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Delegate registration is not open yet.'),
-          ),
-        );
-        return;
-      }
-      final done = await Navigator.push<bool>(
-        context,
-        MaterialPageRoute(
-          builder: (_) =>
-              DelegateFormScreen(session: session, eventId: id, data: d),
-        ),
-      );
-      await onChanged();
-      if (done != true || !context.mounted) return;
-    }
-    if (!context.mounted) return;
-    if (guide) {
-      await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => GuideHub(session: session, eventId: id),
-        ),
-      );
-    } else {
-      onShowPass != null ? onShowPass!() : openMyPass(context, session);
-    }
-  }
+  Future<void> _delegate(BuildContext context) =>
+      _openDelegate(context, session, data, onChanged, onShowPass: onShowPass);
 
   @override
   Widget build(BuildContext context) {
