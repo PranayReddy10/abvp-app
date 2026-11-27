@@ -57,7 +57,7 @@ class SignupAndDelegateTest extends TestCase
             ->assertJsonPath('data.is_new_user', true)
             ->assertJsonPath('data.user.name', 'Rahul Sharma')
             ->assertJsonPath('data.user.prant', 'Delhi')
-            ->assertJsonPath('data.user.is_member', false)
+            ->assertJsonPath('data.user.is_member', true) // everyone who signs up is a member
             ->assertJsonStructure(['data' => ['token']]);
 
         // Wrong code: nothing is created.

@@ -117,7 +117,146 @@ class AccountController extends Controller
             ]),
             'posts' => Post::where('user_id', $user->id)->count(),
             'can_manage' => $this->canManage($request->user(), $user),
+            'can_edit' => $this->canEdit($request->user(), $user),
+            'verified' => (bool) $user->profile?->isVerified(),
+            'verified_at' => $user->profile?->verified_at?->toIso8601String(),
+            'delegate' => $this->delegateOf($request, $user),
         ]);
+    }
+
+    /** The delegate form for the current conference, as the person filled it (or null). */
+    private function delegateOf(Request $request, User $user): ?array
+    {
+        $event = \App\Services\ConferenceTeams::current();
+        if (! $event) {
+            return null;
+        }
+        $sub = Request::create('/', 'GET');
+        $sub->setUserResolver(fn () => $user);
+        $data = rescue(fn () => app(\App\Http\Controllers\Api\V1\DelegateController::class)->show($sub, $event)->getData(true)['data'] ?? null, null, false);
+
+        return $data ? ['event' => $data['event'], 'registration' => $data['registration'], 'options' => $data['options'], 'prefill' => $data['prefill']] : null;
+    }
+
+    /** Admins of the area edit what a person entered (not super admins' own records from here). */
+    private function canEdit(User $admin, User $user): bool
+    {
+        return $this->access->can($admin, 'accounts.manage') && $this->inArea($admin, $user, 'accounts.manage');
+    }
+
+    private function guardEdit(Request $request, User $user): void
+    {
+        $this->authorizeIn('accounts.manage');
+        if (! $this->inArea($request->user(), $user, 'accounts.manage')) {
+            throw new ApiException('FORBIDDEN_SCOPE', 'This account is outside your area.', 403);
+        }
+    }
+
+    /** Change what the person entered: name, gender, date of birth, email, area, college, work, bio. */
+    public function update(Request $request, User $user, AccountIds $ids)
+    {
+        $this->guardEdit($request, $user);
+        $data = $request->validate([
+            'full_name' => ['sometimes', 'string', 'min:2', 'max:120'],
+            'gender' => ['nullable', 'in:male,female,other'],
+            'date_of_birth' => ['nullable', 'date', 'before:-10 years'],
+            'email' => ['nullable', 'email', 'max:190'],
+            'org_unit_id' => ['nullable', 'integer', 'exists:org_units,id'],
+            'institution' => ['nullable', 'string', 'max:160'],
+            'course' => ['nullable', 'string', 'max:120'],
+            'occupation' => ['nullable', 'string', 'max:80'],
+            'bio' => ['nullable', 'string', 'max:500'],
+        ]);
+        $profile = $user->profile ?? $ids->ensure($user) ?? throw new ApiException('PROFILE_REQUIRED', 'Add areas first (Setup → Areas).');
+        $before = $profile->only(['full_name', 'gender', 'org_unit_id', 'institution', 'course', 'bio']);
+        foreach (['email', 'occupation'] as $f) {
+            if (array_key_exists($f, $data)) {
+                $user->{$f} = $data[$f];
+            }
+        }
+        if (array_key_exists('full_name', $data)) {
+            $user->name = $data['full_name'];
+        }
+        if (! empty($data['org_unit_id'])) {
+            $unit = OrgUnit::find($data['org_unit_id']);
+            $user->prant = ($unit->type === 'state' ? $unit : $unit->ancestorOfType('state'))?->name ?? $user->prant;
+        }
+        $user->save();
+        $profile->forceFill(collect($data)->only(['full_name', 'gender', 'date_of_birth', 'org_unit_id', 'institution', 'course', 'bio'])->all())->save();
+        Audit::record('account.edited_by_admin', $user, $before, $profile->only(array_keys($before)));
+
+        return $this->show($request, $user->fresh());
+    }
+
+    public function photo(Request $request, User $user, AccountIds $ids)
+    {
+        $this->guardEdit($request, $user);
+        $request->validate(['photo' => ['required', 'image', 'mimes:jpeg,png,webp', 'max:4096']]);
+        $profile = $user->profile ?? $ids->ensure($user) ?? throw new ApiException('PROFILE_REQUIRED', 'Add areas first (Setup → Areas).');
+        $disk = Storage::disk(config('abvp.media_disk'));
+        if ($profile->photo_path) {
+            $disk->delete($profile->photo_path);
+        }
+        $profile->forceFill(['photo_path' => $request->file('photo')->storeAs('photos/'.$user->id, \Illuminate\Support\Str::uuid().'.'.$request->file('photo')->extension(), ['disk' => config('abvp.media_disk'), 'visibility' => 'private'])])->save();
+        Audit::record('account.photo_by_admin', $user);
+
+        return $this->show($request, $user->fresh());
+    }
+
+    public function removePhoto(Request $request, User $user)
+    {
+        $this->guardEdit($request, $user);
+        $profile = $user->profile;
+        if ($profile?->photo_path) {
+            Storage::disk(config('abvp.media_disk'))->delete($profile->photo_path);
+            $profile->forceFill(['photo_path' => null])->save();
+            Audit::record('account.photo_removed_by_admin', $user);
+        }
+
+        return $this->show($request, $user->fresh());
+    }
+
+    /** The blue tick: an admin checked who this is. */
+    public function verify(Request $request, User $user, AccountIds $ids)
+    {
+        $data = $request->validate(['verified' => ['required', 'boolean'], 'note' => ['nullable', 'string', 'max:300']]);
+        $profile = $user->profile ?? $ids->ensure($user) ?? throw new ApiException('PROFILE_REQUIRED', 'Add areas first (Setup → Areas).');
+        if (! $this->access->canIn($request->user(), 'members.verify', $profile->orgUnit) && ! $this->national($request->user(), 'members.verify')) {
+            throw new ApiException('FORBIDDEN_SCOPE', 'Only admins of this person\'s area can verify.', 403);
+        }
+        if ($profile->membership_status !== MemberProfile::STATUS_APPROVED) {
+            $profile->forceFill(['membership_status' => MemberProfile::STATUS_APPROVED, 'approved_at' => now()]);
+        }
+        $profile->forceFill($data['verified']
+            ? ['verified_at' => now(), 'verified_by' => $request->user()->id, 'verification_note' => $data['note'] ?? null]
+            : ['verified_at' => null, 'verified_by' => null, 'verification_note' => $data['note'] ?? null])->save();
+        Audit::record($data['verified'] ? 'member.verified' : 'member.unverified', $profile, null, ['note' => $data['note'] ?? null]);
+        if ($data['verified']) {
+            AppNotification::sendMany([$user->id], 'profile_verified', 'Your profile is verified', 'A blue tick now shows next to your name.');
+        }
+
+        return $this->show($request, $user->fresh());
+    }
+
+    /** Fill in or change the person's delegate form for the current conference. */
+    public function delegate(Request $request, User $user)
+    {
+        $this->guardEdit($request, $user);
+        $event = \App\Services\ConferenceTeams::current() ?? throw new ApiException('NO_CONFERENCE', 'No published conference.', 404);
+        $request->setUserResolver(fn () => $user);
+        $ctrl = app(\App\Http\Controllers\Api\V1\DelegateController::class);
+        $ctrl->byAdmin = true;
+        $ctrl->save($request, $event);
+        $admin = auth()->user();
+        $request->setUserResolver(fn () => $admin);
+        Audit::record('delegate.edited_by_admin', $user, null, ['event' => $event->id]);
+
+        return $this->show($request, $user->fresh());
+    }
+
+    private function national(User $admin, string $perm): bool
+    {
+        return $this->access->grants($admin, $perm)->map->orgUnit->filter()->contains(fn ($u) => $u->type === 'national' || $u->parent_id === null);
     }
 
     /** Block (or unblock) an account: it cannot sign in, and its open sessions end at once. */

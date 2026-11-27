@@ -43,8 +43,9 @@ class AccountsListTest extends TestCase
         Sanctum::actingAs($this->admin('super_admin', 'Bharat'));
         $rows = collect($this->getJson('/api/v1/admin/accounts')->assertOk()->json('data'));
         $this->assertTrue($rows->contains('name', 'Sita Rao'));
-        $this->assertSame('draft', $rows->firstWhere('name', 'Sita Rao')['membership']);
-        $this->getJson('/api/v1/admin/accounts?status=approved')->assertOk()->assertJsonMissing(['name' => 'Sita Rao']);
+        $this->assertSame('approved', $rows->firstWhere('name', 'Sita Rao')['membership']);
+        $this->getJson('/api/v1/admin/accounts?status=verified')->assertOk()->assertJsonMissing(['name' => 'Sita Rao']);
+        $this->getJson('/api/v1/admin/accounts?status=unverified')->assertOk()->assertJsonFragment(['name' => 'Sita Rao']);
         $this->getJson('/api/v1/admin/accounts?q=Sita')->assertOk()->assertJsonCount(1, 'data');
 
         $log = collect($this->getJson('/api/v1/admin/audit-logs')->assertOk()->json('data'))->firstWhere('action', 'auth.signed_up');

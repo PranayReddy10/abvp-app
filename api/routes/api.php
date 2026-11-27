@@ -187,6 +187,11 @@ Route::prefix('v1')->group(function () {
             Route::get('accounts', [Admin\MemberController::class, 'accounts']);
             Route::post('accounts', [Admin\AccountController::class, 'store']);
             Route::get('accounts/{user}', [Admin\AccountController::class, 'show']);
+            Route::patch('accounts/{user}', [Admin\AccountController::class, 'update']);
+            Route::post('accounts/{user}/photo', [Admin\AccountController::class, 'photo']);
+            Route::delete('accounts/{user}/photo', [Admin\AccountController::class, 'removePhoto']);
+            Route::post('accounts/{user}/verify', [Admin\AccountController::class, 'verify']);
+            Route::put('accounts/{user}/delegate', [Admin\AccountController::class, 'delegate']);
             Route::post('accounts/{user}/block', [Admin\AccountController::class, 'block']);
             Route::delete('accounts/{user}', [Admin\AccountController::class, 'destroy']);
             Route::get('members/{profile}', [Admin\MemberController::class, 'show']);

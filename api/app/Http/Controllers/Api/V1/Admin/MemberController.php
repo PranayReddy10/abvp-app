@@ -69,7 +69,7 @@ class MemberController extends Controller
     {
         $data = $request->validate([
             'q' => ['nullable', 'string', 'max:60'],
-            'status' => ['nullable', 'in:all,not_applied,submitted,approved,delegate'],
+            'status' => ['nullable', 'in:all,not_applied,submitted,approved,delegate,verified,unverified'],
         ]);
         $this->authorizeIn('members.view');
         $grants = $this->access->grants($request->user(), 'members.view')->map->orgUnit->filter();
@@ -100,6 +100,8 @@ class MemberController extends Controller
             'not_applied' => $query->where(fn ($w) => $w->whereDoesntHave('profile')->orWhereHas('profile', fn ($p) => $p->where('membership_status', 'draft'))),
             'submitted' => $query->whereHas('profile', fn ($p) => $p->whereIn('membership_status', ['submitted', 'more_info_required'])),
             'approved' => $query->whereHas('profile', fn ($p) => $p->where('membership_status', 'approved')),
+            'verified' => $query->whereHas('profile', fn ($p) => $p->whereNotNull('verified_at')),
+            'unverified' => $query->where(fn ($w) => $w->whereDoesntHave('profile')->orWhereHas('profile', fn ($p) => $p->whereNull('verified_at'))),
             'delegate' => $query->whereHas('registrations', fn ($r) => $r->where('kind', 'delegate')->where('status', '!=', 'cancelled')),
             default => null,
         };
@@ -120,6 +122,8 @@ class MemberController extends Controller
                 'occupation' => $u->occupation,
                 'membership' => $u->profile?->membership_status ?? 'draft',
                 'member_id' => $u->profile?->member_id,
+                'verified' => (bool) $u->profile?->isVerified(),
+                'photo_url' => $u->profile?->photo_path ? \Illuminate\Support\Facades\URL::temporarySignedRoute('media.photo', now()->addHour(), ['profile' => $u->profile->id]) : null,
                 'profile_id' => $u->profile?->membership_status === MemberProfile::STATUS_APPROVED ? $u->profile->id : null,
                 'delegate' => $delegates->has($u->id),
                 'signed_up_at' => $u->created_at?->toIso8601String(),
@@ -157,9 +161,6 @@ class MemberController extends Controller
         $data = $request->validate(['verified' => ['required', 'boolean'], 'note' => ['nullable', 'string', 'max:300']]);
         if (! $this->access->canIn($request->user(), 'members.verify', $profile->orgUnit)) {
             throw new \App\Support\ApiException('FORBIDDEN_SCOPE', 'Only state or district admins of this member\'s area can verify.', 403);
-        }
-        if ($profile->membership_status !== MemberProfile::STATUS_APPROVED) {
-            throw new \App\Support\ApiException('NOT_A_MEMBER', 'Only approved members can be verified.');
         }
 
         $profile->forceFill($data['verified']

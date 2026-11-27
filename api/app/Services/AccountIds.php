@@ -25,16 +25,31 @@ class AccountIds
         return DB::transaction(function () use ($user) {
             $profile = MemberProfile::where('user_id', $user->id)->lockForUpdate()->first() ?? new MemberProfile;
             if ($profile->exists && $profile->member_id) {
-                return $profile;
+                return $this->member($profile);
             }
             $profile->user_id = $user->id;
             $profile->full_name = $profile->full_name ?: (string) ($user->name ?? '');
             $profile->member_id = $this->ids->next($this->unitFor($user, $profile));
             $profile->save();
+            $this->member($profile);
             $user->setRelation('profile', $profile);
 
             return $profile;
         });
+    }
+
+    /**
+     * Everyone who signs up is a member (unless Settings → "Membership needs approval" is on).
+     * Admins then mark trusted people as verified – the blue tick.
+     */
+    private function member(MemberProfile $profile): MemberProfile
+    {
+        if (! SignInSettings::membershipNeedsApproval()
+            && in_array($profile->membership_status ?? MemberProfile::STATUS_DRAFT, [MemberProfile::STATUS_DRAFT, MemberProfile::STATUS_SUBMITTED, MemberProfile::STATUS_MORE_INFO], true)) {
+            $profile->forceFill(['membership_status' => MemberProfile::STATUS_APPROVED, 'approved_at' => $profile->approved_at ?? now()])->save();
+        }
+
+        return $profile;
     }
 
     private function unitFor(User $user, MemberProfile $profile): OrgUnit

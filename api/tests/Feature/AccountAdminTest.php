@@ -9,6 +9,8 @@ use App\Models\RoleAssignment;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -120,5 +122,41 @@ class AccountAdminTest extends TestCase
         Sanctum::actingAs($this->admin('district_admin', 'Hyderabad'));
         $this->postJson('/api/v1/admin/accounts', ['name' => 'Out Side', 'mobile' => '9876544411'])->assertStatus(403);
         $this->postJson('/api/v1/admin/accounts', ['name' => 'In Side', 'mobile' => '9876544411', 'org_unit_id' => OrgUnit::where('name', 'Hyderabad')->value('id')])->assertCreated();
+    }
+
+    public function test_admin_edits_details_photo_verifies_and_fills_the_delegate_form(): void
+    {
+        Storage::fake('local');
+        $u = $this->person();
+        $this->assertSame('approved', $u->profile->membership_status); // everyone who signs up is a member
+        $this->assertFalse($u->profile->isVerified());
+
+        $organiser = User::firstOrCreate(['mobile' => '+919999900001']);
+        $e = \App\Models\Event::create(['title' => '72nd National Conference', 'category' => 'conference', 'venue' => 'Bhagyanagar',
+            'starts_at' => now()->addDays(10), 'ends_at' => now()->addDays(13), 'org_unit_id' => OrgUnit::where('name', 'Telangana')->value('id'),
+            'organiser_id' => $organiser->id, 'guide_enabled' => true, 'delegate_registration_open' => false]);
+        $e->forceFill(['status' => 'published', 'published_at' => now()])->save();
+
+        Sanctum::actingAs($this->admin('super_admin', 'Bharat'));
+        $hyd = OrgUnit::where('name', 'Hyderabad')->value('id');
+        $this->patchJson("/api/v1/admin/accounts/{$u->id}", ['full_name' => 'Sita Ramesh Rao', 'gender' => 'female', 'org_unit_id' => $hyd, 'institution' => 'Osmania University'])
+            ->assertOk()->assertJsonPath('data.name', 'Sita Ramesh Rao')->assertJsonPath('data.prant', 'Telangana');
+        $this->assertSame($hyd, $u->profile->fresh()->org_unit_id);
+
+        $this->post("/api/v1/admin/accounts/{$u->id}/photo", ['photo' => UploadedFile::fake()->image('me.jpg', 400, 400)], ['Accept' => 'application/json'])->assertOk();
+        $this->assertNotNull($u->profile->fresh()->photo_path);
+        $this->deleteJson("/api/v1/admin/accounts/{$u->id}/photo")->assertOk();
+        $this->assertNull($u->profile->fresh()->photo_path);
+
+        $this->postJson("/api/v1/admin/accounts/{$u->id}/verify", ['verified' => true])->assertOk()->assertJsonPath('data.verified', true);
+        $this->getJson('/api/v1/admin/accounts?status=verified')->assertJsonFragment(['name' => 'Sita Ramesh Rao']);
+
+        // Registration is closed, but an admin can still fill the person's delegate form.
+        $this->putJson("/api/v1/admin/accounts/{$u->id}/delegate", [
+            'first_name' => 'Sita', 'surname' => 'Rao', 'mobile' => '9876555111', 'gender' => 'female', 'prant' => 'Telangana',
+            'responsibility' => 'Karyakarta', 'mode' => 'train', 'reference' => '12723',
+            'arriving_at' => now()->addDays(9)->toIso8601String(), 'arrival_point' => 'Secunderabad',
+            'departing_at' => now()->addDays(13)->toIso8601String(),
+        ])->assertOk()->assertJsonPath('data.delegate.registration.details.responsibility', 'Karyakarta');
     }
 }

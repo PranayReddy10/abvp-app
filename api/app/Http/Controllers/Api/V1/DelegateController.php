@@ -25,6 +25,9 @@ class DelegateController extends Controller
 
     public function __construct(private EventService $events) {}
 
+    /** Set by the admin panel: an admin may fill or change a delegate form even when registration is closed. */
+    public bool $byAdmin = false;
+
     public function show(Request $request, Event $event)
     {
         $this->open($event, forView: true);
@@ -188,7 +191,7 @@ class DelegateController extends Controller
     private function open(Event $event, bool $forView = false): void
     {
         abort_unless($event->status === 'published', 404);
-        if (! $forView && (! $event->delegate_registration_open || $event->ends_at->isPast())) {
+        if (! $forView && ! $this->byAdmin && (! $event->delegate_registration_open || $event->ends_at->isPast())) {
             throw new ApiException('REGISTRATION_CLOSED', 'Delegate registration for this event is not open.', 403);
         }
     }
