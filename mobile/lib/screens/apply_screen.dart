@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import '../l10n.dart';
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
@@ -156,15 +158,17 @@ class _ApplyScreenState extends State<ApplyScreen> {
       return;
     }
     if (_dob == null) {
-      return setState(() => _error = 'Choose your date of birth.');
+      return setState(() => _error = t('Choose your date of birth.'));
     }
     final areaId =
         (_unit ?? _district)?.id ?? widget.session.me?.profile?.orgUnitId;
     if (areaId == null) {
-      return setState(() => _error = 'Choose your state and district.');
+      return setState(() => _error = t('Choose your state and district.'));
     }
     if (!_confirm) {
-      return setState(() => _error = 'Confirm that your details are correct.');
+      return setState(
+        () => _error = t('Confirm that your details are correct.'),
+      );
     }
 
     setState(() {
@@ -199,11 +203,11 @@ class _ApplyScreenState extends State<ApplyScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          tooltip: 'Close',
+          tooltip: t('Close'),
           icon: const Icon(Icons.close),
           onPressed: () => widget.session.editApplication(false),
         ),
-        title: const Text('Your details'),
+        title: Text(t('Your details')),
       ),
       body: Form(
         key: _form,
@@ -211,14 +215,16 @@ class _ApplyScreenState extends State<ApplyScreen> {
           padding: const EdgeInsets.fromLTRB(20, 4, 20, 32),
           children: [
             Text(
-              'Your application goes to the office for the area you choose. Use your real details.',
+              t(
+                'Your application goes to the office for the area you choose. Use your real details.',
+              ),
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 20),
-            _section('About you'),
+            _section(t('About you')),
             TextFormField(
               controller: _name,
-              decoration: const InputDecoration(labelText: 'Full name'),
+              decoration: InputDecoration(labelText: t('Full name')),
               textCapitalization: TextCapitalization.words,
               validator: (v) =>
                   (v ?? '').trim().length < 2 ? 'Enter your full name' : null,
@@ -228,7 +234,7 @@ class _ApplyScreenState extends State<ApplyScreen> {
               icon: const Icon(Icons.cake_outlined),
               label: Text(
                 _dob == null
-                    ? 'Date of birth'
+                    ? t('Date of birth')
                     : DateFormat('d MMM yyyy').format(_dob!),
               ),
               onPressed: () async {
@@ -244,10 +250,10 @@ class _ApplyScreenState extends State<ApplyScreen> {
             ),
             const SizedBox(height: 12),
             SegmentedButton<String>(
-              segments: const [
-                ButtonSegment(value: 'female', label: Text('Female')),
-                ButtonSegment(value: 'male', label: Text('Male')),
-                ButtonSegment(value: 'other', label: Text('Other')),
+              segments: [
+                ButtonSegment(value: 'female', label: Text(t('Female'))),
+                ButtonSegment(value: 'male', label: Text(t('Male'))),
+                ButtonSegment(value: 'other', label: Text(t('Other'))),
               ],
               selected: {?_gender},
               emptySelectionAllowed: true,
@@ -255,31 +261,33 @@ class _ApplyScreenState extends State<ApplyScreen> {
                   setState(() => _gender = s.isEmpty ? null : s.first),
             ),
             const SizedBox(height: 24),
-            _section('Your area'),
+            _section(t('Your area')),
             if (existingArea != null && _state == null)
               Padding(
                 padding: const EdgeInsets.only(bottom: 10),
                 child: Text(
-                  'Currently: $existingArea. Choose again only to change it.',
+                  t('Currently: {x}. Choose again only to change it.', {
+                    'x': existingArea,
+                  }),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ),
-            _dropdown('State', _states, _state, _pickState),
+            _dropdown(t('State'), _states, _state, _pickState),
             const SizedBox(height: 12),
-            _dropdown('District', _districts, _district, _pickDistrict),
+            _dropdown(t('District'), _districts, _district, _pickDistrict),
             const SizedBox(height: 12),
             _dropdown(
-              'Unit or college',
+              t('Unit or college'),
               _units,
               _unit,
               (u) async => setState(() => _unit = u),
             ),
             const SizedBox(height: 24),
-            _section('Study'),
+            _section(t('Study')),
             TextFormField(
               controller: _institution,
-              decoration: const InputDecoration(
-                labelText: 'College or institution',
+              decoration: InputDecoration(
+                labelText: t('College or institution'),
               ),
             ),
             const SizedBox(height: 12),
@@ -289,7 +297,7 @@ class _ApplyScreenState extends State<ApplyScreen> {
                   flex: 3,
                   child: TextFormField(
                     controller: _course,
-                    decoration: const InputDecoration(labelText: 'Course'),
+                    decoration: InputDecoration(labelText: t('Course')),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -297,13 +305,13 @@ class _ApplyScreenState extends State<ApplyScreen> {
                   flex: 2,
                   child: TextFormField(
                     controller: _year,
-                    decoration: const InputDecoration(labelText: 'Year'),
+                    decoration: InputDecoration(labelText: t('Year')),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 24),
-            _section('Vibhags you want to join'),
+            _section(t('Vibhags you want to join')),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -323,7 +331,7 @@ class _ApplyScreenState extends State<ApplyScreen> {
                   .toList(),
             ),
             const SizedBox(height: 24),
-            _section('Photo'),
+            _section(t('Photo')),
             Row(
               children: [
                 ClipRRect(
@@ -351,13 +359,13 @@ class _ApplyScreenState extends State<ApplyScreen> {
                       OutlinedButton.icon(
                         onPressed: () => _pickPhoto(ImageSource.camera),
                         icon: const Icon(Icons.photo_camera_outlined),
-                        label: const Text('Take photo'),
+                        label: Text(t('Take photo')),
                       ),
                       const SizedBox(height: 8),
                       OutlinedButton.icon(
                         onPressed: () => _pickPhoto(ImageSource.gallery),
                         icon: const Icon(Icons.image_outlined),
-                        label: const Text('Choose from gallery'),
+                        label: Text(t('Choose from gallery')),
                       ),
                     ],
                   ),
@@ -366,7 +374,9 @@ class _ApplyScreenState extends State<ApplyScreen> {
             ),
             const SizedBox(height: 6),
             Text(
-              'Optional. A clear, front-facing photo helps your office recognise you. Only you and reviewing officers see it before approval.',
+              t(
+                'Optional. A clear, front-facing photo helps your office recognise you. Only you and reviewing officers see it before approval.',
+              ),
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 20),
@@ -375,9 +385,7 @@ class _ApplyScreenState extends State<ApplyScreen> {
               onChanged: (v) => setState(() => _confirm = v ?? false),
               contentPadding: EdgeInsets.zero,
               controlAffinity: ListTileControlAffinity.leading,
-              title: const Text(
-                'My details are correct and the photo is of me.',
-              ),
+              title: Text(t('My details are correct and the photo is of me.')),
             ),
             if (_error != null) ...[
               const SizedBox(height: 8),
@@ -386,12 +394,12 @@ class _ApplyScreenState extends State<ApplyScreen> {
             const SizedBox(height: 16),
             FilledButton(
               onPressed: _busy ? null : _submit,
-              child: Text(_busy ? 'Submitting…' : 'Submit application'),
+              child: Text(_busy ? 'Submitting…' : t('Submit application')),
             ),
             const SizedBox(height: 8),
             OutlinedButton(
               onPressed: _busy ? null : _saveOnly,
-              child: const Text('Only save my details'),
+              child: Text(t('Only save my details')),
             ),
           ],
         ),

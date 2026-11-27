@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import '../l10n.dart';
+
 import 'package:url_launcher/url_launcher.dart';
 
 import '../api/api_client.dart';
@@ -17,53 +20,53 @@ StatusPill eventPill(Map<String, dynamic> e) {
   final reg = e['my_registration'] as Map<String, dynamic>?;
   final status = reg?['status'];
   if (e['status'] == 'cancelled') {
-    return const StatusPill(
-      'Cancelled',
+    return StatusPill(
+      t('Cancelled'),
       color: AppColors.bad,
       background: AppColors.badSoft,
     );
   }
   if (reg?['checked_in_at'] != null) {
-    return const StatusPill(
-      'Checked in',
+    return StatusPill(
+      t('Checked in'),
       color: AppColors.ok,
       background: AppColors.okSoft,
     );
   }
   if (status == 'registered') {
     return StatusPill(
-      reg?['kind'] == 'guest' ? 'Invited' : 'Registered',
+      reg?['kind'] == 'guest' ? 'Invited' : t('Registered'),
       color: const Color(0xFF2E55C9),
       background: const Color(0xFFE6ECFB),
     );
   }
   if (status == 'waitlisted') {
-    return const StatusPill(
-      'On waitlist',
+    return StatusPill(
+      t('On waitlist'),
       color: AppColors.warn,
       background: AppColors.warnSoft,
     );
   }
   if (status == 'pending') {
-    return const StatusPill(
-      'Waiting for approval',
+    return StatusPill(
+      t('Waiting for approval'),
       color: AppColors.warn,
       background: AppColors.warnSoft,
     );
   }
-  if (e['eligible'] != true) return const StatusPill('Not eligible');
+  if (e['eligible'] != true) return StatusPill(t('Not eligible'));
   if (e['registration_open'] != true) {
-    return const StatusPill('Registration closed');
+    return StatusPill(t('Registration closed'));
   }
   if (e['seats_left'] == 0) {
-    return const StatusPill(
-      'Full · join waitlist',
+    return StatusPill(
+      t('Full · join waitlist'),
       color: AppColors.bad,
       background: AppColors.badSoft,
     );
   }
   return StatusPill(
-    'Open · closes ${day(e['registration_closes_at'] as String)}',
+    t('Open · closes {x}', {'x': day(e['registration_closes_at'] as String)}),
     color: AppColors.saffronInk,
     background: AppColors.saffronSoft,
   );
@@ -80,9 +83,11 @@ class EventsList extends StatelessWidget {
       load: () async => await session.api.get('/events?when=$when') as List,
       builder: (context, rows, reload) => rows.isEmpty
           ? ListView(
-              children: const [
+              children: [
                 EmptyNote(
-                  'No events right now. Published events from your unit, district, state and national office appear here.',
+                  t(
+                    'No events right now. Published events from your unit, district, state and national office appear here.',
+                  ),
                 ),
               ],
             )
@@ -331,13 +336,13 @@ class _EventScreenState extends State<EventScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Event'),
+        title: Text(t('Event')),
         leading: Padding(
           padding: const EdgeInsets.only(left: 12),
           child: Center(
             child: CircleIconButton(
               icon: Icons.arrow_back,
-              tooltip: 'Back',
+              tooltip: t('Back'),
               onTap: () => Navigator.pop(context),
             ),
           ),
@@ -411,7 +416,7 @@ class _EventScreenState extends State<EventScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Organised by ${e['organised_by']}',
+                          t('Organised by {x}', {'x': e['organised_by']}),
                           style: const TextStyle(color: Colors.white70),
                         ),
                       ],
@@ -437,7 +442,7 @@ class _EventScreenState extends State<EventScreen> {
                 child: _row(
                   Icons.place_outlined,
                   e['venue'] as String,
-                  e['venue_map_url'] != null ? 'Open map' : null,
+                  e['venue_map_url'] != null ? t('Open map') : null,
                 ),
               ),
               _row(
@@ -486,7 +491,12 @@ class _EventScreenState extends State<EventScreen> {
                 Padding(
                   padding: const EdgeInsets.only(top: 10),
                   child: Text(
-                    'You are number ${e['waitlist_position']} on the waitlist. You will be told if a seat opens.',
+                    t(
+                      t(
+                        'You are number {n} on the waitlist. You will be told if a seat opens.',
+                      ),
+                      {'n': e['waitlist_position']},
+                    ),
                     style: text.bodyMedium,
                   ),
                 ),
@@ -494,18 +504,20 @@ class _EventScreenState extends State<EventScreen> {
                 Padding(
                   padding: const EdgeInsets.only(top: 10),
                   child: Text(
-                    'The organisers will confirm your registration. You will be notified.',
+                    t(
+                      'The organisers will confirm your registration. You will be notified.',
+                    ),
                     style: text.bodyMedium,
                   ),
                 ),
               if (status == 'rejected' && reg?['note'] != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 10),
-                  child: ErrorBanner('Not approved: ${reg!['note']}'),
+                  child: ErrorBanner('${t('Not approved')}: ${reg!['note']}'),
                 ),
               if ((e['announcements'] as List?)?.isNotEmpty == true) ...[
                 const SizedBox(height: 18),
-                Text('Announcements', style: text.titleMedium),
+                Text(t('Announcements'), style: text.titleMedium),
                 const SizedBox(height: 6),
                 for (final a
                     in (e['announcements'] as List)
@@ -548,7 +560,7 @@ class _EventScreenState extends State<EventScreen> {
               ],
               if (e['instructions'] != null) ...[
                 const SizedBox(height: 18),
-                Text('Before you come', style: text.titleMedium),
+                Text(t('Before you come'), style: text.titleMedium),
                 const SizedBox(height: 6),
                 Card(
                   child: Padding(
@@ -562,7 +574,7 @@ class _EventScreenState extends State<EventScreen> {
                   contentPadding: EdgeInsets.zero,
                   leading: Initials(contact['name'] as String),
                   title: Text(contact['name'] as String),
-                  subtitle: const Text('Contact for this event'),
+                  subtitle: Text(t('Contact for this event')),
                   trailing: contact['phone'] == null
                       ? null
                       : IconButton.filledTonal(
@@ -586,7 +598,7 @@ class _EventScreenState extends State<EventScreen> {
                     widget.onShowPass!();
                   },
                   icon: const Icon(Icons.qr_code_2),
-                  label: const Text('Show my pass'),
+                  label: Text(t('Show my pass')),
                 ),
               if (!cancelled &&
                   !active &&
@@ -598,10 +610,10 @@ class _EventScreenState extends State<EventScreen> {
                       : () => _act('/events/${widget.id}/register'),
                   child: Text(
                     seatsLeft == 0
-                        ? 'Join the waitlist'
+                        ? t('Join the waitlist')
                         : (e['requires_approval'] == true
-                              ? 'Request a place'
-                              : 'Register for this event'),
+                              ? t('Request a place')
+                              : t('Register for this event')),
                   ),
                 ),
               if (!cancelled &&
@@ -623,7 +635,7 @@ class _EventScreenState extends State<EventScreen> {
                     ),
                   ),
                   icon: const Icon(Icons.support_agent),
-                  label: const Text('Ask for help'),
+                  label: Text(t('Ask for help')),
                 ),
               ],
               if (!cancelled &&
@@ -638,8 +650,8 @@ class _EventScreenState extends State<EventScreen> {
                   style: TextButton.styleFrom(foregroundColor: AppColors.bad),
                   child: Text(
                     status == 'waitlisted'
-                        ? 'Leave the waitlist'
-                        : "I can't come – cancel my registration",
+                        ? t('Leave the waitlist')
+                        : t("I can't come – cancel my registration"),
                   ),
                 ),
               ],
@@ -679,7 +691,7 @@ class AllEventsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Events')),
+    appBar: AppBar(title: Text(t('Events'))),
     body: EventsList(session: session),
   );
 }

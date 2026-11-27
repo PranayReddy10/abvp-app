@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import '../l10n.dart';
+
 import 'package:url_launcher/url_launcher.dart';
 
 import '../api/api_client.dart';
@@ -12,36 +15,36 @@ import '../widgets/motion.dart';
 /// [forLead] words it for someone looking at another person's duty.
 StatusPill dutyPill(String status, {bool forLead = false}) => switch (status) {
   'assigned' => StatusPill(
-    forLead ? 'Not accepted yet' : 'Please accept',
+    forLead ? 'Not accepted yet' : t('Please accept'),
     color: AppColors.warn,
     background: AppColors.warnSoft,
   ),
-  'accepted' => const StatusPill(
-    'Accepted',
+  'accepted' => StatusPill(
+    t('Accepted'),
     color: Color(0xFF2E55C9),
     background: Color(0xFFE6ECFB),
   ),
-  'in_progress' => const StatusPill(
-    'On duty',
+  'in_progress' => StatusPill(
+    t('On duty'),
     color: Color(0xFF2E55C9),
     background: Color(0xFFE6ECFB),
   ),
-  'done' => const StatusPill(
-    'Done',
+  'done' => StatusPill(
+    t('Done'),
     color: AppColors.ok,
     background: AppColors.okSoft,
   ),
   'blocked' => StatusPill(
-    forLead ? 'Problem' : 'Problem reported',
+    forLead ? t('Problem') : t('Problem reported'),
     color: AppColors.bad,
     background: AppColors.badSoft,
   ),
   'declined' => StatusPill(
-    forLead ? "Can't do it" : "You can't do this",
+    forLead ? t("Can't do it") : t("You can't do this"),
     color: AppColors.bad,
     background: AppColors.badSoft,
   ),
-  _ => const StatusPill('Cancelled'),
+  _ => StatusPill(t('Cancelled')),
 };
 
 class DutiesList extends StatelessWidget {
@@ -54,9 +57,11 @@ class DutiesList extends StatelessWidget {
       load: () async => await session.api.get('/me/duties') as List,
       builder: (context, rows, reload) => rows.isEmpty
           ? ListView(
-              children: const [
+              children: [
                 EmptyNote(
-                  'No duties. When an event team gives you a duty, it appears here with where to go and whom to report to.',
+                  t(
+                    'No duties. When an event team gives you a duty, it appears here with where to go and whom to report to.',
+                  ),
                 ),
               ],
             )
@@ -142,7 +147,7 @@ class DutyCard extends StatelessWidget {
               ),
               if (d['report_to'] != null)
                 Text(
-                  'Report to ${d['report_to']['name']}',
+                  t('Report to {x}', {'x': d['report_to']['name']}),
                   style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
             ],
@@ -200,11 +205,11 @@ class _DutyScreenState extends State<DutyScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Back'),
+            child: Text(t('Back')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, c.text.trim()),
-            child: const Text('Send'),
+            child: Text(t('Send')),
           ),
         ],
       ),
@@ -218,7 +223,7 @@ class _DutyScreenState extends State<DutyScreen> {
     final report = d['report_to'] as Map<String, dynamic>?;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Duty')),
+      appBar: AppBar(title: Text(t('Duty'))),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
         children: [
@@ -250,7 +255,7 @@ class _DutyScreenState extends State<DutyScreen> {
                 ),
                 subtitle: Text(
                   [
-                    'Report to',
+                    t('Report to'),
                     report['phone'],
                   ].whereType<String>().join(' · '),
                 ),
@@ -265,7 +270,7 @@ class _DutyScreenState extends State<DutyScreen> {
             ),
           if ((d['instructions'] as String?)?.isNotEmpty == true) ...[
             const SizedBox(height: 16),
-            Text('Instructions', style: text.titleMedium),
+            Text(t('Instructions'), style: text.titleMedium),
             const SizedBox(height: 6),
             Card(
               child: Padding(
@@ -276,7 +281,7 @@ class _DutyScreenState extends State<DutyScreen> {
           ],
           if ((d['team_contacts'] as List?)?.isNotEmpty == true) ...[
             const SizedBox(height: 18),
-            Text('Your team', style: text.titleMedium),
+            Text(t('Your team'), style: text.titleMedium),
             const SizedBox(height: 6),
             Card(
               child: Column(
@@ -302,7 +307,7 @@ class _DutyScreenState extends State<DutyScreen> {
                       trailing: c['phone'] == null
                           ? null
                           : IconButton.filledTonal(
-                              tooltip: 'Call',
+                              tooltip: t('Call'),
                               icon: const Icon(Icons.call),
                               onPressed: () =>
                                   launchUrl(Uri.parse('tel:${c['phone']}')),
@@ -314,7 +319,7 @@ class _DutyScreenState extends State<DutyScreen> {
           ],
           if (d['status_note'] != null) ...[
             const SizedBox(height: 12),
-            Text('Note: ${d['status_note']}', style: text.bodySmall),
+            Text('${t('Note')}: ${d['status_note']}', style: text.bodySmall),
           ],
           const SizedBox(height: 20),
           if (_error != null) ...[
@@ -328,7 +333,7 @@ class _DutyScreenState extends State<DutyScreen> {
                   : () => _post('/duties/${d['id']}/respond', {
                       'response': 'accept',
                     }),
-              child: const Text("I'll do this"),
+              child: Text(t("I'll do this")),
             ),
             const SizedBox(height: 8),
             OutlinedButton(
@@ -336,8 +341,10 @@ class _DutyScreenState extends State<DutyScreen> {
                   ? null
                   : () async {
                       final reason = await _ask(
-                        "Can't do this duty?",
-                        'Tell the coordinator why, so they can find someone else',
+                        t("Can't do this duty?"),
+                        t(
+                          'Tell the coordinator why, so they can find someone else',
+                        ),
                       );
                       if (reason != null && reason.isNotEmpty) {
                         await _post('/duties/${d['id']}/respond', {
@@ -346,7 +353,7 @@ class _DutyScreenState extends State<DutyScreen> {
                         });
                       }
                     },
-              child: const Text("I can't do this"),
+              child: Text(t("I can't do this")),
             ),
           ],
           if (status == 'accepted' || status == 'blocked')
@@ -359,8 +366,8 @@ class _DutyScreenState extends State<DutyScreen> {
               icon: const Icon(Icons.play_arrow),
               label: Text(
                 status == 'blocked'
-                    ? 'Problem solved, back on duty'
-                    : "I've reached, starting now",
+                    ? t('Problem solved, back on duty')
+                    : t("I've reached, starting now"),
               ),
             ),
           if (status == 'in_progress')
@@ -371,7 +378,7 @@ class _DutyScreenState extends State<DutyScreen> {
                       'status': 'done',
                     }),
               icon: const Icon(Icons.check),
-              label: const Text('Mark as done'),
+              label: Text(t('Mark as done')),
             ),
           if (status == 'accepted' || status == 'in_progress') ...[
             const SizedBox(height: 8),
@@ -380,8 +387,8 @@ class _DutyScreenState extends State<DutyScreen> {
                   ? null
                   : () async {
                       final note = await _ask(
-                        'Report a problem',
-                        'What is wrong? Your team lead is told right away.',
+                        t('Report a problem'),
+                        t('What is wrong? Your team lead is told right away.'),
                       );
                       if (note != null && note.isNotEmpty) {
                         await _post('/duties/${d['id']}/progress', {
@@ -391,7 +398,7 @@ class _DutyScreenState extends State<DutyScreen> {
                       }
                     },
               icon: const Icon(Icons.report_problem_outlined),
-              label: const Text('Report a problem'),
+              label: Text(t('Report a problem')),
             ),
           ],
         ],
@@ -447,7 +454,7 @@ class _MyTeamsScreenState extends State<MyTeamsScreen> {
     try {
       await widget.session.api.post('/duties/${d['id']}/progress', {
         'status': s,
-        if (s == 'blocked') 'note': 'Reported by team lead',
+        if (s == 'blocked') 'note': t('Reported by team lead'),
       });
       setState(() => _key = UniqueKey());
     } on ApiException catch (e) {
@@ -461,34 +468,37 @@ class _MyTeamsScreenState extends State<MyTeamsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('My teams')),
+      appBar: AppBar(title: Text(t('My teams'))),
       body: Loader<List<dynamic>>(
         key: _key,
         load: () async => await widget.session.api.get('/me/teams') as List,
         builder: (context, teams, _) => teams.isEmpty
             ? ListView(
-                children: const [
-                  EmptyNote('You are not leading a team at any current event.'),
+                children: [
+                  EmptyNote(
+                    t('You are not leading a team at any current event.'),
+                  ),
                 ],
               )
             : ListView(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                 children: [
-                  for (final t in teams.cast<Map<String, dynamic>>()) ...[
+                  for (final team in teams.cast<Map<String, dynamic>>()) ...[
                     const SizedBox(height: 8),
                     Text(
-                      '${t['name']} · ${t['event']['title']}',
+                      '${team['name']} · ${team['event']['title']}',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     Text(
                       _summary(
-                        (t['duties'] as List).cast<Map<String, dynamic>>(),
+                        (team['duties'] as List).cast<Map<String, dynamic>>(),
                       ),
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                     const SizedBox(height: 6),
                     for (final d
-                        in (t['duties'] as List).cast<Map<String, dynamic>>())
+                        in (team['duties'] as List)
+                            .cast<Map<String, dynamic>>())
                       Card(
                         child: ListTile(
                           leading: d['assignee_phone'] == null
@@ -515,17 +525,20 @@ class _MyTeamsScreenState extends State<MyTeamsScreen> {
                             ].whereType<String>().join(' · '),
                           ),
                           trailing: PopupMenuButton<String>(
-                            tooltip: 'Change status',
+                            tooltip: t('Change status'),
                             onSelected: (s) => _set(context, d, s),
-                            itemBuilder: (_) => const [
+                            itemBuilder: (_) => [
                               PopupMenuItem(
                                 value: 'in_progress',
-                                child: Text('On duty'),
+                                child: Text(t('On duty')),
                               ),
-                              PopupMenuItem(value: 'done', child: Text('Done')),
+                              PopupMenuItem(
+                                value: 'done',
+                                child: Text(t('Done')),
+                              ),
                               PopupMenuItem(
                                 value: 'blocked',
-                                child: Text('Problem'),
+                                child: Text(t('Problem')),
                               ),
                             ],
                             child: dutyPill(

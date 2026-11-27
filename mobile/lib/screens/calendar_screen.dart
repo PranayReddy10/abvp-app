@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n.dart';
 import '../state/session.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
@@ -36,7 +37,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Calendar')),
+      appBar: AppBar(title: Text(t('Calendar'))),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
           await Navigator.push(
@@ -48,7 +49,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
           setState(() => _key = UniqueKey());
         },
         icon: const Icon(Icons.videocam_outlined),
-        label: const Text('Schedule a call'),
+        label: Text(t('Schedule a call')),
       ),
       body: Column(
         children: [
@@ -56,11 +57,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
             child: SegmentedButton<String>(
               showSelectedIcon: false,
-              segments: const [
-                ButtonSegment(value: 'upcoming', label: Text('Meetings')),
-                ButtonSegment(value: 'events', label: Text('Events')),
-                ButtonSegment(value: 'duties', label: Text('Duties')),
-                ButtonSegment(value: 'past', label: Text('Past')),
+              segments: [
+                ButtonSegment(value: 'upcoming', label: Text(t('Meetings'))),
+                ButtonSegment(value: 'events', label: Text(t('Events'))),
+                ButtonSegment(value: 'duties', label: Text(t('Duties'))),
+                ButtonSegment(value: 'past', label: Text(t('Past'))),
               ],
               selected: {_when},
               onSelectionChanged: (s) => setState(() {
@@ -93,7 +94,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     children: [
                       if (open.isNotEmpty) ...[
                         Text(
-                          'To do',
+                          t('To do'),
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                         const SizedBox(height: 6),
@@ -116,8 +117,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                               subtitle: Text(
                                 [
                                   if (a['due_on'] != null)
-                                    '${a['overdue'] == true ? 'Overdue' : 'Due'} ${day(a['due_on'] as String)}',
-                                  'From ${a['meeting']['title']}',
+                                    '${a['overdue'] == true ? 'Overdue' : t('Due')} ${day(a['due_on'] as String)}',
+                                  t('From {x}', {'x': a['meeting']['title']}),
                                 ].join(' · '),
                                 style: TextStyle(
                                   color: a['overdue'] == true
@@ -134,8 +135,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       if (meetings.isEmpty)
                         EmptyNote(
                           _when == 'upcoming'
-                              ? 'No meetings coming up. Invitations from your Vibhag and unit will appear here.'
-                              : 'No past meetings yet.',
+                              ? t(
+                                  'No meetings coming up. Invitations from your Vibhag and unit will appear here.',
+                                )
+                              : t('No past meetings yet.'),
                         ),
                       ...staggered(
                         meetings
@@ -227,7 +230,7 @@ class MeetingTile extends StatelessWidget {
                       [
                         dayTime(m['starts_at'] as String),
                         if (m['mode'] != 'in_person')
-                          providerNames[m['provider']] ?? 'Online'
+                          providerNames[m['provider']] ?? t('Online')
                         else
                           m['venue'] ?? '',
                       ].join(' · '),
@@ -237,22 +240,22 @@ class MeetingTile extends StatelessWidget {
                 ),
               ),
               if (cancelled)
-                const StatusPill(
-                  'Cancelled',
+                StatusPill(
+                  t('Cancelled'),
                   color: AppColors.bad,
                   background: AppColors.badSoft,
                 )
               else if (m['is_organiser'] == true)
-                const StatusPill('You called it')
+                StatusPill(t('You called it'))
               else if (rsvp == 'going')
-                const StatusPill(
-                  'Going',
+                StatusPill(
+                  t('Going'),
                   color: AppColors.ok,
                   background: AppColors.okSoft,
                 )
               else if (rsvp == 'pending')
-                const StatusPill(
-                  'Reply',
+                StatusPill(
+                  t('Reply'),
                   color: AppColors.warn,
                   background: AppColors.warnSoft,
                 ),

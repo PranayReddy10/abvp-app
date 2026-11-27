@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import '../l10n.dart';
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -86,12 +88,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         children: [
           ListTile(
             leading: const Icon(Icons.photo_camera_outlined),
-            title: const Text('Take a photo'),
+            title: Text(t('Take a photo')),
             onTap: () => _pick(ImageSource.camera),
           ),
           ListTile(
             leading: const Icon(Icons.photo_library_outlined),
-            title: const Text('Choose from gallery'),
+            title: Text(t('Choose from gallery')),
             onTap: () => _pick(ImageSource.gallery),
           ),
         ],
@@ -141,7 +143,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Profile saved')));
+            .showSnackBar(SnackBar(content: Text(t('Profile saved'))));
       }
     } on ApiException catch (e) {
       setState(() => _error = e.message);
@@ -155,7 +157,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final photoUrl = _profile?['photo_url'] as String?;
     final approved = _profile?['membership_status'] == 'approved';
     return Scaffold(
-      appBar: AppBar(title: const Text('Edit profile')),
+      appBar: AppBar(title: Text(t('Edit profile'))),
       body: Form(
         key: _form,
         child: ListView(
@@ -226,8 +228,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 onPressed: _photoSheet,
                 child: Text(
                   _photo != null || photoUrl != null
-                      ? 'Change photo'
-                      : 'Add photo',
+                      ? t('Change photo')
+                      : t('Add photo'),
                 ),
               ),
             ),
@@ -235,28 +237,28 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ErrorBanner(_error!),
               const SizedBox(height: 12),
             ],
-            const _Group('About you'),
+            _Group(t('About you')),
             TextFormField(
               controller: _name,
               textCapitalization: TextCapitalization.words,
-              decoration: const InputDecoration(
-                labelText: 'Full name',
+              decoration: InputDecoration(
+                labelText: t('Full name'),
                 prefixIcon: Icon(Icons.person_outline),
               ),
               validator: (v) =>
-                  (v ?? '').trim().length < 2 ? 'Enter your name' : null,
+                  (v ?? '').trim().length < 2 ? t('Enter your name') : null,
             ),
             const SizedBox(height: 14),
             DropdownButtonFormField<String>(
               initialValue: _gender,
-              decoration: const InputDecoration(
-                labelText: 'Gender',
+              decoration: InputDecoration(
+                labelText: t('Gender'),
                 prefixIcon: Icon(Icons.wc_rounded),
               ),
-              items: const [
-                DropdownMenuItem(value: 'male', child: Text('Male')),
-                DropdownMenuItem(value: 'female', child: Text('Female')),
-                DropdownMenuItem(value: 'other', child: Text('Other')),
+              items: [
+                DropdownMenuItem(value: 'male', child: Text(t('Male'))),
+                DropdownMenuItem(value: 'female', child: Text(t('Female'))),
+                DropdownMenuItem(value: 'other', child: Text(t('Other'))),
               ],
               onChanged: (v) => setState(() => _gender = v),
             ),
@@ -265,13 +267,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               onTap: _pickDob,
               borderRadius: BorderRadius.circular(16),
               child: InputDecorator(
-                decoration: const InputDecoration(
-                  labelText: 'Date of birth',
+                decoration: InputDecoration(
+                  labelText: t('Date of birth'),
                   prefixIcon: Icon(Icons.cake_outlined),
                 ),
                 child: Text(
                   _dob == null
-                      ? 'Choose'
+                      ? t('Choose')
                       : '${_dob!.day.toString().padLeft(2, '0')}/${_dob!.month.toString().padLeft(2, '0')}/${_dob!.year}',
                 ),
               ),
@@ -280,17 +282,26 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             TextFormField(
               controller: _email,
               keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(
-                labelText: 'Email (optional)',
+              decoration: InputDecoration(
+                labelText: t('Email (optional)'),
                 prefixIcon: Icon(Icons.alternate_email_rounded),
               ),
             ),
-            const _Group('Area'),
+            _Group(t('Area')),
             if (approved && _unit != null)
               Padding(
                 padding: const EdgeInsets.only(bottom: 10),
                 child: Text(
-                  'You are an approved member of ${(_unit!['label'] as String?)?.isNotEmpty == true ? _unit!['label'] : _unit!['name']}. To move to another area, your district office changes it.',
+                  t(
+                    t(
+                      'You are an approved member of {x}. To move to another area, your district office changes it.',
+                    ),
+                    {
+                      'x': (_unit!['label'] as String?)?.isNotEmpty == true
+                          ? _unit!['label']
+                          : _unit!['name'],
+                    },
+                  ),
                   style: const TextStyle(color: AppColors.muted),
                 ),
               ),
@@ -304,28 +315,28 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 _stateName = state;
               },
             ),
-            const _Group('Study and work'),
+            _Group(t('Study and work')),
             TextFormField(
               controller: _institution,
               textCapitalization: TextCapitalization.words,
-              decoration: const InputDecoration(
-                labelText: 'College / institution',
+              decoration: InputDecoration(
+                labelText: t('College / institution'),
                 prefixIcon: Icon(Icons.school_outlined),
               ),
             ),
             const SizedBox(height: 14),
             TextFormField(
               controller: _course,
-              decoration: const InputDecoration(
-                labelText: 'Course',
+              decoration: InputDecoration(
+                labelText: t('Course'),
                 prefixIcon: Icon(Icons.menu_book_outlined),
               ),
             ),
             const SizedBox(height: 14),
             TextFormField(
               controller: _occupation,
-              decoration: const InputDecoration(
-                labelText: 'Occupation',
+              decoration: InputDecoration(
+                labelText: t('Occupation'),
                 prefixIcon: Icon(Icons.work_outline),
               ),
             ),
@@ -334,15 +345,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               controller: _bio,
               maxLines: 3,
               maxLength: 500,
-              decoration: const InputDecoration(
-                labelText: 'Short bio',
+              decoration: InputDecoration(
+                labelText: t('Short bio'),
                 alignLabelWithHint: true,
               ),
             ),
             const SizedBox(height: 10),
             FilledButton(
               onPressed: _busy ? null : _save,
-              child: Text(_busy ? 'Saving…' : 'Save profile'),
+              child: Text(_busy ? t('Saving…') : t('Save profile')),
             ),
           ],
         ),

@@ -26,8 +26,8 @@ Future<void> openHelp(BuildContext context, Session session) async {
   if (!context.mounted) return;
   if (conf == null) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Help opens once the conference is published.'),
+      SnackBar(
+        content: Text(t('Help opens once the conference is published.')),
       ),
     );
     return;
@@ -104,7 +104,7 @@ class _SupportScreenState extends State<SupportScreen> {
                       top: top + 10,
                       child: CircleIconButton(
                         icon: Icons.arrow_back,
-                        tooltip: 'Back',
+                        tooltip: t('Back'),
                         onTap: () => Navigator.pop(context),
                       ),
                     ),
@@ -160,9 +160,10 @@ class _SupportScreenState extends State<SupportScreen> {
                     if (widget.helpline != null) ...[
                       _Action(
                         icon: Icons.emergency_rounded,
-                        title: 'Emergency – call now',
-                        subtitle:
-                            'Helpline ${widget.helpline} · or dial 112 / 108',
+                        title: t('Emergency – call now'),
+                        subtitle: t('Helpline {n} · or dial 112 / 108', {
+                          'n': widget.helpline!,
+                        }),
                         gradient: const LinearGradient(
                           colors: [Color(0xFFFF6B4A), Color(0xFFC81E1E)],
                           begin: Alignment.topLeft,
@@ -503,7 +504,7 @@ class _ChatScreenState extends State<ChatScreen> {
           child: Center(
             child: CircleIconButton(
               icon: Icons.arrow_back,
-              tooltip: 'Back',
+              tooltip: t('Back'),
               onTap: () => Navigator.pop(context),
             ),
           ),
@@ -840,7 +841,7 @@ class _TicketScreenState extends State<TicketScreen> {
           child: Center(
             child: CircleIconButton(
               icon: Icons.arrow_back,
-              tooltip: 'Back',
+              tooltip: t('Back'),
               onTap: () => Navigator.pop(context),
             ),
           ),

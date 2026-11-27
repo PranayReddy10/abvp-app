@@ -149,7 +149,7 @@ class Panel extends StatelessWidget {
   }
 }
 
-/// Section title with an optional "See all" on the right.
+/// Section title with an optional t("See all") on the right.
 class SectionTitle extends StatelessWidget {
   const SectionTitle(this.title, {super.key, this.action, this.onAction});
   final String title;

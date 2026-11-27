@@ -21,17 +21,17 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  static const _fields = {
-    'mobile': 'Mobile number',
-    'email': 'Email',
-    'institution': 'College and course',
-    'date_of_birth': 'Date of birth',
+  static Map<String, String> get _fields => {
+    'mobile': t('Mobile number'),
+    'email': t('Email'),
+    'institution': t('College and course'),
+    'date_of_birth': t('Date of birth'),
   };
-  static const _levels = {
-    'nobody': 'Only me',
-    'office_bearers': 'Office bearers',
-    'my_unit': 'My unit',
-    'members': 'All members',
+  static Map<String, String> get _levels => {
+    'nobody': t('Only me'),
+    'office_bearers': t('Office bearers'),
+    'my_unit': t('My unit'),
+    'members': t('All members'),
   };
 
   String? _message;
@@ -66,34 +66,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('About you', style: Theme.of(ctx).textTheme.titleMedium),
+            Text(t('About you'), style: Theme.of(ctx).textTheme.titleMedium),
             const SizedBox(height: 12),
             TextField(
               controller: bio,
               maxLines: 3,
               maxLength: 500,
-              decoration: const InputDecoration(labelText: 'Short bio'),
+              decoration: InputDecoration(labelText: t('Short bio')),
             ),
             const SizedBox(height: 8),
             TextField(
               controller: skills,
-              decoration: const InputDecoration(
-                labelText: 'Skills',
-                hintText: 'Public speaking, Poster design',
+              decoration: InputDecoration(
+                labelText: t('Skills'),
+                hintText: t('Public speaking, Poster design'),
               ),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: langs,
-              decoration: const InputDecoration(
-                labelText: 'Languages',
-                hintText: 'Telugu, Hindi, English',
+              decoration: InputDecoration(
+                labelText: t('Languages'),
+                hintText: t('Telugu, Hindi, English'),
               ),
             ),
             const SizedBox(height: 16),
             FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Save'),
+              child: Text(t('Save')),
             ),
           ],
         ),
@@ -171,7 +171,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
             icon: const Icon(Icons.edit_rounded),
-            label: const Text('Edit profile – photo, name, area and more'),
+            label: Text(t('Edit profile – photo, name, area and more')),
           ),
 
           const SizedBox(height: 20),
@@ -185,23 +185,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Fact('Mobile', me.mobile),
-                  Fact('Area', p.orgUnitLabel ?? ''),
+                  Fact(t('Mobile'), me.mobile),
+                  Fact(t('Area'), p.orgUnitLabel ?? ''),
                   Fact(
-                    'College',
+                    t('College'),
                     [p.institution, p.course, p.studyYear]
                         .whereType<String>()
                         .where((s) => s.isNotEmpty)
                         .join(' · '),
                   ),
-                  Fact('Vibhags', p.vibhags.map((v) => v.name).join(', ')),
-                  Fact('Bio', p.bio ?? ''),
-                  Fact('Skills', p.skills.join(', ')),
-                  Fact('Languages', p.languages.join(', ')),
+                  Fact(t('Vibhags'), p.vibhags.map((v) => v.name).join(', ')),
+                  Fact(t('Bio'), p.bio ?? ''),
+                  Fact(t('Skills'), p.skills.join(', ')),
+                  Fact(t('Languages'), p.languages.join(', ')),
                   const SizedBox(height: 6),
                   OutlinedButton(
                     onPressed: _editAbout,
-                    child: const Text('Edit bio, skills and languages'),
+                    child: Text(t('Edit bio, skills and languages')),
                   ),
                 ],
               ),
@@ -222,12 +222,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             Icons.groups_2_outlined,
                             color: AppColors.saffron,
                           ),
-                          title: const Text(
-                            'My teams',
+                          title: Text(
+                            t('My teams'),
                             style: TextStyle(fontWeight: FontWeight.w700),
                           ),
                           subtitle: Text(
-                            'You lead ${(snap.data as List).length} team${(snap.data as List).length == 1 ? '' : 's'}',
+                            t('You lead {n} team(s)', {
+                              'n': (snap.data as List).length,
+                            }),
                           ),
                           trailing: const Icon(Icons.chevron_right),
                           onTap: () => Navigator.push(
@@ -245,8 +247,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Icons.support_agent,
                     color: AppColors.saffron,
                   ),
-                  title: const Text(
-                    'My help requests',
+                  title: Text(
+                    t('My help requests'),
                     style: TextStyle(fontWeight: FontWeight.w700),
                   ),
                   trailing: const Icon(Icons.chevron_right),
@@ -256,10 +258,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
           const SizedBox(height: 24),
-          Text('Who can see my details', style: text.titleMedium),
+          Text(t('Who can see my details'), style: text.titleMedium),
           const SizedBox(height: 4),
           Text(
-            'Your name, photo, area and Vibhags are visible to members. Choose who sees the rest.',
+            t(
+              'Your name, photo, area and Vibhags are visible to members. Choose who sees the rest.',
+            ),
             style: text.bodySmall,
           ),
           const SizedBox(height: 10),
@@ -315,7 +319,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 tr('nav.events'),
                 style: const TextStyle(fontWeight: FontWeight.w700),
               ),
-              subtitle: const Text('Other programmes and your registrations'),
+              subtitle: Text(t('Other programmes and your registrations')),
               trailing: const Icon(Icons.chevron_right_rounded),
               onTap: () => Navigator.push(
                 context,
@@ -350,7 +354,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           OutlinedButton(
             onPressed: widget.session.signOut,
             style: OutlinedButton.styleFrom(foregroundColor: AppColors.bad),
-            child: const Text('Sign out'),
+            child: Text(t('Sign out')),
           ),
         ]),
       ),

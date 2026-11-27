@@ -1,4 +1,7 @@
 import 'package:flutter/foundation.dart';
+
+import '../l10n.dart';
+
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../api/api_client.dart';
@@ -156,7 +159,9 @@ class Session extends ChangeNotifier {
     if (!g.supportsAuthenticate()) {
       throw ApiException(
         'GOOGLE_UNSUPPORTED',
-        'Google sign-in works in the Android and iPhone app. Use your mobile number here.',
+        t(
+          'Google sign-in works in the Android and iPhone app. Use your mobile number here.',
+        ),
       );
     }
     final account = await g.authenticate();
@@ -164,7 +169,9 @@ class Session extends ChangeNotifier {
     if (idToken == null) {
       throw ApiException(
         'GOOGLE_NO_TOKEN',
-        'Google did not return a sign-in token. Try again or use your mobile number.',
+        t(
+          'Google did not return a sign-in token. Try again or use your mobile number.',
+        ),
       );
     }
     final data = await api.post('/auth/google', {

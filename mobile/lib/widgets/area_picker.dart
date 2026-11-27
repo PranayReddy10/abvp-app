@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n.dart';
 import '../api/api_client.dart';
 
 typedef _Unit = Map<String, dynamic>;
@@ -108,7 +109,7 @@ class _AreaPickerState extends State<AreaPicker> {
           initialValue: _state,
           isExpanded: true,
           decoration: InputDecoration(
-            labelText: _loading ? 'Loading states…' : 'State / Prant',
+            labelText: _loading ? t('Loading states…') : t('State / Prant'),
             prefixIcon: const Icon(Icons.map_outlined),
           ),
           items: [
@@ -118,7 +119,7 @@ class _AreaPickerState extends State<AreaPicker> {
                 child: Text(s['name'] as String),
               ),
           ],
-          validator: (v) => v == null ? 'Choose your state' : null,
+          validator: (v) => v == null ? t('Choose your state') : null,
           onChanged: (v) => _pickState(v),
         ),
         if (_districts.isNotEmpty) ...[
@@ -127,8 +128,8 @@ class _AreaPickerState extends State<AreaPicker> {
             key: ValueKey('district-$_state'),
             initialValue: _district,
             isExpanded: true,
-            decoration: const InputDecoration(
-              labelText: 'District',
+            decoration: InputDecoration(
+              labelText: t('District'),
               prefixIcon: Icon(Icons.location_city_outlined),
             ),
             items: [
@@ -139,7 +140,7 @@ class _AreaPickerState extends State<AreaPicker> {
                 ),
             ],
             validator: (v) => v == null && widget.requireDistrict
-                ? 'Choose your district'
+                ? t('Choose your district')
                 : null,
             onChanged: (v) {
               setState(() => _district = v);

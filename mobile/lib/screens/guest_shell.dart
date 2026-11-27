@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n.dart';
 import '../state/session.dart';
 import '../theme.dart';
 import 'events_screen.dart';
@@ -33,9 +34,9 @@ class _GuestShellState extends State<GuestShell> {
     if (!mounted) return;
     if (rows.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            'The conference guide opens once your invitation is confirmed.',
+            t('The conference guide opens once your invitation is confirmed.'),
           ),
         ),
       );
@@ -59,16 +60,16 @@ class _GuestShellState extends State<GuestShell> {
       appBar: _tab == 0
           ? AppBar(
               title: Text(
-                'Namaste${name.isEmpty ? '' : ', ${name.split(' ').take(2).join(' ')}'}',
+                '${t('Namaste')}${name.isEmpty ? '' : ', ${name.split(' ').take(2).join(' ')}'}',
               ),
               actions: [
                 IconButton(
-                  tooltip: 'Conference guide',
+                  tooltip: t('Conference guide'),
                   icon: const Icon(Icons.explore_outlined),
                   onPressed: _openGuide,
                 ),
                 IconButton(
-                  tooltip: 'Notifications',
+                  tooltip: t('Notifications'),
                   icon: const Icon(Icons.notifications_none),
                   onPressed: () => Navigator.push(
                     context,
@@ -80,7 +81,7 @@ class _GuestShellState extends State<GuestShell> {
                 ),
                 TextButton(
                   onPressed: widget.session.signOut,
-                  child: const Text('Sign out'),
+                  child: Text(t('Sign out')),
                 ),
               ],
             )
@@ -99,8 +100,10 @@ class _GuestShellState extends State<GuestShell> {
                     color: AppColors.saffronSoft,
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: const Text(
-                    'You have been invited as a guest. Your invitations are below.',
+                  child: Text(
+                    t(
+                      'You have been invited as a guest. Your invitations are below.',
+                    ),
                     style: TextStyle(
                       color: AppColors.saffronInk,
                       fontWeight: FontWeight.w600,

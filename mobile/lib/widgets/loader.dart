@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n.dart';
 import '../api/api_client.dart';
 import '../theme.dart';
 import 'common.dart';
@@ -55,9 +56,9 @@ class _LoaderState<T> extends State<Loader<T>> {
       return ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          ErrorBanner(_error ?? 'Could not load.'),
+          ErrorBanner(_error ?? t('Could not load.')),
           const SizedBox(height: 12),
-          OutlinedButton(onPressed: _reload, child: const Text('Try again')),
+          OutlinedButton(onPressed: _reload, child: Text(t('Try again'))),
         ],
       );
     }

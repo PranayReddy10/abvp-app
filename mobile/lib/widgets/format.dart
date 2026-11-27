@@ -1,5 +1,7 @@
 import 'package:intl/intl.dart';
 
+import '../l10n.dart';
+
 final _day = DateFormat('EEE d MMM');
 final _time = DateFormat('h:mm a');
 
@@ -57,4 +59,4 @@ const _months = [
   'Nov',
   'Dec',
 ];
-String monthShort(DateTime d) => _months[d.month - 1];
+String monthShort(DateTime d) => t(_months[d.month - 1]);

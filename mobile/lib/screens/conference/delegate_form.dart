@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import '../../l10n.dart';
+
 import 'package:intl/intl.dart';
 
 import '../../api/api_client.dart';
@@ -90,13 +93,13 @@ class _DelegateFormScreenState extends State<DelegateFormScreen> {
       initialDate: base,
       firstDate: start.subtract(const Duration(days: 10)),
       lastDate: start.add(const Duration(days: 15)),
-      helpText: arrival ? 'Arrival date' : 'Departure date',
+      helpText: arrival ? t('Arrival date') : t('Departure date'),
     );
     if (day == null || !mounted) return;
     final time = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.fromDateTime(base),
-      helpText: arrival ? 'Arrival time' : 'Departure time',
+      helpText: arrival ? t('Arrival time') : t('Departure time'),
     );
     if (time == null) return;
     final v = DateTime(day.year, day.month, day.day, time.hour, time.minute);
@@ -107,13 +110,13 @@ class _DelegateFormScreenState extends State<DelegateFormScreen> {
     final ok = _form.currentState!.validate();
     if (_arrive == null || _depart == null) {
       setState(
-        () => _error = 'Choose your arrival and departure date and time.',
+        () => _error = t('Choose your arrival and departure date and time.'),
       );
       return;
     }
     if (!ok) return;
     if (!_depart!.isAfter(_arrive!)) {
-      setState(() => _error = 'Departure must be after arrival.');
+      setState(() => _error = t('Departure must be after arrival.'));
       return;
     }
     setState(() {
@@ -145,7 +148,8 @@ class _DelegateFormScreenState extends State<DelegateFormScreen> {
     }
   }
 
-  String? _required(String? v) => (v ?? '').trim().isEmpty ? 'Required' : null;
+  String? _required(String? v) =>
+      (v ?? '').trim().isEmpty ? t('Required') : null;
 
   @override
   Widget build(BuildContext context) {
@@ -163,7 +167,7 @@ class _DelegateFormScreenState extends State<DelegateFormScreen> {
           ),
         ),
         child: Text(
-          v == null ? 'Choose date and time' : fmt.format(v),
+          v == null ? t('Choose date and time') : fmt.format(v),
           style: TextStyle(color: v == null ? AppColors.muted : AppColors.ink),
         ),
       ),
@@ -171,7 +175,9 @@ class _DelegateFormScreenState extends State<DelegateFormScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(editing ? 'My delegate form' : 'Delegate registration'),
+        title: Text(
+          editing ? t('My delegate form') : t('Delegate registration'),
+        ),
       ),
       body: Form(
         key: _form,
@@ -202,15 +208,17 @@ class _DelegateFormScreenState extends State<DelegateFormScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            ev['title'] as String? ?? 'Conference',
+                            ev['title'] as String? ?? t('Conference'),
                             style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w800,
                               fontSize: 16,
                             ),
                           ),
-                          const Text(
-                            'We filled in what we know. Check everything; all fields except email are needed.',
+                          Text(
+                            t(
+                              'We filled in what we know. Check everything; all fields except email are needed.',
+                            ),
                             style: TextStyle(
                               color: Colors.white70,
                               fontSize: 12.5,
@@ -227,14 +235,14 @@ class _DelegateFormScreenState extends State<DelegateFormScreen> {
               const SizedBox(height: 14),
               ErrorBanner(_error!),
             ],
-            const _Step(1, 'Who you are'),
+            _Step(1, t('Who you are')),
             Row(
               children: [
                 Expanded(
                   child: TextFormField(
                     controller: _first,
                     textCapitalization: TextCapitalization.words,
-                    decoration: const InputDecoration(labelText: 'First name'),
+                    decoration: InputDecoration(labelText: t('First name')),
                     validator: _required,
                   ),
                 ),
@@ -243,7 +251,7 @@ class _DelegateFormScreenState extends State<DelegateFormScreen> {
                   child: TextFormField(
                     controller: _surname,
                     textCapitalization: TextCapitalization.words,
-                    decoration: const InputDecoration(labelText: 'Surname'),
+                    decoration: InputDecoration(labelText: t('Surname')),
                     validator: _required,
                   ),
                 ),
@@ -253,68 +261,68 @@ class _DelegateFormScreenState extends State<DelegateFormScreen> {
             TextFormField(
               controller: _mobile,
               keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(
-                labelText: 'Mobile number',
+              decoration: InputDecoration(
+                labelText: t('Mobile number'),
                 prefixText: '+91  ',
                 prefixIcon: Icon(Icons.phone_iphone),
               ),
               validator: (v) =>
                   RegExp(r'^[0-9]{10}$').hasMatch((v ?? '').replaceAll(' ', ''))
                   ? null
-                  : 'Enter a 10-digit mobile number',
+                  : t('Enter a 10-digit mobile number'),
             ),
             const SizedBox(height: 14),
             TextFormField(
               controller: _email,
               keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(
-                labelText: 'Email (optional)',
+              decoration: InputDecoration(
+                labelText: t('Email (optional)'),
                 prefixIcon: Icon(Icons.alternate_email_rounded),
               ),
             ),
             const SizedBox(height: 14),
             DropdownButtonFormField<String>(
               initialValue: _gender,
-              decoration: const InputDecoration(
-                labelText: 'Gender',
+              decoration: InputDecoration(
+                labelText: t('Gender'),
                 prefixIcon: Icon(Icons.wc_rounded),
               ),
-              items: const [
-                DropdownMenuItem(value: 'male', child: Text('Male')),
-                DropdownMenuItem(value: 'female', child: Text('Female')),
-                DropdownMenuItem(value: 'other', child: Text('Other')),
+              items: [
+                DropdownMenuItem(value: 'male', child: Text(t('Male'))),
+                DropdownMenuItem(value: 'female', child: Text(t('Female'))),
+                DropdownMenuItem(value: 'other', child: Text(t('Other'))),
               ],
-              validator: (v) => v == null ? 'Required' : null,
+              validator: (v) => v == null ? t('Required') : null,
               onChanged: (v) => setState(() => _gender = v),
             ),
             const SizedBox(height: 14),
             DropdownButtonFormField<String>(
               initialValue: _prant,
               isExpanded: true,
-              decoration: const InputDecoration(
-                labelText: 'Prant',
+              decoration: InputDecoration(
+                labelText: t('Prant'),
                 prefixIcon: Icon(Icons.map_outlined),
               ),
               items: [
                 for (final p in _prants)
                   DropdownMenuItem(value: p, child: Text(p)),
               ],
-              validator: (v) => v == null ? 'Required' : null,
+              validator: (v) => v == null ? t('Required') : null,
               onChanged: (v) => setState(() => _prant = v),
             ),
             const SizedBox(height: 14),
             TextFormField(
               controller: _responsibility,
               textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(
-                labelText: 'Responsibility',
-                hintText: 'e.g. Zilla Sanghatan Mantri',
+              decoration: InputDecoration(
+                labelText: t('Responsibility'),
+                hintText: t('e.g. Zilla Sanghatan Mantri'),
                 prefixIcon: Icon(Icons.workspace_premium_outlined),
               ),
               validator: _required,
             ),
-            const _Step(2, 'Arrival and departure'),
-            when('Arrival date and time', _arrive, true),
+            _Step(2, t('Arrival and departure')),
+            when(t('Arrival date and time'), _arrive, true),
             const SizedBox(height: 14),
             Autocomplete<String>(
               initialValue: TextEditingValue(text: _arrivalPlace.text),
@@ -326,17 +334,17 @@ class _DelegateFormScreenState extends State<DelegateFormScreen> {
                 controller: c,
                 focusNode: focus,
                 onChanged: (v) => _arrivalPlace.text = v,
-                decoration: const InputDecoration(
-                  labelText: 'Arrival place',
-                  hintText: 'Station, airport or bus stand',
+                decoration: InputDecoration(
+                  labelText: t('Arrival place'),
+                  hintText: t('Station, airport or bus stand'),
                   prefixIcon: Icon(Icons.place_outlined),
                 ),
                 validator: _required,
               ),
             ),
             const SizedBox(height: 14),
-            when('Departure date and time', _depart, false),
-            const _Step(3, 'How you are coming'),
+            when(t('Departure date and time'), _depart, false),
+            _Step(3, t('How you are coming')),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -352,10 +360,10 @@ class _DelegateFormScreenState extends State<DelegateFormScreen> {
               ],
             ),
             if (_mode == null)
-              const Padding(
+              Padding(
                 padding: EdgeInsets.only(top: 6),
                 child: Text(
-                  'Choose one',
+                  t('Choose one'),
                   style: TextStyle(color: AppColors.muted, fontSize: 12),
                 ),
               ),
@@ -364,11 +372,11 @@ class _DelegateFormScreenState extends State<DelegateFormScreen> {
               controller: _reference,
               decoration: InputDecoration(
                 labelText: switch (_mode) {
-                  'train' => 'Train name and number',
-                  'flight' => 'Flight number',
-                  'bus' => 'Bus / operator',
-                  'own' => 'Vehicle number',
-                  _ => 'Travel details',
+                  'train' => t('Train name and number'),
+                  'flight' => t('Flight number'),
+                  'bus' => t('Bus / operator'),
+                  'own' => t('Vehicle number'),
+                  _ => t('Travel details'),
                 },
                 prefixIcon: const Icon(Icons.confirmation_number_outlined),
               ),
@@ -379,10 +387,10 @@ class _DelegateFormScreenState extends State<DelegateFormScreen> {
               onPressed: _busy || _mode == null ? null : _submit,
               child: Text(
                 _busy
-                    ? 'Saving…'
+                    ? t('Saving…')
                     : editing
-                    ? 'Save changes'
-                    : 'Register as delegate',
+                    ? t('Save changes')
+                    : t('Register as delegate'),
               ),
             ),
           ],

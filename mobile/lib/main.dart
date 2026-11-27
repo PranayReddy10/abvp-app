@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/intl.dart';
 
 import 'api/api_client.dart';
 import 'l10n.dart';
@@ -24,6 +26,12 @@ Future<void> main() async {
   } catch (_) {
     // First run or storage unavailable: the phone's language is used.
   }
+  // Dates (weekdays, months) follow the chosen language.
+  try {
+    await initializeDateFormatting();
+  } catch (_) {}
+  Intl.defaultLocale = appLang.value;
+  appLang.addListener(() => Intl.defaultLocale = appLang.value);
   final session = Session(api)..start();
   runApp(AbvpConnectApp(session: session));
 }

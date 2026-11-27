@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n.dart';
 import '../theme.dart';
 
 /// Fades and lifts its child into place, with a short delay per [index] so lists
@@ -187,9 +188,11 @@ class VerifiedBadge extends StatelessWidget {
       Icons.verified,
       size: size,
       color: AppColors.verified,
-      semanticLabel: 'Verified',
+      semanticLabel: t('Verified'),
     );
-    if (!label) return Tooltip(message: 'Verified by the office', child: icon);
+    if (!label) {
+      return Tooltip(message: t('Verified by the office'), child: icon);
+    }
     return Container(
       padding: const EdgeInsets.fromLTRB(6, 2, 10, 2),
       decoration: BoxDecoration(
@@ -201,8 +204,8 @@ class VerifiedBadge extends StatelessWidget {
         children: [
           icon,
           const SizedBox(width: 4),
-          const Text(
-            'Verified',
+          Text(
+            t('Verified'),
             style: TextStyle(
               color: AppColors.verified,
               fontWeight: FontWeight.w700,

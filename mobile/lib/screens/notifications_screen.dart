@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n.dart';
 import '../state/session.dart';
 import '../theme.dart';
 import '../widgets/format.dart';
@@ -33,7 +34,7 @@ class NotificationsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Notifications')),
+      appBar: AppBar(title: Text(t('Notifications'))),
       body: Loader<List<dynamic>>(
         load: () async {
           final rows = await session.api.get('/notifications') as List;
@@ -42,9 +43,11 @@ class NotificationsScreen extends StatelessWidget {
         },
         builder: (context, rows, _) => rows.isEmpty
             ? ListView(
-                children: const [
+                children: [
                   EmptyNote(
-                    'Nothing yet. Meeting invitations, call requests and reminders show up here.',
+                    t(
+                      'Nothing yet. Meeting invitations, call requests and reminders show up here.',
+                    ),
                   ),
                 ],
               )

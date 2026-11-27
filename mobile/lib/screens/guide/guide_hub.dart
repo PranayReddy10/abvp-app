@@ -55,7 +55,7 @@ class GuideHub extends StatefulWidget {
   final Session session;
   final int eventId;
 
-  /// Opened by itself when the app starts near the event: shows "Continue to app".
+  /// Opened by itself when the app starts near the event: shows t("Continue to app").
   final bool landing;
 
   @override
@@ -102,7 +102,7 @@ class _GuideHubState extends State<GuideHub> {
       );
       if (saved == true && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Your delegate form is saved.')),
+          SnackBar(content: Text(t('Your delegate form is saved.'))),
         );
       }
     } on ApiException catch (e) {
@@ -333,7 +333,7 @@ class _GuideHubState extends State<GuideHub> {
                           if (!widget.landing)
                             CircleIconButton(
                               icon: Icons.arrow_back,
-                              tooltip: 'Back',
+                              tooltip: t('Back'),
                               onTap: () => Navigator.pop(context),
                             )
                           else
@@ -524,7 +524,7 @@ class _GuideHubState extends State<GuideHub> {
                       child: OutlinedButton.icon(
                         onPressed: _editDelegateForm,
                         icon: const Icon(Icons.edit_note_rounded),
-                        label: const Text('Edit my delegate form'),
+                        label: Text(t('Edit my delegate form')),
                       ),
                     ),
                   ),
@@ -996,7 +996,7 @@ class GuideBanner extends StatelessWidget {
 }
 
 /// Near the event (two days before until it ends), open the guide first, once per app launch.
-/// Delegates tap Skip or "Continue to app" to reach the usual app.
+/// Delegates tap Skip or t("Continue to app") to reach the usual app.
 Future<void> maybeOpenGuide(BuildContext context, Session session) async {
   if (session.guideLandingShown) return;
   session.guideLandingShown = true;

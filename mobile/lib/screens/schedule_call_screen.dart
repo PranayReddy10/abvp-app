@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import '../l10n.dart';
+
 import 'package:intl/intl.dart';
 
 import '../api/api_client.dart';
@@ -65,7 +68,7 @@ class _ScheduleCallScreenState extends State<ScheduleCallScreen> {
       final data = await widget.session.api.post('/meetings', {
         'kind': 'call',
         'title': _title.text.trim().isEmpty
-            ? 'Call with ${widget.name}'
+            ? t('Call with {name}', {'name': widget.name})
             : _title.text.trim(),
         'mode': 'online',
         'link': _link.text.trim(),
@@ -94,15 +97,17 @@ class _ScheduleCallScreenState extends State<ScheduleCallScreen> {
   Widget build(BuildContext context) {
     final provider = providerFor(_link.text);
     return Scaffold(
-      appBar: AppBar(title: Text('Call ${widget.name.split(' ').first}')),
+      appBar: AppBar(
+        title: Text(t('Call {x}', {'x': widget.name.split(' ').first})),
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 4, 20, 32),
         children: [
           TextField(
             controller: _title,
             decoration: InputDecoration(
-              labelText: 'What is it about?',
-              hintText: 'Call with ${widget.name}',
+              labelText: t('What is it about?'),
+              hintText: t('Call with {name}', {'name': widget.name}),
             ),
           ),
           const SizedBox(height: 14),
@@ -113,10 +118,10 @@ class _ScheduleCallScreenState extends State<ScheduleCallScreen> {
           ),
           const SizedBox(height: 12),
           SegmentedButton<int>(
-            segments: const [
-              ButtonSegment(value: 15, label: Text('15 min')),
-              ButtonSegment(value: 30, label: Text('30 min')),
-              ButtonSegment(value: 60, label: Text('1 hour')),
+            segments: [
+              ButtonSegment(value: 15, label: Text(t('15 min'))),
+              ButtonSegment(value: 30, label: Text(t('30 min'))),
+              ButtonSegment(value: 60, label: Text(t('1 hour'))),
             ],
             selected: {_minutes},
             onSelectionChanged: (s) => setState(() => _minutes = s.first),
@@ -126,14 +131,16 @@ class _ScheduleCallScreenState extends State<ScheduleCallScreen> {
             controller: _link,
             keyboardType: TextInputType.url,
             decoration: InputDecoration(
-              labelText: 'Meeting link',
+              labelText: t('Meeting link'),
               hintText: 'https://meet.google.com/…',
               suffixIcon: provider == null
                   ? null
                   : const Icon(Icons.check_circle, color: AppColors.ok),
               helperText: provider == null
-                  ? 'Paste a Google Meet, Zoom, Teams, Jitsi or any https link'
-                  : 'Recognised: ${providerNames[provider]}',
+                  ? t(
+                      'Paste a Google Meet, Zoom, Teams, Jitsi or any https link',
+                    )
+                  : t('Recognised: {x}', {'x': providerNames[provider] ?? ''}),
             ),
           ),
           const SizedBox(height: 20),
@@ -143,7 +150,7 @@ class _ScheduleCallScreenState extends State<ScheduleCallScreen> {
           ],
           FilledButton(
             onPressed: _busy || provider == null ? null : _submit,
-            child: Text(_busy ? 'Sending…' : 'Send call request'),
+            child: Text(_busy ? 'Sending…' : t('Send call request')),
           ),
           const SizedBox(height: 8),
           Text(

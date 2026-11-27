@@ -1,4 +1,7 @@
 import 'dart:convert';
+
+import '../l10n.dart';
+
 import 'dart:io';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -140,7 +143,7 @@ class ApiClient {
       final e = (json['error'] as Map<String, dynamic>?) ?? {};
       throw ApiException(
         e['code'] as String? ?? 'HTTP_${res.statusCode}',
-        e['message'] as String? ?? 'Something went wrong.',
+        e['message'] as String? ?? t('Something went wrong.'),
         status: res.statusCode,
       );
     }
@@ -156,12 +159,12 @@ class ApiClient {
     } on SocketException {
       throw ApiException(
         'NETWORK',
-        'No internet connection. Check your network and try again.',
+        t('No internet connection. Check your network and try again.'),
       );
     } on Exception {
       throw ApiException(
         'NETWORK',
-        'Could not reach the server. Try again in a moment.',
+        t('Could not reach the server. Try again in a moment.'),
       );
     }
 
@@ -181,7 +184,7 @@ class ApiClient {
     final error = (json?['error'] as Map<String, dynamic>?) ?? {};
     throw ApiException(
       error['code'] as String? ?? 'HTTP_${res.statusCode}',
-      error['message'] as String? ?? 'Something went wrong. Try again.',
+      error['message'] as String? ?? t('Something went wrong. Try again.'),
       status: res.statusCode,
     );
   }

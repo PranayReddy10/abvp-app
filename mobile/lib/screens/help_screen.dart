@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n.dart';
 import '../api/api_client.dart';
 import '../state/session.dart';
 import '../theme.dart';
@@ -7,15 +8,15 @@ import '../widgets/common.dart';
 import '../widgets/format.dart';
 import '../widgets/loader.dart';
 
-const helpCategories = {
-  'medical': 'Medical',
-  'registration': 'Registration or pass',
-  'stay': 'Stay',
-  'food': 'Food',
-  'transport': 'Transport',
-  'venue': 'Venue or directions',
-  'lost': 'Lost and found',
-  'other': 'Something else',
+Map<String, String> get helpCategories => {
+  'medical': t('Medical'),
+  'registration': t('Registration or pass'),
+  'stay': t('Stay'),
+  'food': t('Food'),
+  'transport': t('Transport'),
+  'venue': t('Venue or directions'),
+  'lost': t('Lost and found'),
+  'other': t('Something else'),
 };
 
 class AskHelpScreen extends StatefulWidget {
@@ -59,7 +60,7 @@ class _AskHelpScreenState extends State<AskHelpScreen> {
         SnackBar(
           content: Text(
             r['emergency_note'] as String? ??
-                'Sent. The event team will reply in the app.',
+                t('Sent. The event team will reply in the app.'),
           ),
         ),
       );
@@ -79,7 +80,7 @@ class _AskHelpScreenState extends State<AskHelpScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Ask for help')),
+      appBar: AppBar(title: Text(t('Ask for help'))),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
         children: [
@@ -102,8 +103,10 @@ class _AskHelpScreenState extends State<AskHelpScreen> {
           ),
           if (_category == 'medical') ...[
             const SizedBox(height: 12),
-            const ErrorBanner(
-              'Emergency? Call 108 first. This request alerts the event team, but it does not replace an ambulance.',
+            ErrorBanner(
+              t(
+                'Emergency? Call 108 first. This request alerts the event team, but it does not replace an ambulance.',
+              ),
             ),
           ],
           const SizedBox(height: 14),
@@ -111,13 +114,13 @@ class _AskHelpScreenState extends State<AskHelpScreen> {
             controller: _message,
             maxLines: 4,
             maxLength: 1000,
-            decoration: const InputDecoration(labelText: 'What do you need?'),
+            decoration: InputDecoration(labelText: t('What do you need?')),
           ),
           TextField(
             controller: _where,
-            decoration: const InputDecoration(
-              labelText: 'Where are you? (optional)',
-              hintText: 'Hall B entrance',
+            decoration: InputDecoration(
+              labelText: t('Where are you? (optional)'),
+              hintText: t('Hall B entrance'),
             ),
           ),
           const SizedBox(height: 20),
@@ -127,7 +130,7 @@ class _AskHelpScreenState extends State<AskHelpScreen> {
           ],
           FilledButton(
             onPressed: _busy ? null : _send,
-            child: Text(_busy ? 'Sending…' : 'Send to event team'),
+            child: Text(_busy ? 'Sending…' : t('Send to event team')),
           ),
         ],
       ),
@@ -151,12 +154,12 @@ class _MyHelpScreenState extends State<MyHelpScreen> {
     final body = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Reply'),
+        title: Text(t('Reply')),
         content: TextField(controller: c, autofocus: true, maxLines: 3),
         actions: [
           FilledButton(
             onPressed: () => Navigator.pop(ctx, c.text.trim()),
-            child: const Text('Send'),
+            child: Text(t('Send')),
           ),
         ],
       ),
@@ -176,15 +179,17 @@ class _MyHelpScreenState extends State<MyHelpScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('My help requests')),
+      appBar: AppBar(title: Text(t('My help requests'))),
       body: Loader<List<dynamic>>(
         key: _key,
         load: () async => await widget.session.api.get('/me/help') as List,
         builder: (context, rows, _) => rows.isEmpty
             ? ListView(
-                children: const [
+                children: [
                   EmptyNote(
-                    'No help requests. At an event, open the event and tap "Ask for help".',
+                    t(
+                      'No help requests. At an event, open the event and tap "Ask for help".',
+                    ),
                   ),
                 ],
               )
@@ -209,18 +214,18 @@ class _MyHelpScreenState extends State<MyHelpScreen> {
                                   ),
                                 ),
                                 switch (h['status']) {
-                                  'resolved' => const StatusPill(
-                                    'Resolved',
+                                  'resolved' => StatusPill(
+                                    t('Resolved'),
                                     color: AppColors.ok,
                                     background: AppColors.okSoft,
                                   ),
-                                  'in_progress' => const StatusPill(
-                                    'Being handled',
+                                  'in_progress' => StatusPill(
+                                    t('Being handled'),
                                     color: Color(0xFF2E55C9),
                                     background: Color(0xFFE6ECFB),
                                   ),
-                                  _ => const StatusPill(
-                                    'Sent',
+                                  _ => StatusPill(
+                                    t('Sent'),
                                     color: AppColors.warn,
                                     background: AppColors.warnSoft,
                                   ),
@@ -251,7 +256,7 @@ class _MyHelpScreenState extends State<MyHelpScreen> {
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Text(
-                                  '${r['from_team'] == true ? r['by'] : 'You'}: ${r['body']}',
+                                  '${r['from_team'] == true ? r['by'] : t('You')}: ${r['body']}',
                                 ),
                               ),
                             if (h['status'] != 'resolved')
@@ -259,7 +264,7 @@ class _MyHelpScreenState extends State<MyHelpScreen> {
                                 alignment: Alignment.centerRight,
                                 child: TextButton(
                                   onPressed: () => _reply(h),
-                                  child: const Text('Reply'),
+                                  child: Text(t('Reply')),
                                 ),
                               ),
                           ],

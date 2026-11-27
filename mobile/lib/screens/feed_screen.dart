@@ -1,4 +1,7 @@
 import 'package:flutter/gestures.dart';
+
+import '../l10n.dart';
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -118,7 +121,7 @@ class _FeedScreenState extends State<FeedScreen> {
           if (isTagPage) ...[
             CircleIconButton(
               icon: Icons.arrow_back,
-              tooltip: 'Back',
+              tooltip: t('Back'),
               onTap: () => Navigator.pop(context),
             ),
             const SizedBox(width: 12),
@@ -128,11 +131,11 @@ class _FeedScreenState extends State<FeedScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isTagPage ? 'Hashtag' : 'Community',
+                  isTagPage ? 'Hashtag' : t('Community'),
                   style: const TextStyle(color: AppColors.muted, fontSize: 14),
                 ),
                 Text(
-                  isTagPage ? '#${widget.tag}' : 'What’s happening',
+                  isTagPage ? '#${widget.tag}' : t('What’s happening'),
                   style: const TextStyle(
                     fontFamily: 'Anek',
                     fontSize: 28,
@@ -146,7 +149,7 @@ class _FeedScreenState extends State<FeedScreen> {
           ),
           CircleIconButton(
             icon: Icons.edit_outlined,
-            tooltip: 'New post',
+            tooltip: t('New post'),
             accent: true,
             onTap: _compose,
           ),
@@ -167,9 +170,9 @@ class _FeedScreenState extends State<FeedScreen> {
                 size: 44,
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'Share work from your unit…',
+                  t('Share work from your unit…'),
                   style: TextStyle(color: AppColors.muted, fontSize: 15.5),
                 ),
               ),
@@ -196,7 +199,7 @@ class _FeedScreenState extends State<FeedScreen> {
           child: Row(
             children: [
               PillChip(
-                label: 'For you',
+                label: t('For you'),
                 icon: Icons.auto_awesome_outlined,
                 selected: _tab == 'for_you',
                 onTap: () {
@@ -207,7 +210,7 @@ class _FeedScreenState extends State<FeedScreen> {
               ),
               const SizedBox(width: 8),
               PillChip(
-                label: 'Following',
+                label: t('Following'),
                 icon: Icons.people_alt_outlined,
                 selected: _tab == 'following',
                 onTap: () {
@@ -261,8 +264,12 @@ class _FeedScreenState extends State<FeedScreen> {
                   ? ErrorBanner(_error!)
                   : EmptyNote(
                       _tab == 'following'
-                          ? 'Follow members from their profile to see their posts here.'
-                          : 'No posts yet. Share what your unit did today – a photo and a few lines is enough.',
+                          ? t(
+                              'Follow members from their profile to see their posts here.',
+                            )
+                          : t(
+                              'No posts yet. Share what your unit did today – a photo and a few lines is enough.',
+                            ),
                     );
             }
             if (j >= _posts.length) {
@@ -367,14 +374,14 @@ class _PostCardState extends State<PostCard> {
           children: [
             ListTile(
               leading: const Icon(Icons.repeat),
-              title: const Text('Repost'),
-              subtitle: const Text('Share it with your followers as it is'),
+              title: Text(t('Repost')),
+              subtitle: Text(t('Share it with your followers as it is')),
               onTap: () => Navigator.pop(ctx, 'repost'),
             ),
             ListTile(
               leading: const Icon(Icons.edit_note),
-              title: const Text('Quote'),
-              subtitle: const Text('Add your own words on top'),
+              title: Text(t('Quote')),
+              subtitle: Text(t('Add your own words on top')),
               onTap: () => Navigator.pop(ctx, 'quote'),
             ),
             const SizedBox(height: 8),
@@ -406,7 +413,7 @@ class _PostCardState extends State<PostCard> {
         m['reposts'] = (m['reposts'] as int) + 1;
       });
       widget.onReposted?.call(created);
-      _snack('Reposted');
+      _snack(t('Reposted'));
     } on ApiException catch (e) {
       _snack(e.message);
     }
@@ -423,16 +430,14 @@ class _PostCardState extends State<PostCard> {
           children: [
             ListTile(
               leading: const Icon(Icons.person_outline),
-              title: Text(
-                'View ${(_main['author']['name'] as String).split(' ').first}’s profile',
-              ),
+              title: Text(t('View profile')),
               onTap: () => Navigator.pop(ctx, 'profile'),
             ),
             if (mine)
               ListTile(
                 leading: const Icon(Icons.delete_outline, color: AppColors.bad),
-                title: const Text(
-                  'Delete post',
+                title: Text(
+                  t('Delete post'),
                   style: TextStyle(color: AppColors.bad),
                 ),
                 onTap: () => Navigator.pop(ctx, 'delete'),
@@ -440,8 +445,8 @@ class _PostCardState extends State<PostCard> {
             else
               ListTile(
                 leading: const Icon(Icons.flag_outlined),
-                title: const Text('Report post'),
-                subtitle: const Text('Your name is not shown to the author'),
+                title: Text(t('Report post')),
+                subtitle: Text(t('Your name is not shown to the author')),
                 onTap: () => Navigator.pop(ctx, 'report'),
               ),
             const SizedBox(height: 8),
@@ -460,18 +465,18 @@ class _PostCardState extends State<PostCard> {
       final ok = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('Delete this post?'),
-          content: const Text(
-            'Replies and likes go with it. This cannot be undone.',
+          title: Text(t('Delete this post?')),
+          content: Text(
+            t('Replies and likes go with it. This cannot be undone.'),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Keep'),
+              child: Text(t('Keep')),
             ),
             TextButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Delete'),
+              child: Text(t('Delete')),
             ),
           ],
         ),
@@ -480,7 +485,7 @@ class _PostCardState extends State<PostCard> {
       try {
         await api.delete('/posts/${p['id']}');
         widget.onRemoved?.call();
-        _snack('Post deleted');
+        _snack(t('Post deleted'));
       } on ApiException catch (e) {
         _snack(e.message);
       }
@@ -522,7 +527,7 @@ class _PostCardState extends State<PostCard> {
                   const Icon(Icons.repeat, size: 15, color: AppColors.muted),
                   const SizedBox(width: 6),
                   Text(
-                    '${p['is_mine'] == true ? 'You' : p['author']['name']} reposted',
+                    '${p['is_mine'] == true ? t('You') : p['author']['name']} reposted',
                     style: const TextStyle(
                       color: AppColors.muted,
                       fontSize: 13,
@@ -603,7 +608,7 @@ class _PostCardState extends State<PostCard> {
                 ),
               ),
               IconButton(
-                tooltip: 'More',
+                tooltip: t('More'),
                 icon: const Icon(Icons.more_horiz, color: AppColors.muted),
                 onPressed: _menu,
               ),
@@ -625,7 +630,7 @@ class _PostCardState extends State<PostCard> {
                       color: AppColors.saffronSoft,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
@@ -635,7 +640,7 @@ class _PostCardState extends State<PostCard> {
                         ),
                         SizedBox(width: 6),
                         Text(
-                          'Waiting for approval · only you can see it',
+                          t('Waiting for approval · only you can see it'),
                           style: TextStyle(
                             color: AppColors.saffronInk,
                             fontWeight: FontWeight.w700,
@@ -666,7 +671,7 @@ class _PostCardState extends State<PostCard> {
               _Act(
                 icon: Icons.chat_bubble_outline,
                 count: m['comments'] as int,
-                tooltip: 'Reply',
+                tooltip: t('Reply'),
                 onTap: _open,
               ),
               _Act(
@@ -674,7 +679,7 @@ class _PostCardState extends State<PostCard> {
                 count: m['reposts'] as int,
                 active: m['reposted'] == true,
                 color: AppColors.ok,
-                tooltip: 'Repost',
+                tooltip: t('Repost'),
                 onTap: _repost,
               ),
               _Act(
@@ -684,7 +689,7 @@ class _PostCardState extends State<PostCard> {
                 count: m['likes'] as int,
                 active: m['liked'] == true,
                 color: AppColors.bad,
-                tooltip: m['liked'] == true ? 'Unlike' : 'Like',
+                tooltip: m['liked'] == true ? 'Unlike' : t('Like'),
                 onTap: _like,
               ),
             ],
@@ -1007,7 +1012,7 @@ class _PhotoViewer extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             child: CircleIconButton(
               icon: Icons.close,
-              tooltip: 'Close',
+              tooltip: t('Close'),
               dark: true,
               onTap: () => Navigator.pop(context),
             ),
@@ -1018,12 +1023,12 @@ class _PhotoViewer extends StatelessWidget {
   );
 }
 
-const reportReasons = {
-  'abuse': 'Abusive or hateful',
-  'false_info': 'False information',
-  'spam': 'Spam or advertising',
-  'private_info': 'Shares someone’s private details',
-  'other': 'Something else',
+Map<String, String> get reportReasons => {
+  'abuse': t('Abusive or hateful'),
+  'false_info': t('False information'),
+  'spam': t('Spam or advertising'),
+  'private_info': t('Shares someone’s private details'),
+  'other': t('Something else'),
 };
 
 Future<void> reportPost(BuildContext context, Session session, int id) async {
@@ -1035,10 +1040,10 @@ Future<void> reportPost(BuildContext context, Session session, int id) async {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
+          Padding(
             padding: EdgeInsets.fromLTRB(20, 0, 20, 8),
             child: Text(
-              'Why are you reporting this?',
+              t('Why are you reporting this?'),
               style: TextStyle(
                 fontFamily: 'Anek',
                 fontSize: 20,
@@ -1062,8 +1067,8 @@ Future<void> reportPost(BuildContext context, Session session, int id) async {
     await session.api.post('/posts/$id/report', {'reason': reason});
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Thanks. Your district office will review it.'),
+        SnackBar(
+          content: Text(t('Thanks. Your district office will review it.')),
         ),
       );
     }
@@ -1159,12 +1164,12 @@ class _PostScreenState extends State<PostScreen> {
                 children: [
                   CircleIconButton(
                     icon: Icons.arrow_back,
-                    tooltip: 'Back',
+                    tooltip: t('Back'),
                     onTap: () => Navigator.pop(context),
                   ),
                   const SizedBox(width: 14),
-                  const Text(
-                    'Post',
+                  Text(
+                    t('Post'),
                     style: TextStyle(
                       fontFamily: 'Anek',
                       fontSize: 22,
@@ -1196,7 +1201,7 @@ class _PostScreenState extends State<PostScreen> {
                         ),
                         const SizedBox(height: 18),
                         Text(
-                          replies.isEmpty ? 'No replies yet' : 'Replies',
+                          replies.isEmpty ? 'No replies yet' : t('Replies'),
                           style: const TextStyle(
                             fontFamily: 'Anek',
                             fontSize: 19,
@@ -1314,8 +1319,11 @@ class _PostScreenState extends State<PostScreen> {
                         maxLines: 4,
                         textCapitalization: TextCapitalization.sentences,
                         decoration: InputDecoration(
-                          hintText:
-                              'Reply to ${(p['author']['name'] as String).split(' ').first}…',
+                          hintText: t('Reply to {x}…', {
+                            'x': (p['author']['name'] as String)
+                                .split(' ')
+                                .first,
+                          }),
                           counterText: '',
                           fillColor: AppColors.surface,
                           filled: true,
@@ -1337,7 +1345,7 @@ class _PostScreenState extends State<PostScreen> {
                     const SizedBox(width: 8),
                     CircleIconButton(
                       icon: _sending ? Icons.hourglass_top : Icons.send_rounded,
-                      tooltip: 'Send reply',
+                      tooltip: t('Send reply'),
                       accent: true,
                       onTap: _sending ? null : _send,
                     ),
@@ -1387,7 +1395,7 @@ class _ComposeScreenState extends State<ComposeScreen> {
 
   Future<void> _post() async {
     if (_text.text.trim().isEmpty && _photos.isEmpty && widget.quote == null) {
-      setState(() => _error = 'Write something or add a photo.');
+      setState(() => _error = t('Write something or add a photo.'));
       return;
     }
     setState(() {
@@ -1410,9 +1418,11 @@ class _ComposeScreenState extends State<ComposeScreen> {
       ) as Post;
       if (created['pending'] == true && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(
-              'Sent for approval. Your post appears for everyone once an admin approves it.',
+              t(
+                'Sent for approval. Your post appears for everyone once an admin approves it.',
+              ),
             ),
           ),
         );
@@ -1442,13 +1452,13 @@ class _ComposeScreenState extends State<ComposeScreen> {
                 children: [
                   CircleIconButton(
                     icon: Icons.close,
-                    tooltip: 'Cancel',
+                    tooltip: t('Cancel'),
                     onTap: () => Navigator.pop(context),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
                     child: Text(
-                      widget.quote != null ? 'Quote post' : 'New post',
+                      widget.quote != null ? 'Quote post' : t('New post'),
                       style: const TextStyle(
                         fontFamily: 'Anek',
                         fontSize: 22,
@@ -1463,7 +1473,7 @@ class _ComposeScreenState extends State<ComposeScreen> {
                         minimumSize: const Size(0, 48),
                       ),
                       onPressed: _busy || left < 0 ? null : _post,
-                      child: Text(_busy ? 'Posting…' : 'Post'),
+                      child: Text(_busy ? 'Posting…' : t('Post')),
                     ),
                   ),
                 ],
@@ -1505,8 +1515,10 @@ class _ComposeScreenState extends State<ComposeScreen> {
                                   fontSize: 17,
                                   height: 1.45,
                                 ),
-                                decoration: const InputDecoration(
-                                  hintText: 'What did your unit do today? Add #hashtags so others find it.',
+                                decoration: InputDecoration(
+                                  hintText: t(
+                                    'What did your unit do today? Add #hashtags so others find it.',
+                                  ),
                                   border: InputBorder.none,
                                   enabledBorder: InputBorder.none,
                                   focusedBorder: InputBorder.none,
@@ -1585,7 +1597,7 @@ class _ComposeScreenState extends State<ComposeScreen> {
                               ),
                               label: Text(
                                 _photos.isEmpty
-                                    ? 'Add photos'
+                                    ? t('Add photos')
                                     : '${_photos.length}/4 photos',
                               ),
                             ),
@@ -1607,8 +1619,8 @@ class _ComposeScreenState extends State<ComposeScreen> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  const Text(
-                    'Who can see this',
+                  Text(
+                    t('Who can see this'),
                     style: TextStyle(
                       fontFamily: 'Anek',
                       fontSize: 18,
@@ -1621,14 +1633,14 @@ class _ComposeScreenState extends State<ComposeScreen> {
                     runSpacing: 8,
                     children: [
                       PillChip(
-                        label: 'Everyone',
+                        label: t('Everyone'),
                         icon: Icons.public,
                         selected: _audience == 'members',
                         onTap: () => setState(() => _audience = 'members'),
                       ),
                       if (p?.orgUnitId != null)
                         PillChip(
-                          label: 'My district',
+                          label: t('My district'),
                           icon: Icons.place_outlined,
                           selected: _audience == 'area',
                           onTap: () => setState(() => _audience = 'area'),
@@ -1657,7 +1669,9 @@ class _ComposeScreenState extends State<ComposeScreen> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'Posts are for members only. Don’t share phone numbers or private details; posts reported by several members are hidden until reviewed.',
+                          t(
+                            'Posts are for members only. Don’t share phone numbers or private details; posts reported by several members are hidden until reviewed.',
+                          ),
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                       ),
@@ -1779,7 +1793,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                         top: top + 12,
                         child: CircleIconButton(
                           icon: Icons.arrow_back,
-                          tooltip: 'Back',
+                          tooltip: t('Back'),
                           onTap: () => Navigator.pop(context),
                         ),
                       ),
@@ -1827,10 +1841,10 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                         style: const TextStyle(color: AppColors.muted),
                       ),
                       if (p['works_with_you'] == true)
-                        const Padding(
+                        Padding(
                           padding: EdgeInsets.only(top: 8),
                           child: StatusPill(
-                            'Works with you at an event',
+                            t('Works with you at an event'),
                             color: AppColors.info,
                             background: AppColors.infoSoft,
                           ),
@@ -1846,7 +1860,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                       Row(
                         children: [
                           _Stat('${social['posts'] ?? posts.length}', 'Posts'),
-                          _Stat('$followers', 'Followers'),
+                          _Stat('$followers', t('Followers')),
                           _Stat('${social['following'] ?? 0}', 'Following'),
                         ],
                       ),
@@ -1858,17 +1872,17 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                               child: following
                                   ? OutlinedButton(
                                       onPressed: _busy ? null : _follow,
-                                      child: const Text('Following'),
+                                      child: Text(t('Following')),
                                     )
                                   : FilledButton(
                                       onPressed: _busy ? null : _follow,
-                                      child: const Text('Follow'),
+                                      child: Text(t('Follow')),
                                     ),
                             ),
                             const SizedBox(width: 10),
                             CircleIconButton(
                               icon: Icons.videocam_outlined,
-                              tooltip: 'Schedule a call',
+                              tooltip: t('Schedule a call'),
                               onTap: () => Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -1884,7 +1898,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                               const SizedBox(width: 10),
                               CircleIconButton(
                                 icon: Icons.call,
-                                tooltip: 'Call ${p['mobile']}',
+                                tooltip: t('Call {x}', {'x': p['mobile']}),
                                 dark: true,
                                 onTap: () =>
                                     launchUrl(Uri.parse('tel:${p['mobile']}')),
@@ -1899,7 +1913,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                           children: [
                             if (resp.isNotEmpty)
                               Fact(
-                                'Dayitva',
+                                t('Dayitva'),
                                 resp
                                     .map(
                                       (r) =>
@@ -1909,24 +1923,24 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                               ),
                             if ((p['vibhags'] as List? ?? []).isNotEmpty)
                               Fact(
-                                'Vibhags',
+                                t('Vibhags'),
                                 (p['vibhags'] as List).join(', '),
                               ),
                             if (p['institution'] != null)
-                              Fact('College', p['institution'] as String),
+                              Fact(t('College'), p['institution'] as String),
                             if (p['mobile'] != null)
-                              Fact('Mobile', p['mobile'] as String)
+                              Fact(t('Mobile'), p['mobile'] as String)
                             else if (!self)
-                              const Fact(
-                                'Mobile',
-                                'Hidden by their privacy settings',
+                              Fact(
+                                t('Mobile'),
+                                t('Hidden by their privacy settings'),
                               ),
                           ],
                         ),
                       ),
                       const SizedBox(height: 20),
                       Text(
-                        posts.isEmpty ? 'No posts yet' : 'Posts',
+                        posts.isEmpty ? 'No posts yet' : t('Posts'),
                         style: const TextStyle(
                           fontFamily: 'Anek',
                           fontSize: 21,

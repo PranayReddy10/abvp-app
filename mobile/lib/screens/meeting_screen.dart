@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import '../l10n.dart';
+
 import 'package:url_launcher/url_launcher.dart';
 
 import '../api/api_client.dart';
@@ -61,7 +64,7 @@ class _MeetingScreenState extends State<MeetingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Meeting')),
+      appBar: AppBar(title: Text(t('Meeting'))),
       body: Loader<Map<String, dynamic>>(
         key: _key,
         load: () async =>
@@ -90,20 +93,20 @@ class _MeetingScreenState extends State<MeetingScreen> {
                 spacing: 8,
                 children: [
                   if (cancelled)
-                    const StatusPill(
-                      'Cancelled',
+                    StatusPill(
+                      t('Cancelled'),
                       color: AppColors.bad,
                       background: AppColors.badSoft,
                     )
                   else if (joinable)
-                    const StatusPill(
-                      'Happening now',
+                    StatusPill(
+                      t('Happening now'),
                       color: AppColors.saffronInk,
                       background: AppColors.saffronSoft,
                     )
                   else if (past)
-                    const StatusPill('Finished'),
-                  if (m['kind'] == 'call') const StatusPill('One-to-one call'),
+                    StatusPill(t('Finished')),
+                  if (m['kind'] == 'call') StatusPill(t('One-to-one call')),
                   if (m['audience'] != null)
                     StatusPill(m['audience'] as String),
                 ],
@@ -114,12 +117,14 @@ class _MeetingScreenState extends State<MeetingScreen> {
               _row(
                 Icons.schedule,
                 dayTime(m['starts_at'] as String),
-                'Called by ${m['organiser'] ?? ''}',
+                t('Called by {x}', {'x': m['organiser'] ?? ''}),
               ),
               if (m['link'] != null)
                 _row(
                   Icons.videocam_outlined,
-                  'Online on ${providerNames[m['provider']] ?? 'a meeting link'}',
+                  t('Online on {x}', {
+                    'x': providerNames[m['provider']] ?? 'link',
+                  }),
                   null,
                 ),
               if (m['venue'] != null)
@@ -134,16 +139,18 @@ class _MeetingScreenState extends State<MeetingScreen> {
                   onPressed: _join,
                   icon: const Icon(Icons.videocam),
                   label: Text(
-                    'Join on ${providerNames[m['provider']] ?? 'link'}',
+                    t('Join on {x}', {
+                      'x': providerNames[m['provider']] ?? 'link',
+                    }),
                   ),
                 ),
               if (!past && !cancelled && !isOrganiser) ...[
                 const SizedBox(height: 12),
                 SegmentedButton<String>(
-                  segments: const [
-                    ButtonSegment(value: 'going', label: Text('Going')),
-                    ButtonSegment(value: 'maybe', label: Text('Maybe')),
-                    ButtonSegment(value: 'no', label: Text("Can't")),
+                  segments: [
+                    ButtonSegment(value: 'going', label: Text(t('Going'))),
+                    ButtonSegment(value: 'maybe', label: Text(t('Maybe'))),
+                    ButtonSegment(value: 'no', label: Text(t("Can't"))),
                   ],
                   selected: {
                     if (m['my_rsvp'] != null && m['my_rsvp'] != 'pending')
@@ -164,7 +171,7 @@ class _MeetingScreenState extends State<MeetingScreen> {
                 OutlinedButton.icon(
                   onPressed: () => _addToCalendar(m),
                   icon: const Icon(Icons.event_available),
-                  label: const Text('Add to Google Calendar'),
+                  label: Text(t('Add to Google Calendar')),
                 ),
               ],
               const SizedBox(height: 16),
@@ -174,7 +181,7 @@ class _MeetingScreenState extends State<MeetingScreen> {
               ),
               if ((m['agenda'] as String?)?.isNotEmpty == true) ...[
                 const SizedBox(height: 18),
-                Text('Agenda', style: text.titleMedium),
+                Text(t('Agenda'), style: text.titleMedium),
                 const SizedBox(height: 6),
                 Card(
                   child: Padding(
@@ -185,7 +192,7 @@ class _MeetingScreenState extends State<MeetingScreen> {
               ],
               if ((m['minutes'] as String?)?.isNotEmpty == true) ...[
                 const SizedBox(height: 18),
-                Text('Minutes', style: text.titleMedium),
+                Text(t('Minutes'), style: text.titleMedium),
                 const SizedBox(height: 6),
                 Card(
                   child: Padding(
@@ -196,7 +203,7 @@ class _MeetingScreenState extends State<MeetingScreen> {
               ],
               if (items.isNotEmpty) ...[
                 const SizedBox(height: 18),
-                Text('Action items', style: text.titleMedium),
+                Text(t('Action items'), style: text.titleMedium),
                 ...items.map(
                   (a) => ListTile(
                     contentPadding: EdgeInsets.zero,
@@ -225,11 +232,11 @@ class _MeetingScreenState extends State<MeetingScreen> {
                     leading: Initials(p['name'] as String? ?? '?'),
                     title: Text(p['name'] as String? ?? ''),
                     subtitle: Text(switch (p['rsvp']) {
-                      'going' => 'Accepted',
+                      'going' => t('Accepted'),
                       'no' =>
-                        "Can't make it${p['note'] != null ? ': ${p['note']}' : ''}",
-                      'maybe' => 'Maybe',
-                      _ => 'Not replied yet',
+                        "${t("Can't make it")}${p['note'] != null ? ': ${p['note']}' : ''}",
+                      'maybe' => t('Maybe'),
+                      _ => t('Not replied yet'),
                     }),
                   ),
                 ),
@@ -241,7 +248,7 @@ class _MeetingScreenState extends State<MeetingScreen> {
                     () async => api.post('/meetings/${widget.id}/cancel'),
                   ),
                   style: TextButton.styleFrom(foregroundColor: AppColors.bad),
-                  child: const Text('Cancel this meeting'),
+                  child: Text(t('Cancel this meeting')),
                 ),
               ],
             ],

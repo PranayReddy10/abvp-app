@@ -357,7 +357,7 @@ class ContactActions extends StatelessWidget {
           ),
         btn(
           Icons.call_rounded,
-          'Call $phone',
+          t('Call {x}', {'x': phone}),
           light ? Colors.white : AppColors.ok,
           light ? AppColors.ink : Colors.white,
           () => callNumber(phone),

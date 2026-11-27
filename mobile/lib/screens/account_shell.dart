@@ -131,21 +131,27 @@ class AccountMeScreen extends StatelessWidget {
                         children: [
                           Expanded(
                             child: Text(
-                              'ABVP membership',
+                              t('ABVP membership'),
                               style: text.titleMedium,
                             ),
                           ),
                           app == null
-                              ? const StatusPill('Not applied')
+                              ? StatusPill(t('Not applied'))
                               : StatusPill.forStatus(p?.status ?? app.status),
                         ],
                       ),
                       const SizedBox(height: 8),
                       Text(
                         app == null
-                            ? 'Members get member-only events and Vibhag spaces.'
+                            ? t(
+                                'Members get member-only events and Vibhag spaces.',
+                              )
                             : app.status == 'submitted'
-                            ? 'With ${app.reviewingOffice ?? 'your district office'} for review.'
+                            ? t('With {x} for review.', {
+                                'x':
+                                    app.reviewingOffice ??
+                                    t('your district office'),
+                              })
                             : (app.decisionNote ?? ''),
                         style: text.bodyMedium?.copyWith(
                           color: AppColors.muted,
@@ -158,8 +164,8 @@ class AccountMeScreen extends StatelessWidget {
                           onPressed: () => session.editApplication(true),
                           child: Text(
                             app == null
-                                ? 'Apply for membership'
-                                : 'Fix and send again',
+                                ? t('Apply for membership')
+                                : t('Fix and send again'),
                           ),
                         ),
                       ],
@@ -178,9 +184,9 @@ class AccountMeScreen extends StatelessWidget {
                       children: [
                         ListTile(
                           leading: const Icon(Icons.edit_outlined),
-                          title: const Text('Edit profile'),
-                          subtitle: const Text(
-                            'Photo, name, gender, email, area, college',
+                          title: Text(t('Edit profile')),
+                          subtitle: Text(
+                            t('Photo, name, gender, email, area, college'),
                           ),
                           onTap: () => Navigator.push(
                             context,
@@ -203,8 +209,8 @@ class AccountMeScreen extends StatelessWidget {
                         ListTile(
                           leading: const Icon(Icons.event_outlined),
                           title: Text(tr('nav.events')),
-                          subtitle: const Text(
-                            'Other programmes and your registrations',
+                          subtitle: Text(
+                            t('Other programmes and your registrations'),
                           ),
                           onTap: () => Navigator.push(
                             context,
@@ -226,8 +232,8 @@ class AccountMeScreen extends StatelessWidget {
                             Icons.logout,
                             color: AppColors.bad,
                           ),
-                          title: const Text(
-                            'Sign out',
+                          title: Text(
+                            t('Sign out'),
                             style: TextStyle(color: AppColors.bad),
                           ),
                           onTap: session.signOut,

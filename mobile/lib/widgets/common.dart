@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n.dart';
 import '../theme.dart';
 
 class StatusPill extends StatelessWidget {
@@ -11,27 +12,27 @@ class StatusPill extends StatelessWidget {
   });
 
   factory StatusPill.forStatus(String status) => switch (status) {
-    'approved' => const StatusPill(
-      'Approved',
+    'approved' => StatusPill(
+      t('Approved'),
       color: AppColors.ok,
       background: AppColors.okSoft,
     ),
-    'submitted' => const StatusPill(
-      'Under review',
+    'submitted' => StatusPill(
+      t('Under review'),
       color: AppColors.warn,
       background: AppColors.warnSoft,
     ),
-    'more_info_required' => const StatusPill(
-      'Needs correction',
+    'more_info_required' => StatusPill(
+      t('Needs correction'),
       color: AppColors.warn,
       background: AppColors.warnSoft,
     ),
-    'rejected' => const StatusPill(
-      'Not approved',
+    'rejected' => StatusPill(
+      t('Not approved'),
       color: AppColors.bad,
       background: AppColors.badSoft,
     ),
-    _ => const StatusPill('Draft'),
+    _ => StatusPill(t('Draft')),
   };
 
   final String label;

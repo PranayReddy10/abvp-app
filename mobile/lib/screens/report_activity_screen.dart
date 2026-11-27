@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import '../l10n.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -60,7 +62,8 @@ class _ReportActivityScreenState extends State<ReportActivityScreen> {
   Future<void> _submit() async {
     if (_title.text.trim().isEmpty || _type == null || _students.text.isEmpty) {
       setState(
-        () => _error = 'Add the programme name, type and number of students.',
+        () =>
+            _error = t('Add the programme name, type and number of students.'),
       );
       return;
     }
@@ -86,7 +89,7 @@ class _ReportActivityScreenState extends State<ReportActivityScreen> {
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Report submitted. Thank you.')),
+        SnackBar(content: Text(t('Report submitted. Thank you.'))),
       );
       Navigator.pop(context);
     } on ApiException catch (e) {
@@ -101,22 +104,22 @@ class _ReportActivityScreenState extends State<ReportActivityScreen> {
     final vibhags = widget.session.me?.profile?.vibhags ?? <Vibhag>[];
     final digits = [FilteringTextInputFormatter.digitsOnly];
     return Scaffold(
-      appBar: AppBar(title: const Text('Report activity')),
+      appBar: AppBar(title: Text(t('Report activity'))),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 4, 20, 32),
         children: [
           TextField(
             controller: _title,
-            decoration: const InputDecoration(
-              labelText: 'Programme',
-              hintText: 'Lake clean-up drive',
+            decoration: InputDecoration(
+              labelText: t('Programme'),
+              hintText: t('Lake clean-up drive'),
             ),
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
             initialValue: _type,
             isExpanded: true,
-            decoration: const InputDecoration(labelText: 'Type'),
+            decoration: InputDecoration(labelText: t('Type')),
             items: _types
                 .map(
                   (t) => DropdownMenuItem(
@@ -152,12 +155,9 @@ class _ReportActivityScreenState extends State<ReportActivityScreen> {
                 child: DropdownButtonFormField<int?>(
                   initialValue: _vibhag,
                   isExpanded: true,
-                  decoration: const InputDecoration(labelText: 'Vibhag'),
+                  decoration: InputDecoration(labelText: t('Vibhag')),
                   items: [
-                    const DropdownMenuItem<int?>(
-                      value: null,
-                      child: Text('None'),
-                    ),
+                    DropdownMenuItem<int?>(value: null, child: Text(t('None'))),
                     ...vibhags.map(
                       (v) => DropdownMenuItem<int?>(
                         value: v.id,
@@ -173,7 +173,7 @@ class _ReportActivityScreenState extends State<ReportActivityScreen> {
           const SizedBox(height: 12),
           TextField(
             controller: _place,
-            decoration: const InputDecoration(labelText: 'Place'),
+            decoration: InputDecoration(labelText: t('Place')),
           ),
           const SizedBox(height: 12),
           Row(
@@ -183,7 +183,7 @@ class _ReportActivityScreenState extends State<ReportActivityScreen> {
                   controller: _students,
                   keyboardType: TextInputType.number,
                   inputFormatters: digits,
-                  decoration: const InputDecoration(labelText: 'Students'),
+                  decoration: InputDecoration(labelText: t('Students')),
                 ),
               ),
               const SizedBox(width: 12),
@@ -192,7 +192,7 @@ class _ReportActivityScreenState extends State<ReportActivityScreen> {
                   controller: _colleges,
                   keyboardType: TextInputType.number,
                   inputFormatters: digits,
-                  decoration: const InputDecoration(labelText: 'Colleges'),
+                  decoration: InputDecoration(labelText: t('Colleges')),
                 ),
               ),
             ],
@@ -202,12 +202,12 @@ class _ReportActivityScreenState extends State<ReportActivityScreen> {
             controller: _desc,
             maxLines: 3,
             maxLength: 3000,
-            decoration: const InputDecoration(
-              labelText: 'What happened (optional)',
+            decoration: InputDecoration(
+              labelText: t('What happened (optional)'),
             ),
           ),
           Text(
-            'Photos (up to 6)',
+            t('Photos (up to 6)'),
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
@@ -249,11 +249,11 @@ class _ReportActivityScreenState extends State<ReportActivityScreen> {
           ],
           FilledButton(
             onPressed: _busy ? null : _submit,
-            child: Text(_busy ? 'Submitting…' : 'Submit report'),
+            child: Text(_busy ? 'Submitting…' : t('Submit report')),
           ),
           const SizedBox(height: 8),
           Text(
-            'Visible to your district, state and Vibhag coordinators.',
+            t('Visible to your district, state and Vibhag coordinators.'),
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodySmall,
           ),

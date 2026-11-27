@@ -168,7 +168,7 @@ class _GuideSectionScreenState extends State<GuideSectionScreen> {
                       top: top + 10,
                       child: CircleIconButton(
                         icon: Icons.arrow_back,
-                        tooltip: 'Back',
+                        tooltip: t('Back'),
                         onTap: () => Navigator.pop(context),
                       ),
                     ),
@@ -1436,7 +1436,7 @@ class _SosButtonState extends State<SosButton>
   Widget build(BuildContext context) {
     return Semantics(
       button: true,
-      label: 'Call ${widget.label}, ${widget.phone}',
+      label: t('Call {x}', {'x': '${widget.label}, ${widget.phone}'}),
       child: GestureDetector(
         onTap: widget.onTap,
         child: SizedBox(
@@ -1561,7 +1561,7 @@ class _GuideItemScreenState extends State<GuideItemScreen> {
               child: Center(
                 child: CircleIconButton(
                   icon: Icons.arrow_back,
-                  tooltip: 'Back',
+                  tooltip: t('Back'),
                   onTap: () => Navigator.pop(context),
                 ),
               ),
@@ -1776,7 +1776,7 @@ class _GuideItemScreenState extends State<GuideItemScreen> {
                         const SizedBox(width: 10),
                         CircleIconButton(
                           icon: Icons.map_rounded,
-                          tooltip: 'Open map',
+                          tooltip: t('Open map'),
                           onTap: () => openUrl(it['map_url'] as String),
                         ),
                       ],
@@ -2008,7 +2008,7 @@ class _VideoTile extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              title?.isNotEmpty == true ? title! : 'Video',
+              title?.isNotEmpty == true ? title! : t('Video'),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(fontWeight: FontWeight.w700),

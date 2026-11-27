@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import '../l10n.dart';
+
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -84,7 +87,7 @@ class _LogisticsCardState extends State<LogisticsCard> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text('Stay, food and travel', style: text.titleMedium),
+        Text(t('Stay, food and travel'), style: text.titleMedium),
         const SizedBox(height: 6),
         Card(
           child: Column(
@@ -92,13 +95,15 @@ class _LogisticsCardState extends State<LogisticsCard> {
               line(
                 Icons.train_outlined,
                 travel == null
-                    ? 'Tell us how you are coming'
-                    : 'Travel: ${_mode(travel['mode'] as String)}${travel['reference'] != null ? ' · ${travel['reference']}' : ''}',
+                    ? t('Tell us how you are coming')
+                    : '${t('Travel')}: ${_mode(travel['mode'] as String)}${travel['reference'] != null ? ' · ${travel['reference']}' : ''}',
                 travel == null
-                    ? 'So the team can arrange pickup and a room'
+                    ? t('So the team can arrange pickup and a room')
                     : [
                         if (travel['arriving_at'] != null)
-                          'Arriving ${dayTime(travel['arriving_at'] as String)}',
+                          t('Arriving {x}', {
+                            'x': dayTime(travel['arriving_at'] as String),
+                          }),
                         travel['arrival_point'],
                         if (travel['needs_pickup'] == true) 'pickup requested',
                         if (travel['needs_stay'] == true) 'stay requested',
@@ -135,8 +140,8 @@ class _LogisticsCardState extends State<LogisticsCard> {
               else if (travel?['needs_pickup'] == true)
                 line(
                   Icons.directions_bus_outlined,
-                  'Pickup requested',
-                  'You will be told which vehicle and where to wait.',
+                  t('Pickup requested'),
+                  t('You will be told which vehicle and where to wait.'),
                 ),
               if (stay != null)
                 line(
@@ -159,8 +164,8 @@ class _LogisticsCardState extends State<LogisticsCard> {
               else if (travel?['needs_stay'] == true)
                 line(
                   Icons.bed_outlined,
-                  'Stay requested',
-                  'Your room will appear here once it is given.',
+                  t('Stay requested'),
+                  t('Your room will appear here once it is given.'),
                 ),
               for (final m in meals)
                 line(
@@ -191,15 +196,21 @@ class _LogisticsCardState extends State<LogisticsCard> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Sharing your location with ${loc.sharedWith == 'team_lead' ? 'your team lead' : 'event coordinators'} until ${DateFormat('h:mm a').format(loc.expiresAt!)}.'
-                        '${loc.error != null ? '\n${loc.error}' : ''}',
+                        t('Sharing your location with {who} until {time}.', {
+                              'who': loc.sharedWith == 'team_lead'
+                                  ? t('your team lead')
+                                  : t('event coordinators'),
+                              'time': DateFormat('h:mm a')
+                                  .format(loc.expiresAt!),
+                            }) +
+                            (loc.error != null ? '\n${loc.error}' : ''),
                         style: const TextStyle(
                           color: AppColors.saffronInk,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
-                    TextButton(onPressed: loc.stop, child: const Text('Stop')),
+                    TextButton(onPressed: loc.stop, child: Text(t('Stop'))),
                   ],
                 ),
               );
@@ -213,7 +224,7 @@ class _LogisticsCardState extends State<LogisticsCard> {
                 ),
               ),
               icon: const Icon(Icons.location_on_outlined),
-              label: const Text('Share my location for a while'),
+              label: Text(t('Share my location for a while')),
             );
           },
         ),
@@ -222,12 +233,12 @@ class _LogisticsCardState extends State<LogisticsCard> {
   }
 
   static String _mode(String m) =>
-      const {
-        'train': 'Train',
-        'bus': 'Bus',
-        'flight': 'Flight',
-        'own': 'Own vehicle',
-        'other': 'Other',
+      {
+        'train': t('Train'),
+        'bus': t('Bus'),
+        'flight': t('Flight'),
+        'own': t('Own vehicle'),
+        'other': t('Other'),
       }[m] ??
       m;
 }
@@ -311,7 +322,7 @@ class _TravelFormState extends State<TravelForm> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Travel details')),
+      appBar: AppBar(title: Text(t('Travel details'))),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
         children: [
@@ -319,12 +330,12 @@ class _TravelFormState extends State<TravelForm> {
             spacing: 8,
             runSpacing: 8,
             children: [
-              for (final m in const {
-                'train': 'Train',
-                'bus': 'Bus',
-                'flight': 'Flight',
-                'own': 'Own vehicle',
-                'other': 'Other',
+              for (final m in {
+                'train': t('Train'),
+                'bus': t('Bus'),
+                'flight': t('Flight'),
+                'own': t('Own vehicle'),
+                'other': t('Other'),
               }.entries)
                 ChoiceChip(
                   label: Text(m.value),
@@ -340,10 +351,10 @@ class _TravelFormState extends State<TravelForm> {
               controller: _ref,
               decoration: InputDecoration(
                 labelText: _mode == 'train'
-                    ? 'Train number and name'
+                    ? t('Train number and name')
                     : _mode == 'flight'
-                    ? 'Flight number'
-                    : 'Bus or service',
+                    ? t('Flight number')
+                    : t('Bus or service'),
                 hintText: _mode == 'train' ? '12723 Telangana Express' : null,
               ),
             ),
@@ -353,16 +364,18 @@ class _TravelFormState extends State<TravelForm> {
             icon: const Icon(Icons.schedule),
             label: Text(
               _arriving == null
-                  ? 'When do you arrive?'
-                  : 'Arriving ${DateFormat('EEE d MMM, h:mm a').format(_arriving!)}',
+                  ? t('When do you arrive?')
+                  : t('Arriving {x}', {
+                      'x': DateFormat('EEE d MMM, h:mm a').format(_arriving!),
+                    }),
             ),
           ),
           const SizedBox(height: 12),
           TextField(
             controller: _point,
-            decoration: const InputDecoration(
-              labelText: 'Arriving at',
-              hintText: 'Warangal railway station',
+            decoration: InputDecoration(
+              labelText: t('Arriving at'),
+              hintText: t('Warangal railway station'),
             ),
           ),
           const SizedBox(height: 8),
@@ -370,19 +383,19 @@ class _TravelFormState extends State<TravelForm> {
             contentPadding: EdgeInsets.zero,
             value: _pickup,
             onChanged: (v) => setState(() => _pickup = v),
-            title: const Text('I need a pickup to the venue'),
+            title: Text(t('I need a pickup to the venue')),
           ),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             value: _stay,
             onChanged: (v) => setState(() => _stay = v),
-            title: const Text('I need a place to stay'),
+            title: Text(t('I need a place to stay')),
           ),
           TextField(
             controller: _notes,
             maxLength: 300,
-            decoration: const InputDecoration(
-              labelText: 'Anything the team should know (optional)',
+            decoration: InputDecoration(
+              labelText: t('Anything the team should know (optional)'),
             ),
           ),
           const SizedBox(height: 12),
@@ -392,11 +405,11 @@ class _TravelFormState extends State<TravelForm> {
           ],
           FilledButton(
             onPressed: _busy ? null : _save,
-            child: Text(_busy ? 'Saving…' : 'Save'),
+            child: Text(_busy ? t('Saving…') : t('Save')),
           ),
           const SizedBox(height: 8),
           Text(
-            'Only the event\'s logistics team sees this.',
+            t('Only the event\'s logistics team sees this.'),
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodySmall,
           ),
@@ -432,7 +445,7 @@ class _ShareLocationScreenState extends State<ShareLocationScreen> {
   Future<void> _start() async {
     if (_why.text.trim().isEmpty) {
       return setState(
-        () => _error = 'Say why, so the person seeing it knows what to do.',
+        () => _error = t('Say why, so the person seeing it knows what to do.'),
       );
     }
     setState(() {
@@ -458,44 +471,46 @@ class _ShareLocationScreenState extends State<ShareLocationScreen> {
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('Share my location')),
+      appBar: AppBar(title: Text(t('Share my location'))),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
         children: [
           Text(
-            'Use this when someone needs to find you: you are late, lost, or bringing something. Your location is never shared unless you turn this on.',
+            t(
+              'Use this when someone needs to find you: you are late, lost, or bringing something. Your location is never shared unless you turn this on.',
+            ),
             style: text.bodyMedium,
           ),
           const SizedBox(height: 18),
-          Text('Who can see it', style: text.titleMedium),
+          Text(t('Who can see it'), style: text.titleMedium),
           RadioGroup<String>(
             groupValue: _with,
             onChanged: (v) => setState(() => _with = v!),
-            child: const Column(
+            child: Column(
               children: [
                 RadioListTile(
                   contentPadding: EdgeInsets.zero,
                   value: 'coordinators',
-                  title: Text('Event coordinators'),
+                  title: Text(t('Event coordinators')),
                 ),
                 RadioListTile(
                   contentPadding: EdgeInsets.zero,
                   value: 'team_lead',
-                  title: Text('My team lead only'),
+                  title: Text(t('My team lead only')),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 8),
-          Text('For how long', style: text.titleMedium),
+          Text(t('For how long'), style: text.titleMedium),
           const SizedBox(height: 8),
           SegmentedButton<int>(
             showSelectedIcon: false,
-            segments: const [
-              ButtonSegment(value: 30, label: Text('30 min')),
-              ButtonSegment(value: 60, label: Text('1 hour')),
-              ButtonSegment(value: 120, label: Text('2 hours')),
-              ButtonSegment(value: 240, label: Text('4 hours')),
+            segments: [
+              ButtonSegment(value: 30, label: Text(t('30 min'))),
+              ButtonSegment(value: 60, label: Text(t('1 hour'))),
+              ButtonSegment(value: 120, label: Text(t('2 hours'))),
+              ButtonSegment(value: 240, label: Text(t('4 hours'))),
             ],
             selected: {_minutes},
             onSelectionChanged: (s) => setState(() => _minutes = s.first),
@@ -504,9 +519,9 @@ class _ShareLocationScreenState extends State<ShareLocationScreen> {
           TextField(
             controller: _why,
             maxLength: 160,
-            decoration: const InputDecoration(
-              labelText: 'Why',
-              hintText: 'Coming late by bus, near Kazipet',
+            decoration: InputDecoration(
+              labelText: t('Why'),
+              hintText: t('Coming late by bus, near Kazipet'),
             ),
           ),
           const SizedBox(height: 8),
@@ -532,7 +547,7 @@ class _ShareLocationScreenState extends State<ShareLocationScreen> {
           FilledButton.icon(
             onPressed: _busy ? null : _start,
             icon: const Icon(Icons.location_on),
-            label: Text(_busy ? 'Starting…' : 'Start sharing'),
+            label: Text(_busy ? 'Starting…' : t('Start sharing')),
           ),
         ],
       ),

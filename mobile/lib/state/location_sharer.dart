@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import '../l10n.dart';
+
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 
@@ -28,7 +30,7 @@ class LocationSharer extends ChangeNotifier {
     required String purpose,
   }) async {
     if (!await Geolocator.isLocationServiceEnabled()) {
-      return 'Turn on location (GPS) on your phone first.';
+      return t('Turn on location (GPS) on your phone first.');
     }
     var perm = await Geolocator.checkPermission();
     if (perm == LocationPermission.denied) {
@@ -36,7 +38,9 @@ class LocationSharer extends ChangeNotifier {
     }
     if (perm == LocationPermission.denied ||
         perm == LocationPermission.deniedForever) {
-      return 'Location permission is off. Allow it in your phone settings to share.';
+      return t(
+        'Location permission is off. Allow it in your phone settings to share.',
+      );
     }
 
     try {
@@ -95,7 +99,7 @@ class LocationSharer extends ChangeNotifier {
       if (e.status == 410 || e.status == 403) return _clear();
       error = e.message;
     } catch (_) {
-      error = 'Could not read your location just now.';
+      error = t('Could not read your location just now.');
     }
     notifyListeners();
   }

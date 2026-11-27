@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import '../l10n.dart';
+
 import 'package:url_launcher/url_launcher.dart';
 
 import '../state/session.dart';
@@ -20,15 +23,17 @@ class _CircularsScreenState extends State<CircularsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Circulars')),
+      appBar: AppBar(title: Text(t('Circulars'))),
       body: Loader<List<dynamic>>(
         key: _key,
         load: () async => await widget.session.api.get('/circulars') as List,
         builder: (context, rows, _) => rows.isEmpty
             ? ListView(
-                children: const [
+                children: [
                   EmptyNote(
-                    'No circulars yet. Official circulars from your unit, district, state and national office appear here.',
+                    t(
+                      'No circulars yet. Official circulars from your unit, district, state and national office appear here.',
+                    ),
                   ),
                 ],
               )
@@ -90,7 +95,7 @@ class CircularScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Circular')),
+      appBar: AppBar(title: Text(t('Circular'))),
       body: Loader<Map<String, dynamic>>(
         load: () async =>
             await session.api.get('/circulars/$id') as Map<String, dynamic>,
@@ -130,7 +135,7 @@ class CircularScreen extends StatelessWidget {
                   mode: LaunchMode.externalApplication,
                 ),
                 icon: const Icon(Icons.picture_as_pdf_outlined),
-                label: const Text('Open attachment'),
+                label: Text(t('Open attachment')),
               ),
             ],
           ],

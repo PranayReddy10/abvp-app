@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n.dart';
 import '../state/session.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
@@ -26,7 +27,7 @@ class _DirectoryScreenState extends State<DirectoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Directory')),
+      appBar: AppBar(title: Text(t('Directory'))),
       body: Column(
         children: [
           Padding(
@@ -35,9 +36,9 @@ class _DirectoryScreenState extends State<DirectoryScreen> {
               controller: _q,
               textInputAction: TextInputAction.search,
               onSubmitted: (_) => setState(() => _key = UniqueKey()),
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 prefixIcon: Icon(Icons.search),
-                hintText: 'Name, college or Member ID',
+                hintText: t('Name, college or Member ID'),
               ),
             ),
           ),
@@ -46,7 +47,7 @@ class _DirectoryScreenState extends State<DirectoryScreen> {
             child: Row(
               children: [
                 FilterChip(
-                  label: const Text('Office bearers'),
+                  label: Text(t('Office bearers')),
                   selected: _bearers,
                   selectedColor: AppColors.saffronSoft,
                   onSelected: (v) => setState(() {
@@ -65,9 +66,11 @@ class _DirectoryScreenState extends State<DirectoryScreen> {
               ) as List,
               builder: (context, rows, _) => rows.isEmpty
                   ? ListView(
-                      children: const [
+                      children: [
                         EmptyNote(
-                          'No one matches. Try another name or turn off "Office bearers".',
+                          t(
+                            'No one matches. Try another name or turn off "Office bearers".',
+                          ),
                         ),
                       ],
                     )
@@ -99,7 +102,7 @@ class _DirectoryScreenState extends State<DirectoryScreen> {
                               ].whereType<String>().join(' · '),
                             ),
                             trailing: IconButton.filledTonal(
-                              tooltip: 'Schedule a call',
+                              tooltip: t('Schedule a call'),
                               icon: const Icon(Icons.videocam_outlined),
                               onPressed: () => Navigator.push(
                                 context,

@@ -2,6 +2,8 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
+part 'phrases.dart';
+
 /// App languages. Add one by adding a column to [_t] and an entry here.
 const appLanguages = [
   (code: 'en', name: 'English', native: 'English'),
@@ -20,6 +22,19 @@ String _deviceDefault() {
 /// Translate [key]; `{name}` placeholders are filled from [args]. Falls back to English.
 String tr(String key, [Map<String, Object> args = const {}]) {
   var s = _t[key]?[appLang.value] ?? _t[key]?['en'] ?? key;
+  args.forEach((k, v) => s = s.replaceAll('{$k}', '$v'));
+  return s;
+}
+
+/// Translate an English text shown in the app (Hindi / Telugu from [_phrases]); `{name}`
+/// placeholders are filled from [args]. Unknown texts stay in English.
+String t(String en, [Map<String, Object> args = const {}]) {
+  final row = _phrases[en];
+  var s = switch (appLang.value) {
+    'hi' => row?[0] ?? en,
+    'te' => row?[1] ?? en,
+    _ => en,
+  };
   args.forEach((k, v) => s = s.replaceAll('{$k}', '$v'));
   return s;
 }

@@ -1,4 +1,7 @@
 import 'dart:async';
+
+import '../../l10n.dart';
+
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -127,9 +130,11 @@ class ConferenceHome extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     if (d.conference == null)
-                      const Panel(
+                      Panel(
                         child: EmptyNote(
-                          'The conference details appear here once it is published.',
+                          t(
+                            'The conference details appear here once it is published.',
+                          ),
                         ),
                       )
                     else ...[
@@ -209,7 +214,7 @@ class VolunteerScreen extends StatelessWidget {
                 actions: [
                   if (d.ghats.isNotEmpty)
                     IconButton(
-                      tooltip: 'Search the team',
+                      tooltip: t('Search the team'),
                       icon: const Icon(Icons.search_rounded),
                       onPressed: () => showSearch(
                         context: context,
@@ -222,8 +227,8 @@ class VolunteerScreen extends StatelessWidget {
                     ),
                 ],
                 flexibleSpace: FlexibleSpaceBar(
-                  title: const Text(
-                    'Volunteer',
+                  title: Text(
+                    t('Volunteer'),
                     style: TextStyle(
                       fontWeight: FontWeight.w800,
                       color: Colors.white,
@@ -257,9 +262,9 @@ class VolunteerScreen extends StatelessWidget {
                       const SizedBox(height: 22),
                     ],
                     if (d.ghats.isEmpty)
-                      const EmptyNote('The conference team appears here soon.')
+                      EmptyNote(t('The conference team appears here soon.'))
                     else ...[
-                      const SectionTitle('Conference team'),
+                      SectionTitle(t('Conference team')),
                       const SizedBox(height: 10),
                       _GhatGrid(
                         session: session,
@@ -313,18 +318,18 @@ class _HomeHeaderState extends State<_HomeHeader>
         : (me?.name ?? '');
     final hour = DateTime.now().hour;
     final hello = hour < 12
-        ? 'Good morning'
+        ? t('Good morning')
         : hour < 17
-        ? 'Good afternoon'
-        : 'Good evening';
+        ? t('Good afternoon')
+        : t('Good evening');
     final chips = <(IconData, String)>[
-      if (widget.data.isDelegate) (Icons.badge_rounded, 'Delegate'),
+      if (widget.data.isDelegate) (Icons.badge_rounded, t('Delegate')),
       for (final pl in widget.data.places.take(2))
         (
           Icons.volunteer_activism_rounded,
-          '${pl['role_label']} · ${(pl['team'] as Json)['name']}',
+          '${t(pl['role_label'] as String? ?? '')} · ${(pl['team'] as Json)['name']}',
         ),
-      if (p?.status == 'approved') (Icons.verified_rounded, 'Member'),
+      if (p?.status == 'approved') (Icons.verified_rounded, t('Member')),
     ];
     final top = MediaQuery.paddingOf(context).top;
     return Container(
@@ -440,7 +445,7 @@ class _HomeHeaderState extends State<_HomeHeader>
                           ],
                         ),
                         Text(
-                          name.isEmpty ? 'Welcome' : name,
+                          name.isEmpty ? t('Welcome') : name,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
@@ -470,7 +475,7 @@ class _HomeHeaderState extends State<_HomeHeader>
                     color: Colors.white.withValues(alpha: 0.18),
                     shape: const CircleBorder(),
                     child: IconButton(
-                      tooltip: 'Notifications',
+                      tooltip: t('Notifications'),
                       icon: const Icon(
                         Icons.notifications_none_rounded,
                         color: Colors.white,
@@ -600,9 +605,11 @@ Future<void> _openDelegate(
     );
   } else {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
+      SnackBar(
         content: Text(
-          'You are registered as a delegate. The guide opens closer to the conference.',
+          t(
+            'You are registered as a delegate. The guide opens closer to the conference.',
+          ),
         ),
       ),
     );
@@ -627,18 +634,20 @@ Future<void> _openGuide(
         size: 36,
         color: AppColors.saffron,
       ),
-      title: const Text('Fill the delegate form first'),
-      content: const Text(
-        'The conference guide – your stay, transport, food and help desk – opens once you have filled the delegate form.',
+      title: Text(t('Fill the delegate form first')),
+      content: Text(
+        t(
+          'The conference guide – your stay, transport, food and help desk – opens once you have filled the delegate form.',
+        ),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('Later'),
+          child: Text(t('Later')),
         ),
         FilledButton(
           onPressed: () => Navigator.pop(ctx, true),
-          child: const Text('Fill the form'),
+          child: Text(t('Fill the form')),
         ),
       ],
     ),
@@ -661,17 +670,18 @@ Future<void> _registrationClosed(BuildContext context, Session session) {
         size: 36,
         color: AppColors.saffron,
       ),
-      title: const Text('Delegate registration is not open yet'),
+      title: Text(t('Delegate registration is not open yet')),
       content: Text(
         admin
-            ? 'Switch it on in the admin panel: Events → the conference → Guide → "Delegate registration". The form opens here straight away after that.'
-            : 'The form opens here as soon as registration starts. You will get a notification.',
+            ? t(
+                'Switch it on in the admin panel: Events → the conference → Guide → "Delegate registration". The form opens here straight away after that.',
+              )
+            : t(
+                'The form opens here as soon as registration starts. You will get a notification.',
+              ),
       ),
       actions: [
-        FilledButton(
-          onPressed: () => Navigator.pop(ctx),
-          child: const Text('OK'),
-        ),
+        FilledButton(onPressed: () => Navigator.pop(ctx), child: Text(t('OK'))),
       ],
     ),
   );
@@ -732,13 +742,13 @@ class _QuickButtons extends StatelessWidget {
         );
     return Row(
       children: [
-        b(Icons.explore_rounded, 'Guide', const [
+        b(Icons.explore_rounded, t('Guide'), const [
           Color(0xFFF59A4C),
           AppColors.saffronDeep,
         ], () => _openGuide(context, session, data, onChanged)),
         b(
           Icons.photo_library_rounded,
-          'Gallery',
+          t('Gallery'),
           const [Color(0xFFFFB35C), Color(0xFFD9730D)],
           () => guide
               ? Navigator.push(
@@ -748,20 +758,22 @@ class _QuickButtons extends StatelessWidget {
                       session: session,
                       event: conf,
                       kind: 'gallery',
-                      title: 'Gallery',
+                      title: t('Gallery'),
                       hindi: 'चित्र दीर्घा',
                     ),
                   ),
                 )
               : ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Photos appear here during the conference.'),
+                  SnackBar(
+                    content: Text(
+                      t('Photos appear here during the conference.'),
+                    ),
                   ),
                 ),
         ),
         b(
           Icons.diversity_3_rounded,
-          'Team',
+          t('Team'),
           const [Color(0xFFEF8354), Color(0xFFB8430A)],
           () => Navigator.push(
             context,
@@ -770,7 +782,7 @@ class _QuickButtons extends StatelessWidget {
             ),
           ),
         ),
-        b(Icons.emergency_rounded, 'Help', const [
+        b(Icons.emergency_rounded, t('Help'), const [
           Color(0xFFFF7A45),
           Color(0xFFC81E1E),
         ], () => openHelp(context, session)),
@@ -915,8 +927,8 @@ class _CountdownState extends State<_Countdown> {
           ),
           const SizedBox(height: 14),
           if (over)
-            const Text(
-              'Thank you for being part of it.',
+            Text(
+              t('Thank you for being part of it.'),
               style: TextStyle(fontWeight: FontWeight.w700),
             )
           else if (live)
@@ -929,8 +941,8 @@ class _CountdownState extends State<_Countdown> {
                 ),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Text(
-                '● Happening now',
+              child: Text(
+                t('● Happening now'),
                 style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w800,
@@ -941,10 +953,10 @@ class _CountdownState extends State<_Countdown> {
           else
             Row(
               children: [
-                unit(left.inDays, 'DAYS'),
-                unit(left.inHours % 24, 'HOURS'),
-                unit(left.inMinutes % 60, 'MINS'),
-                unit(left.inSeconds % 60, 'SECS'),
+                unit(left.inDays, t('DAYS')),
+                unit(left.inHours % 24, t('HOURS')),
+                unit(left.inMinutes % 60, t('MINS')),
+                unit(left.inSeconds % 60, t('SECS')),
               ],
             ),
         ],
@@ -964,7 +976,7 @@ class _SideTiles extends StatelessWidget {
   final _HomeData data;
   final Future<void> Function() onChanged;
 
-  /// First time the form; after that straight into the guide (which has "Edit my delegate form").
+  /// First time the form; after that straight into the guide (which has t("Edit my delegate form")).
   Future<void> _delegate(BuildContext context) =>
       _openDelegate(context, session, data, onChanged);
 
@@ -1044,20 +1056,20 @@ class _SideTiles extends StatelessWidget {
     return Row(
       children: [
         tile(
-          'Delegate',
+          t('Delegate'),
           data.isDelegate
-              ? 'Registered ✓ · open guide'
-              : 'Fill the delegate form',
+              ? t('Registered ✓ · open guide')
+              : t('Fill the delegate form'),
           data.isDelegate ? Icons.verified_rounded : Icons.badge_rounded,
           const [Color(0xFFF59A4C), Color(0xFFC24F06)],
           () => _delegate(context),
         ),
         const SizedBox(width: 12),
         tile(
-          'Volunteer',
+          t('Volunteer'),
           seva
               ? (data.places.first['team'] as Json)['name'] as String
-              : 'Ghats, departments, team',
+              : t('Ghats, departments, team'),
           Icons.volunteer_activism_rounded,
           const [Color(0xFFFFB35C), Color(0xFFD9730D)],
           () async {
@@ -1079,20 +1091,26 @@ class _SideTiles extends StatelessWidget {
 class _Thought extends StatelessWidget {
   const _Thought();
 
-  static const _thoughts = [
+  static List<(String, String)> get _thoughts => [
     (
-      'Arise, awake, and stop not till the goal is reached.',
-      'Swami Vivekananda',
+      t('Arise, awake, and stop not till the goal is reached.'),
+      t('Swami Vivekananda'),
     ),
     (
-      'Education is the manifestation of the perfection already in man.',
-      'Swami Vivekananda',
+      t('Education is the manifestation of the perfection already in man.'),
+      t('Swami Vivekananda'),
     ),
-    ('Take up one idea. Make that one idea your life.', 'Swami Vivekananda'),
-    ('Strength is life, weakness is death.', 'Swami Vivekananda'),
-    ('The future depends on what you do today.', 'Mahatma Gandhi'),
-    ('Be the change that you wish to see in the world.', 'Mahatma Gandhi'),
-    ('Character, once lost, is lost forever.', 'Swami Vivekananda'),
+    (
+      t('Take up one idea. Make that one idea your life.'),
+      t('Swami Vivekananda'),
+    ),
+    (t('Strength is life, weakness is death.'), t('Swami Vivekananda')),
+    (t('The future depends on what you do today.'), t('Mahatma Gandhi')),
+    (
+      t('Be the change that you wish to see in the world.'),
+      t('Mahatma Gandhi'),
+    ),
+    (t('Character, once lost, is lost forever.'), t('Swami Vivekananda')),
   ];
 
   @override
@@ -1128,8 +1146,8 @@ class _Thought extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'THOUGHT FOR TODAY',
+                Text(
+                  t('THOUGHT FOR TODAY'),
                   style: TextStyle(
                     fontSize: 11,
                     letterSpacing: 1.1,
@@ -1175,8 +1193,8 @@ class _CommunityStrip extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         SectionTitle(
-          'From the community',
-          action: onOpen == null ? null : 'See all',
+          t('From the community'),
+          action: onOpen == null ? null : t('See all'),
           onAction: onOpen,
         ),
         const SizedBox(height: 10),
@@ -1303,7 +1321,7 @@ class _MySeva extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SectionTitle('Volunteer'),
+        SectionTitle(t('Volunteer')),
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
@@ -1313,7 +1331,7 @@ class _MySeva extends StatelessWidget {
               _RoleChip(
                 color: _hex((p['team'] as Json)['color'] as String?),
                 text:
-                    '${p['role_label']} · ${(p['team'] as Json)['name']}${p['ghat'] != null ? ' · ${(p['ghat'] as Json)['name']}' : ''}',
+                    '${t(p['role_label'] as String? ?? '')} · ${(p['team'] as Json)['name']}${p['ghat'] != null ? ' · ${(p['ghat'] as Json)['name']}' : ''}',
               ),
           ],
         ),
@@ -1356,7 +1374,7 @@ class _MySeva extends StatelessWidget {
                         ),
                         Text(
                           c['last'] == null
-                              ? 'No messages yet'
+                              ? t('No messages yet')
                               : '${(c['last'] as Json)['by']}: ${(c['last'] as Json)['body']}',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -1409,7 +1427,7 @@ class _MySeva extends StatelessWidget {
                           Uri.parse(m['link'] as String),
                           mode: LaunchMode.externalApplication,
                         ),
-                        child: const Text('Join'),
+                        child: Text(t('Join')),
                       ),
                   ],
                 ),
@@ -1424,8 +1442,8 @@ class _MySeva extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  '📣 Announcements',
+                Text(
+                  t('📣 Announcements'),
                   style: TextStyle(
                     fontWeight: FontWeight.w800,
                     color: AppColors.saffronInk,
@@ -1445,7 +1463,7 @@ class _MySeva extends StatelessWidget {
         ],
         if (tasks.isNotEmpty) ...[
           const SizedBox(height: 14),
-          Text('My tasks', style: text.titleMedium),
+          Text(t('My tasks'), style: text.titleMedium),
           const SizedBox(height: 6),
           for (final t in tasks)
             Padding(
@@ -1765,7 +1783,7 @@ class PersonTile extends StatelessWidget {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
-                            p['role_label'] as String? ?? '',
+                            t(p['role_label'] as String? ?? ''),
                             style: TextStyle(
                               color: rc,
                               fontSize: 11.5,
@@ -1888,7 +1906,7 @@ Future<void> showPersonSheet(
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
-                        p['role_label'] as String? ?? '',
+                        t(p['role_label'] as String? ?? ''),
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w700,
@@ -1904,29 +1922,29 @@ Future<void> showPersonSheet(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     if (team != null)
-                      _InfoRow(Icons.groups_rounded, 'Team', team),
+                      _InfoRow(Icons.groups_rounded, t('Team'), team),
                     _InfoRow(
                       Icons.phone_rounded,
-                      'Mobile',
+                      t('Mobile'),
                       m ??
                           (p['has_mobile'] == true
-                              ? 'Sign in to see the number'
-                              : 'No phone yet'),
+                              ? t('Sign in to see the number')
+                              : t('No phone yet')),
                     ),
                     _InfoRow(
                       p['linked'] == true
                           ? Icons.verified_rounded
                           : Icons.phone_android_rounded,
-                      'App',
+                      t('App'),
                       p['linked'] == true
-                          ? 'Using ABVP Connect'
-                          : 'Not signed in yet',
+                          ? t('Using ABVP Connect')
+                          : t('Not signed in yet'),
                     ),
                     if (p['note'] != null &&
                         (p['note'] as String).trim().isNotEmpty)
                       _InfoRow(
                         Icons.notes_rounded,
-                        'Note',
+                        t('Note'),
                         p['note'] as String,
                       ),
                     if (session != null &&
@@ -1950,7 +1968,7 @@ Future<void> showPersonSheet(
                               ),
                               onPressed: () => _call(m),
                               icon: const Icon(Icons.call_rounded),
-                              label: const Text('Call'),
+                              label: Text(t('Call')),
                             ),
                           ),
                           const SizedBox(width: 10),
@@ -1973,11 +1991,11 @@ Future<void> showPersonSheet(
                           Clipboard.setData(ClipboardData(text: m));
                           Navigator.pop(ctx);
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Number copied')),
+                            SnackBar(content: Text(t('Number copied'))),
                           );
                         },
                         icon: const Icon(Icons.copy_rounded, size: 18),
-                        label: const Text('Copy number'),
+                        label: Text(t('Copy number')),
                       ),
                     ],
                   ],
@@ -2062,7 +2080,7 @@ class _ProfileActionsState extends State<_ProfileActions> {
               );
             },
             icon: const Icon(Icons.person_rounded),
-            label: const Text('View profile'),
+            label: Text(t('View profile')),
           ),
         ),
         const SizedBox(width: 10),
@@ -2077,7 +2095,7 @@ class _ProfileActionsState extends State<_ProfileActions> {
             icon: Icon(
               following ? Icons.check_rounded : Icons.person_add_alt_1_rounded,
             ),
-            label: Text(following ? 'Following' : 'Follow'),
+            label: Text(following ? t('Following') : t('Follow')),
           ),
         ),
       ],
@@ -2158,7 +2176,7 @@ class GhatScreen extends StatelessWidget {
             actions: [
               if (canGhat)
                 IconButton(
-                  tooltip: 'Ghat chat',
+                  tooltip: t('Ghat chat'),
                   icon: const Icon(Icons.forum_rounded),
                   onPressed: () => Navigator.push(
                     context,
@@ -2194,7 +2212,7 @@ class GhatScreen extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
             sliver: SliverList.list(
               children: [
-                const _Heading('Ghat heads'),
+                _Heading(t('Ghat heads')),
                 const SizedBox(height: 10),
                 SizedBox(
                   height: 172,
@@ -2227,7 +2245,7 @@ class GhatScreen extends StatelessWidget {
                   ),
                 ],
                 const SizedBox(height: 22),
-                _Heading('Departments', trailing: '${depts.length}'),
+                _Heading(t('Departments'), trailing: '${depts.length}'),
                 const SizedBox(height: 10),
                 for (var i = 0; i < depts.length; i++)
                   Padding(
@@ -2442,7 +2460,7 @@ class _HeadCard extends StatelessWidget {
             ),
           ),
           Text(
-            p['role_label'] as String? ?? '',
+            t(p['role_label'] as String? ?? ''),
             maxLines: 1,
             style: TextStyle(
               color: color,
@@ -2464,8 +2482,8 @@ class _HeadCard extends StatelessWidget {
               ],
             )
           else
-            const Text(
-              'No phone yet',
+            Text(
+              t('No phone yet'),
               style: TextStyle(color: AppColors.muted, fontSize: 12),
             ),
         ],
@@ -2633,7 +2651,9 @@ class _DeptCard extends StatelessWidget {
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
-                              leads.isEmpty ? 'Needs a Pramukh' : 'Pramukh',
+                              leads.isEmpty
+                                  ? t('Needs a Pramukh')
+                                  : t('Pramukh'),
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
@@ -2670,14 +2690,16 @@ class _DeptCard extends StatelessWidget {
                     if (people.isNotEmpty)
                       _AvatarStack(people)
                     else
-                      const Text(
-                        'No one yet',
+                      Text(
+                        t('No one yet'),
                         style: TextStyle(color: AppColors.muted),
                       ),
                     const SizedBox(width: 8),
                     if (people.isNotEmpty)
                       Text(
-                        '${people.length} ${people.length == 1 ? 'person' : 'people'}',
+                        people.length == 1
+                            ? t('1 person')
+                            : t('{n} people', {'n': people.length}),
                         style: const TextStyle(
                           fontWeight: FontWeight.w600,
                           color: AppColors.inkSoft,
@@ -2784,7 +2806,9 @@ class DepartmentScreen extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        '${people.length} ${people.length == 1 ? 'person' : 'people'}',
+                        people.length == 1
+                            ? t('1 person')
+                            : t('{n} people', {'n': people.length}),
                         style: const TextStyle(color: AppColors.muted),
                       ),
                     ],
@@ -2808,7 +2832,7 @@ class DepartmentScreen extends StatelessWidget {
                   const SizedBox(height: 14),
                 ],
                 if (sorted.isEmpty)
-                  const EmptyNote('No one in this department yet.')
+                  EmptyNote(t('No one in this department yet.'))
                 else
                   for (var i = 0; i < sorted.length; i++)
                     FadeSlideIn(
@@ -2937,7 +2961,7 @@ class _TeamChatScreenState extends State<TeamChatScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              _team?['name'] as String? ?? 'Team chat',
+              _team?['name'] as String? ?? t('Team chat'),
               style: const TextStyle(
                 fontWeight: FontWeight.w800,
                 color: Colors.white,
@@ -2953,7 +2977,7 @@ class _TeamChatScreenState extends State<TeamChatScreen> {
         actions: [
           if (_canManage)
             IconButton(
-              tooltip: 'Team tools',
+              tooltip: t('Team tools'),
               icon: const Icon(Icons.more_vert_rounded),
               onPressed: () => showModalBottomSheet(
                 context: context,
@@ -2979,7 +3003,7 @@ class _TeamChatScreenState extends State<TeamChatScreen> {
             ),
           Expanded(
             child: _messages.isEmpty
-                ? const EmptyNote('No messages yet. Say namaste to your team!')
+                ? EmptyNote(t('No messages yet. Say namaste to your team!'))
                 : ListView.builder(
                     controller: _scroll,
                     padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
@@ -2999,7 +3023,7 @@ class _TeamChatScreenState extends State<TeamChatScreen> {
                     Align(
                       alignment: Alignment.centerLeft,
                       child: FilterChip(
-                        label: const Text('📣 Send as announcement'),
+                        label: Text(t('📣 Send as announcement')),
                         selected: _announce,
                         onSelected: (v) => setState(() => _announce = v),
                       ),
@@ -3012,8 +3036,8 @@ class _TeamChatScreenState extends State<TeamChatScreen> {
                           minLines: 1,
                           maxLines: 4,
                           maxLength: 2000,
-                          decoration: const InputDecoration(
-                            hintText: 'Message your team',
+                          decoration: InputDecoration(
+                            hintText: t('Message your team'),
                             counterText: '',
                           ),
                         ),
@@ -3109,7 +3133,7 @@ class _HeadActions extends StatelessWidget {
       children: [
         chip(
           Icons.forum_outlined,
-          'Team chat',
+          t('Team chat'),
           () => Navigator.push(
             context,
             MaterialPageRoute(
@@ -3119,12 +3143,12 @@ class _HeadActions extends StatelessWidget {
         ),
         chip(
           Icons.person_add_alt_1_outlined,
-          isGhat ? 'Add ghat head' : 'Add volunteer',
+          isGhat ? t('Add ghat head') : t('Add volunteer'),
           () => _addPerson(context),
         ),
-        chip(Icons.event_outlined, 'Meeting', () => _meeting(context)),
+        chip(Icons.event_outlined, t('Meeting'), () => _meeting(context)),
         if (people.isNotEmpty)
-          chip(Icons.task_alt_outlined, 'Assign task', () => _task(context)),
+          chip(Icons.task_alt_outlined, t('Assign task'), () => _task(context)),
       ],
     );
   }
@@ -3166,13 +3190,13 @@ class _HeadActions extends StatelessWidget {
                     if (ctx.mounted) Navigator.pop(ctx);
                     if (context.mounted) {
                       ScaffoldMessenger.of(context)
-                          .showSnackBar(const SnackBar(content: Text('Done.')));
+                          .showSnackBar(SnackBar(content: Text(t('Done.'))));
                     }
                   } on ApiException catch (e) {
                     set(() => error = e.message);
                   }
                 },
-                child: const Text('Save'),
+                child: Text(t('Save')),
               ),
             ],
           ),
@@ -3187,21 +3211,21 @@ class _HeadActions extends StatelessWidget {
     var role = isGhat ? 'ghat_saha_pramukh' : 'volunteer';
     final roles = isGhat
         ? {
-            'ghat_pramukh': 'Ghat Pramukh',
-            'ghat_saha_pramukh': 'Ghat Saha Pramukh',
-            'ghat_palak': 'Ghat Palak',
+            'ghat_pramukh': t('Ghat Pramukh'),
+            'ghat_saha_pramukh': t('Ghat Saha Pramukh'),
+            'ghat_palak': t('Ghat Palak'),
           }
         : {
-            'volunteer': 'Volunteer',
-            'pramukh': 'Pramukh',
-            'saha_pramukh': 'Saha Pramukh',
+            'volunteer': t('Volunteer'),
+            'pramukh': t('Pramukh'),
+            'saha_pramukh': t('Saha Pramukh'),
           };
     final idq = TextEditingController();
     Json? found;
     String? findError;
     return _sheet(
       context,
-      isGhat ? 'Add a ghat head' : 'Add to this department',
+      isGhat ? t('Add a ghat head') : t('Add to this department'),
       [
         StatefulBuilder(
           builder: (c, set) {
@@ -3237,14 +3261,14 @@ class _HeadActions extends StatelessWidget {
                     if (found != null) set(() => found = null);
                   },
                   decoration: InputDecoration(
-                    labelText: 'Member ID or mobile',
+                    labelText: t('Member ID or mobile'),
                     hintText: 'ABVP-TG-000123',
                     helperText: found == null
-                        ? 'Fills the name and phone for you'
+                        ? t('Fills the name and phone for you')
                         : null,
                     errorText: findError,
                     suffixIcon: IconButton(
-                      tooltip: 'Find',
+                      tooltip: t('Find'),
                       icon: const Icon(Icons.search_rounded),
                       onPressed: find,
                     ),
@@ -3286,14 +3310,14 @@ class _HeadActions extends StatelessWidget {
         const SizedBox(height: 10),
         TextField(
           controller: name,
-          decoration: const InputDecoration(labelText: 'Name'),
+          decoration: InputDecoration(labelText: t('Name')),
           textCapitalization: TextCapitalization.words,
         ),
         const SizedBox(height: 10),
         TextField(
           controller: mobile,
-          decoration: const InputDecoration(
-            labelText: 'Mobile number',
+          decoration: InputDecoration(
+            labelText: t('Mobile number'),
             prefixText: '+91  ',
           ),
           keyboardType: TextInputType.phone,
@@ -3302,7 +3326,7 @@ class _HeadActions extends StatelessWidget {
         StatefulBuilder(
           builder: (c, set) => DropdownButtonFormField<String>(
             initialValue: role,
-            decoration: const InputDecoration(labelText: 'Role'),
+            decoration: InputDecoration(labelText: t('Role')),
             items: [
               for (final e in roles.entries)
                 DropdownMenuItem(value: e.key, child: Text(e.value)),
@@ -3323,31 +3347,31 @@ class _HeadActions extends StatelessWidget {
 
   Future<void> _meeting(BuildContext context) {
     final title = TextEditingController(
-      text: isGhat ? 'Ghat baithak' : 'Team baithak',
+      text: isGhat ? t('Ghat baithak') : t('Team baithak'),
     );
     final link = TextEditingController();
     final venue = TextEditingController();
     var when = DateTime.now().add(const Duration(hours: 2));
     return _sheet(
       context,
-      'Schedule a meeting',
+      t('Schedule a meeting'),
       [
         TextField(
           controller: title,
-          decoration: const InputDecoration(labelText: 'Title'),
+          decoration: InputDecoration(labelText: t('Title')),
         ),
         const SizedBox(height: 10),
         TextField(
           controller: link,
-          decoration: const InputDecoration(
-            labelText: 'Online link (Google Meet, Zoom…)',
+          decoration: InputDecoration(
+            labelText: t('Online link (Google Meet, Zoom…)'),
             hintText: 'https://',
           ),
         ),
         const SizedBox(height: 10),
         TextField(
           controller: venue,
-          decoration: const InputDecoration(labelText: 'Or a place'),
+          decoration: InputDecoration(labelText: t('Or a place')),
         ),
         const SizedBox(height: 10),
         StatefulBuilder(
@@ -3400,17 +3424,19 @@ class _HeadActions extends StatelessWidget {
     final start = DateTime.now().add(const Duration(hours: 1));
     return _sheet(
       context,
-      'Assign a task',
+      t('Assign a task'),
       [
         StatefulBuilder(
           builder: (c, set) => DropdownButtonFormField<int>(
             initialValue: member,
-            decoration: const InputDecoration(labelText: 'To'),
+            decoration: InputDecoration(labelText: t('To')),
             items: [
               for (final p in people)
                 DropdownMenuItem(
                   value: p['id'] as int,
-                  child: Text('${p['name']} · ${p['role_label']}'),
+                  child: Text(
+                    '${p['name']} · ${t(p['role_label'] as String? ?? '')}',
+                  ),
                 ),
             ],
             onChanged: (v) => set(() => member = v),
@@ -3419,12 +3445,12 @@ class _HeadActions extends StatelessWidget {
         const SizedBox(height: 10),
         TextField(
           controller: title,
-          decoration: const InputDecoration(labelText: 'What to do'),
+          decoration: InputDecoration(labelText: t('What to do')),
         ),
         const SizedBox(height: 10),
         TextField(
           controller: where,
-          decoration: const InputDecoration(labelText: 'Where (optional)'),
+          decoration: InputDecoration(labelText: t('Where (optional)')),
         ),
       ],
       () => session.api.post('/teams/$teamId/tasks', {
@@ -3444,7 +3470,7 @@ class _TeamSearch extends SearchDelegate<void> {
     required this.session,
     required this.ghats,
     required this.manageable,
-  }) : super(searchFieldLabel: 'Name, phone or department – e.g. parking');
+  }) : super(searchFieldLabel: t('Name, phone or department – e.g. parking'));
   final Session session;
   final List<Json> ghats;
   final Set<int> manageable;
@@ -3533,7 +3559,7 @@ class _TeamSearch extends SearchDelegate<void> {
       }
     }
     return rows.isEmpty
-        ? const EmptyNote('No one found.')
+        ? EmptyNote(t('No one found.'))
         : ListView(children: rows);
   }
 }

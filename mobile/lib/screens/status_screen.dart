@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import '../l10n.dart';
+
 import 'package:intl/intl.dart';
 
 import '../state/session.dart';
@@ -10,12 +13,12 @@ class StatusScreen extends StatelessWidget {
   const StatusScreen({super.key, required this.session});
   final Session session;
 
-  static const _labels = {
-    'submitted': 'Application submitted',
-    'resubmitted': 'Resubmitted with corrections',
-    'returned': 'Returned for correction',
-    'approved': 'Approved',
-    'rejected': 'Not approved',
+  static Map<String, String> get _labels => {
+    'submitted': t('Application submitted'),
+    'resubmitted': t('Resubmitted with corrections'),
+    'returned': t('Returned for correction'),
+    'approved': t('Approved'),
+    'rejected': t('Not approved'),
   };
 
   @override
@@ -27,9 +30,9 @@ class StatusScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Application'),
+        title: Text(t('Application')),
         actions: [
-          TextButton(onPressed: session.signOut, child: const Text('Sign out')),
+          TextButton(onPressed: session.signOut, child: Text(t('Sign out'))),
         ],
       ),
       body: RefreshIndicator(
@@ -54,8 +57,12 @@ class StatusScreen extends StatelessWidget {
                   children: [
                     Text(
                       rejected
-                          ? 'Message from ${app.reviewingOffice ?? 'the office'}'
-                          : 'Returned by ${app.reviewingOffice ?? 'the office'}',
+                          ? t('Message from {x}', {
+                              'x': app.reviewingOffice ?? t('the office'),
+                            })
+                          : t('Returned by {x}', {
+                              'x': app.reviewingOffice ?? t('the office'),
+                            }),
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
                         color: rejected ? AppColors.bad : AppColors.warn,
@@ -70,12 +77,15 @@ class StatusScreen extends StatelessWidget {
               const SizedBox(height: 14),
               FilledButton(
                 onPressed: () => session.editApplication(true),
-                child: const Text('Fix and resubmit'),
+                child: Text(t('Fix and resubmit')),
               ),
             ],
             if (app.status == 'submitted')
               Text(
-                'Your application is with ${app.reviewingOffice ?? 'your district office'}. You will be notified when they decide. Pull down to check again.',
+                t(
+                  'Your application is with {x}. You will be notified when they decide. Pull down to check again.',
+                  {'x': app.reviewingOffice ?? t('your district office')},
+                ),
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
             const SizedBox(height: 20),
@@ -84,7 +94,7 @@ class StatusScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
-                    _step(context, true, 'Mobile verified', null),
+                    _step(context, true, t('Mobile verified'), null),
                     ...app.history.map(
                       (h) => _step(
                         context,
@@ -99,8 +109,8 @@ class StatusScreen extends StatelessWidget {
                       _step(
                         context,
                         false,
-                        'Approval and Member ID',
-                        'Usually within 7 days',
+                        t('Approval and Member ID'),
+                        t('Usually within 7 days'),
                         last: true,
                       ),
                   ],

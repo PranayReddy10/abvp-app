@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:abvp_connect/api/api_client.dart';
+import 'package:abvp_connect/l10n.dart';
 import 'package:abvp_connect/main.dart';
 import 'package:abvp_connect/models.dart';
 import 'package:abvp_connect/state/session.dart';
@@ -407,6 +408,29 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
     }
     expect(find.text('Emergency – call now'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Home speaks Hindi and Telugu', (tester) async {
+    addTearDown(() => appLang.value = 'en');
+    await _openEveryTab(tester, member: true);
+    appLang.value = 'hi';
+    rebuildAll(tester.element(find.byType(Scaffold).first));
+    for (var i = 0; i < 5; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    for (final w in ['मार्गदर्शिका', 'चित्र दीर्घा', 'सहायता', 'प्रतिनिधि', 'आज का विचार']) {
+      expect(find.text(w), findsWidgets, reason: w);
+    }
+    expect(find.text('Guide'), findsNothing);
+    appLang.value = 'te';
+    rebuildAll(tester.element(find.byType(Scaffold).first));
+    for (var i = 0; i < 5; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    for (final w in ['మార్గదర్శి', 'సహాయం', 'నేటి సూక్తి']) {
+      expect(find.text(w), findsWidgets, reason: w);
+    }
     expect(tester.takeException(), isNull);
   });
 

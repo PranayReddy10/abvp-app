@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n.dart';
 import '../api/api_client.dart';
 import '../state/session.dart';
 import '../theme.dart';
@@ -17,10 +18,10 @@ class VibhagsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Vibhags'),
+        title: Text(t('Vibhags')),
         actions: [
           IconButton(
-            tooltip: 'Directory',
+            tooltip: t('Directory'),
             icon: const Icon(Icons.people_alt_outlined),
             onPressed: () => Navigator.push(
               context,
@@ -46,8 +47,8 @@ class VibhagsScreen extends StatelessWidget {
               subtitle: Text('${v['members_count']} members'),
               trailing: v['is_member'] == true
                   ? const Icon(Icons.chevron_right)
-                  : const StatusPill(
-                      'Join',
+                  : StatusPill(
+                      t('Join'),
                       color: AppColors.saffronInk,
                       background: AppColors.saffronSoft,
                     ),
@@ -67,13 +68,13 @@ class VibhagsScreen extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
             children: [
               Text(
-                'My Vibhags',
+                t('My Vibhags'),
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 6),
               if (mine.isEmpty)
-                const EmptyNote(
-                  'You have not joined a Vibhag yet. Pick one below.',
+                EmptyNote(
+                  t('You have not joined a Vibhag yet. Pick one below.'),
                 ),
               ...staggered(
                 mine
@@ -87,7 +88,7 @@ class VibhagsScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                'All Vibhags',
+                t('All Vibhags'),
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 6),
@@ -136,23 +137,23 @@ class _VibhagScreenState extends State<VibhagScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Post an update'),
+        title: Text(t('Post an update')),
         content: TextField(
           controller: ctrl,
           maxLines: 5,
           maxLength: 2000,
-          decoration: const InputDecoration(
-            hintText: 'What happened, or what is coming up?',
+          decoration: InputDecoration(
+            hintText: t('What happened, or what is coming up?'),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(t('Cancel')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Post'),
+            child: Text(t('Post')),
           ),
         ],
       ),
@@ -172,7 +173,7 @@ class _VibhagScreenState extends State<VibhagScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Vibhag')),
+      appBar: AppBar(title: Text(t('Vibhag'))),
       body: Loader<(Map<String, dynamic>, List, List)>(
         key: _key,
         load: _load,
@@ -217,7 +218,7 @@ class _VibhagScreenState extends State<VibhagScreen> {
                             style: OutlinedButton.styleFrom(
                               minimumSize: const Size(0, 40),
                             ),
-                            child: const Text('Leave'),
+                            child: Text(t('Leave')),
                           )
                         else
                           FilledButton(
@@ -236,14 +237,14 @@ class _VibhagScreenState extends State<VibhagScreen> {
                             style: FilledButton.styleFrom(
                               minimumSize: const Size(0, 40),
                             ),
-                            child: const Text('Join this Vibhag'),
+                            child: Text(t('Join this Vibhag')),
                           ),
                         const Spacer(),
                         if (v['can_post'] == true)
                           TextButton.icon(
                             onPressed: _post,
                             icon: const Icon(Icons.edit_outlined),
-                            label: const Text('Post update'),
+                            label: Text(t('Post update')),
                           ),
                       ],
                     ),
@@ -252,7 +253,7 @@ class _VibhagScreenState extends State<VibhagScreen> {
               ),
               if (coords.isNotEmpty) ...[
                 const SizedBox(height: 18),
-                Text('Coordinators', style: text.titleMedium),
+                Text(t('Coordinators'), style: text.titleMedium),
                 ...coords.map(
                   (c) => ListTile(
                     contentPadding: EdgeInsets.zero,
@@ -265,9 +266,9 @@ class _VibhagScreenState extends State<VibhagScreen> {
                 ),
               ],
               const SizedBox(height: 18),
-              Text('Updates', style: text.titleMedium),
+              Text(t('Updates'), style: text.titleMedium),
               const SizedBox(height: 6),
-              if (posts.isEmpty) const EmptyNote('No updates yet.'),
+              if (posts.isEmpty) EmptyNote(t('No updates yet.')),
               ...posts.cast<Map<String, dynamic>>().map(
                 (p) => Padding(
                   padding: const EdgeInsets.only(bottom: 8),
@@ -291,7 +292,7 @@ class _VibhagScreenState extends State<VibhagScreen> {
               ),
               if (joined && members.isNotEmpty) ...[
                 const SizedBox(height: 18),
-                Text('Members near you', style: text.titleMedium),
+                Text(t('Members near you'), style: text.titleMedium),
                 ...members.cast<Map<String, dynamic>>().map(
                   (m) => ListTile(
                     contentPadding: EdgeInsets.zero,

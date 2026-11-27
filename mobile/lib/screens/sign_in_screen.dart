@@ -66,7 +66,9 @@ class _SignInScreenState extends State<SignInScreen> {
     } on GoogleSignInException catch (e) {
       if (e.code != GoogleSignInExceptionCode.canceled && mounted) {
         setState(
-          () => _error = 'Google sign-in did not finish. Try again or use your mobile number.',
+          () => _error = t(
+            'Google sign-in did not finish. Try again or use your mobile number.',
+          ),
         );
       }
     } on ApiException catch (e) {
@@ -74,7 +76,9 @@ class _SignInScreenState extends State<SignInScreen> {
     } catch (_) {
       if (mounted) {
         setState(
-          () => _error = 'Google sign-in is not available on this device. Use your mobile number.',
+          () => _error = t(
+            'Google sign-in is not available on this device. Use your mobile number.',
+          ),
         );
       }
     } finally {
@@ -367,22 +371,22 @@ class _SignInScreenState extends State<SignInScreen> {
             controller: _email,
             keyboardType: TextInputType.emailAddress,
             autofillHints: const [AutofillHints.email],
-            decoration: const InputDecoration(
-              labelText: 'Email (optional)',
+            decoration: InputDecoration(
+              labelText: t('Email (optional)'),
               prefixIcon: Icon(Icons.alternate_email_rounded),
             ),
           ),
           const SizedBox(height: 14),
           DropdownButtonFormField<String>(
             initialValue: _gender,
-            decoration: const InputDecoration(
-              labelText: 'Gender',
+            decoration: InputDecoration(
+              labelText: t('Gender'),
               prefixIcon: Icon(Icons.wc_rounded),
             ),
-            items: const [
-              DropdownMenuItem(value: 'male', child: Text('Male')),
-              DropdownMenuItem(value: 'female', child: Text('Female')),
-              DropdownMenuItem(value: 'other', child: Text('Other')),
+            items: [
+              DropdownMenuItem(value: 'male', child: Text(t('Male'))),
+              DropdownMenuItem(value: 'female', child: Text(t('Female'))),
+              DropdownMenuItem(value: 'other', child: Text(t('Other'))),
             ],
             onChanged: (v) => setState(() => _gender = v),
           ),
@@ -419,7 +423,7 @@ class _SignInScreenState extends State<SignInScreen> {
                 : tr('signin.password'),
             prefixIcon: const Icon(Icons.lock_outline),
             suffixIcon: IconButton(
-              tooltip: _showPassword ? 'Hide' : 'Show',
+              tooltip: _showPassword ? t('Hide') : t('Show'),
               icon: Icon(
                 _showPassword
                     ? Icons.visibility_off_outlined
@@ -436,8 +440,8 @@ class _SignInScreenState extends State<SignInScreen> {
             controller: _confirm,
             obscureText: !_showPassword,
             autofillHints: const [AutofillHints.newPassword],
-            decoration: const InputDecoration(
-              labelText: 'Confirm password',
+            decoration: InputDecoration(
+              labelText: t('Confirm password'),
               prefixIcon: Icon(Icons.lock_reset_rounded),
             ),
             onSubmitted: (_) => _passwordAction(),
@@ -484,12 +488,14 @@ class _SignInScreenState extends State<SignInScreen> {
   void _passwordAction() {
     if (_mode == 'create') {
       final missing = [
-        if (_name.text.trim().length < 2) 'your name',
-        if (_gender == null) 'gender',
-        if (_unitId == null) 'your state and district',
+        if (_name.text.trim().length < 2) t('your name'),
+        if (_gender == null) t('your gender'),
+        if (_unitId == null) t('your state and district'),
       ];
       if (missing.isNotEmpty) {
-        setState(() => _error = 'Please add ${missing.join(', ')}.');
+        setState(
+          () => _error = t('Please add {x}.', {'x': missing.join(', ')}),
+        );
         return;
       }
       if (_password.text.length < 8) {
@@ -497,7 +503,7 @@ class _SignInScreenState extends State<SignInScreen> {
         return;
       }
       if (_password.text != _confirm.text) {
-        setState(() => _error = 'The two passwords do not match.');
+        setState(() => _error = t('The two passwords do not match.'));
         return;
       }
     }
