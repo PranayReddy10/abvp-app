@@ -343,6 +343,7 @@ class ConferenceTeamController extends Controller
             'linked' => $m->user_id !== null,
             // Their member ID, to open their profile or follow them in the app.
             'member_id' => $p?->member_id,
+            'verified' => (bool) $p?->isVerified(),
             'note' => $m->note,
             'photo_url' => $p?->photo_path ? \Illuminate\Support\Facades\URL::temporarySignedRoute('media.photo', now()->addHour(), ['profile' => $p->id]) : null,
         ];

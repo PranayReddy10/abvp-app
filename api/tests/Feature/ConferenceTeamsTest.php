@@ -260,4 +260,20 @@ class ConferenceTeamsTest extends TestCase
         $this->assertSame($heads[0], $k->members()->first()->id);
         $this->deleteJson("/api/v1/admin/events/{$this->event->id}/cover")->assertOk();
     }
+
+    public function test_team_people_show_blue_tick_and_their_number_on_the_profile(): void
+    {
+        $this->postJson('/api/v1/auth/send-otp', ['mobile' => '9876533377'])->assertOk();
+        $this->postJson('/api/v1/auth/register', ['mobile' => '9876533377', 'code' => '123456', 'name' => 'Ravi Teja'])->assertOk();
+        $this->app['auth']->forgetGuards();
+        $ravi = User::where('mobile', '+919876533377')->firstOrFail();
+        $ravi->profile->forceFill(['verified_at' => now(), 'privacy' => ['mobile' => 'nobody']])->save();
+        EventTeamMember::create(['team_id' => $this->dept('Bhojan', 'Kitchen')->id, 'name' => 'Ravi Teja', 'mobile' => '9876533377', 'role' => 'volunteer', 'user_id' => $ravi->id]);
+
+        Sanctum::actingAs(User::create(['mobile' => '+919876500055', 'name' => 'Viewer']));
+        $people = collect($this->getJson("/api/v1/events/{$this->event->id}/teams")->json('data.ghats'))
+            ->flatMap(fn ($g) => collect($g['departments'])->flatMap(fn ($d) => $d['people']));
+        $this->assertTrue($people->firstWhere('name', 'Ravi Teja')['verified']);
+        $this->getJson('/api/v1/members/'.$ravi->profile->member_id)->assertOk()->assertJsonPath('data.mobile', '+919876533377');
+    }
 }

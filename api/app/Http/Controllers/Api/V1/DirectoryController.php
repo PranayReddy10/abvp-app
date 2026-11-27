@@ -110,6 +110,8 @@ class DirectoryController extends Controller
         $viewerProfile = $viewer->profile;
         $isOfficeBearer = $isAdmin || $viewer->responsibilities()->whereNull('ends_on')->exists();
         $workContact = $viewer->id !== $p->user_id && app(\App\Services\ContactPolicy::class)->canSeePhone($viewer, $p->user);
+        // Conference team numbers are already public in the team tree for everyone signed in.
+        $onTeam = rescue(fn () => \App\Models\EventTeamMember::where('user_id', $p->user_id)->whereNotNull('mobile')->exists(), false, false);
 
         $canSee = function (string $field) use ($p, $viewer, $viewerProfile, $isOfficeBearer) {
             if ($viewer->id === $p->user_id) {
@@ -140,7 +142,7 @@ class DirectoryController extends Controller
             'course' => $canSee('institution') ? $p->course : null,
             'email' => $canSee('email') ? $p->user->email : null,
             // Phone: their own privacy choice, or because you work together at a current event.
-            'mobile' => $canSee('mobile') || $workContact ? $p->user->mobile : null,
+            'mobile' => $canSee('mobile') || $workContact || $onTeam ? $p->user->mobile : null,
             'works_with_you' => $workContact,
             'social' => FeedController::counts($p->user, $viewer),
             'date_of_birth' => $canSee('date_of_birth') ? $p->date_of_birth?->toDateString() : null,
