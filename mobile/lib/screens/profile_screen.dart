@@ -9,6 +9,7 @@ import '../widgets/motion.dart';
 import '../widgets/password_sheet.dart';
 import 'duties_screen.dart';
 import 'edit_profile_screen.dart';
+import 'feed_screen.dart' show openPhoto;
 import 'events_screen.dart';
 import 'guide/support_screen.dart';
 
@@ -136,7 +137,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     width: 2.5,
                   ),
                 ),
-                child: Initials(p.fullName, size: 68, photoUrl: p.photoUrl),
+                child: GestureDetector(
+                  onTap: p.photoUrl == null
+                      ? null
+                      : () => openPhoto(context, p.photoUrl!),
+                  child: Initials(p.fullName, size: 68, photoUrl: p.photoUrl),
+                ),
               ),
               const SizedBox(width: 16),
               Expanded(

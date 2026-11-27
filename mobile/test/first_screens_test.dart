@@ -164,6 +164,7 @@ final _person = {
   'has_mobile': true,
   'linked': true,
   'member_id': 'ABVP-TS-HYD-000009',
+  'verified': true,
   'note': null,
   'photo_url': null,
 };
@@ -337,6 +338,7 @@ void main() {
     expect(find.text('Adhiveshan office · Karyalaya'), findsOneWidget);
     expect(find.text('WhatsApp'), findsOneWidget);
     expect(find.text('View profile'), findsOneWidget);
+    expect(find.byIcon(Icons.verified), findsWidgets); // blue tick in the popup
     expect(find.text('Follow'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });

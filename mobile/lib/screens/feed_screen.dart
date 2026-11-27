@@ -991,6 +991,17 @@ class PhotoGrid extends StatelessWidget {
   }
 }
 
+/// Opens one photo full screen (pinch to zoom), e.g. when tapping a profile picture.
+Future<void> openPhoto(BuildContext context, String url) => Navigator.push(
+  context,
+  PageRouteBuilder(
+    opaque: false,
+    pageBuilder: (_, _, _) => _PhotoViewer(urls: [url], index: 0),
+    transitionsBuilder: (_, a, _, child) =>
+        FadeTransition(opacity: a, child: child),
+  ),
+);
+
 class _PhotoViewer extends StatelessWidget {
   const _PhotoViewer({required this.urls, required this.index});
   final List<String> urls;
@@ -1806,10 +1817,18 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                             color: AppColors.ground,
                             shape: BoxShape.circle,
                           ),
-                          child: Initials(
-                            p['full_name'] as String,
-                            photoUrl: p['photo_url'] as String?,
-                            size: 88,
+                          child: GestureDetector(
+                            onTap: p['photo_url'] == null
+                                ? null
+                                : () => openPhoto(
+                                    context,
+                                    p['photo_url'] as String,
+                                  ),
+                            child: Initials(
+                              p['full_name'] as String,
+                              photoUrl: p['photo_url'] as String?,
+                              size: 88,
+                            ),
                           ),
                         ),
                       ),
@@ -1929,12 +1948,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                             if (p['institution'] != null)
                               Fact(t('College'), p['institution'] as String),
                             if (p['mobile'] != null)
-                              Fact(t('Mobile'), p['mobile'] as String)
-                            else if (!self)
-                              Fact(
-                                t('Mobile'),
-                                t('Hidden by their privacy settings'),
-                              ),
+                              Fact(t('Mobile'), p['mobile'] as String),
                           ],
                         ),
                       ),

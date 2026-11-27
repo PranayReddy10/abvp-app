@@ -18,7 +18,7 @@ import '../../widgets/loader.dart';
 import '../../widgets/motion.dart';
 import '../duties_screen.dart';
 import '../edit_profile_screen.dart';
-import '../feed_screen.dart' show MemberProfileScreen;
+import '../feed_screen.dart' show MemberProfileScreen, openPhoto;
 import '../guide/guide_hub.dart';
 import '../guide/guide_sections.dart';
 import '../guide/support_screen.dart';
@@ -1761,14 +1761,24 @@ class PersonTile extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      p['name'] as String,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 15,
-                      ),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            p['name'] as String,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ),
+                        if (p['verified'] == true) ...[
+                          const SizedBox(width: 4),
+                          const VerifiedBadge(size: 16),
+                        ],
+                      ],
                     ),
                     const SizedBox(height: 3),
                     Row(
@@ -1880,20 +1890,36 @@ Future<void> showPersonSheet(
                         color: Colors.white,
                         border: Border.all(color: rc, width: 3),
                       ),
-                      child: Initials(
-                        p['name'] as String,
-                        photoUrl: p['photo_url'] as String?,
-                        size: 88,
+                      child: GestureDetector(
+                        onTap: p['photo_url'] == null
+                            ? null
+                            : () => openPhoto(ctx, p['photo_url'] as String),
+                        child: Initials(
+                          p['name'] as String,
+                          photoUrl: p['photo_url'] as String?,
+                          size: 88,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 12),
-                    Text(
-                      p['name'] as String,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            p['name'] as String,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                        if (p['verified'] == true) ...[
+                          const SizedBox(width: 6),
+                          const VerifiedBadge(size: 22),
+                        ],
+                      ],
                     ),
                     const SizedBox(height: 6),
                     Container(
@@ -2449,8 +2475,20 @@ class _HeadCard extends StatelessWidget {
             size: 40,
           ),
           const SizedBox(height: 8),
-          Text(
-            p['name'] as String,
+          Text.rich(
+            TextSpan(
+              text: p['name'] as String,
+              children: [
+                if (p['verified'] == true)
+                  const WidgetSpan(
+                    alignment: PlaceholderAlignment.middle,
+                    child: Padding(
+                      padding: EdgeInsets.only(left: 4),
+                      child: VerifiedBadge(size: 15),
+                    ),
+                  ),
+              ],
+            ),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
