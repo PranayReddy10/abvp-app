@@ -6,7 +6,6 @@ import 'calendar_screen.dart';
 import 'feed_screen.dart';
 import 'guide/guide_hub.dart';
 import 'conference/conference.dart';
-import 'pass_screen.dart';
 import 'profile_screen.dart';
 import '../l10n.dart';
 
@@ -36,7 +35,7 @@ class _MemberShellState extends State<MemberShell> {
       // The national conference first: delegate side, my seva, the whole team.
       ConferenceHome(
         session: widget.session,
-        onShowPass: () => openMyPass(context, widget.session),
+        onOpenCommunity: () => setState(() => _tab = 1),
       ),
       FeedScreen(session: widget.session),
       CalendarScreen(session: widget.session),

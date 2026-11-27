@@ -6,7 +6,6 @@ import 'events_screen.dart';
 import 'guide/guide_hub.dart';
 import 'guide/guide_widgets.dart' show Json;
 import 'notifications_screen.dart';
-import 'pass_screen.dart';
 
 /// Invited guests: their invitations and passes, nothing else.
 class GuestShell extends StatefulWidget {
@@ -18,7 +17,7 @@ class GuestShell extends StatefulWidget {
 }
 
 class _GuestShellState extends State<GuestShell> {
-  int _tab = 0;
+  final int _tab = 0;
 
   @override
   void initState() {
@@ -101,7 +100,7 @@ class _GuestShellState extends State<GuestShell> {
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: const Text(
-                    'You have been invited as a guest. Your invitations and entry passes are below.',
+                    'You have been invited as a guest. Your invitations are below.',
                     style: TextStyle(
                       color: AppColors.saffronInk,
                       fontWeight: FontWeight.w600,
@@ -112,19 +111,6 @@ class _GuestShellState extends State<GuestShell> {
               Expanded(child: EventsList(session: widget.session)),
             ],
           ),
-          PassScreen(session: widget.session),
-        ],
-      ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _tab,
-        onDestinationSelected: (i) => setState(() => _tab = i),
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.event_outlined),
-            selectedIcon: Icon(Icons.event),
-            label: 'Invitations',
-          ),
-          NavigationDestination(icon: Icon(Icons.qr_code_2), label: 'Pass'),
         ],
       ),
     );

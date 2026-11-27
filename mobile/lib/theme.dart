@@ -10,8 +10,9 @@ class AppColors {
   static const ink = Color(0xFF171A2E);
   static const inkSoft = Color(0xFF2A2E4A);
   static const muted = Color(0xFF5D6178);
-  static const line = Color(0xFFE6E8EF);
-  static const ground = Color(0xFFF1F2F5);
+  static const line = Color(0xFFF1E1D2);
+  // Warm saffron-cream background instead of plain grey.
+  static const ground = Color(0xFFFFF3E8);
   static const surface = Color(0xFFFFFFFF);
   static const ok = Color(0xFF1C7F55);
   static const okSoft = Color(0xFFE3F4EC);

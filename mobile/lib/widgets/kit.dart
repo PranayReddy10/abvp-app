@@ -216,11 +216,12 @@ class FloatingNavBar extends StatelessWidget {
           margin: const EdgeInsets.symmetric(horizontal: 20),
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: AppColors.ink,
+            color: Colors.white,
             borderRadius: BorderRadius.circular(40),
+            border: Border.all(color: AppColors.saffronSoft),
             boxShadow: const [
               BoxShadow(
-                color: Color(0x40171A2E),
+                color: Color(0x40E3620C),
                 blurRadius: 24,
                 offset: Offset(0, 10),
                 spreadRadius: -6,
@@ -247,14 +248,24 @@ class FloatingNavBar extends StatelessWidget {
                           width: i == index ? 64 : 54,
                           height: 54,
                           decoration: BoxDecoration(
-                            color: i == index
-                                ? AppColors.saffron
-                                : Colors.white.withValues(alpha: 0.08),
+                            gradient: i == index
+                                ? const LinearGradient(
+                                    colors: [
+                                      Color(0xFFF59A4C),
+                                      AppColors.saffronDeep,
+                                    ],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  )
+                                : null,
+                            color: i == index ? null : AppColors.saffronSoft,
                             borderRadius: BorderRadius.circular(30),
                           ),
                           child: Icon(
                             items[i].$1,
-                            color: Colors.white,
+                            color: i == index
+                                ? Colors.white
+                                : AppColors.saffronDeep,
                             size: 24,
                           ),
                         ),

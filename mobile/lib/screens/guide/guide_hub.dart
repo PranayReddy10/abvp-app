@@ -958,6 +958,10 @@ Future<void> maybeOpenGuide(BuildContext context, Session session) async {
         .cast<Json>();
     final next = rows.where((r) => r['open_first'] == true).firstOrNull;
     if (next == null || !context.mounted) return;
+    // The guide is for delegates: it opens only after the delegate form is filled.
+    final id = (next['event'] as Json)['id'];
+    final mine = await session.api.get('/events/$id/delegate') as Json?;
+    if (mine?['registration'] == null || !context.mounted) return;
     await Navigator.push(
       context,
       PageRouteBuilder(

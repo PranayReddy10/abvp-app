@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -16,7 +17,6 @@ import '../duties_screen.dart';
 import '../edit_profile_screen.dart';
 import '../guide/guide_hub.dart';
 import '../guide/guide_sections.dart';
-import '../pass_screen.dart';
 import 'delegate_form.dart';
 import '../meeting_screen.dart';
 import '../notifications_screen.dart';
@@ -40,7 +40,16 @@ Future<void> _wa(String m) => launchUrl(
 
 /// Everything the home needs in one go: the conference, my seva and the team tree.
 class _HomeData {
-  _HomeData(this.conference, this.seva, this.tree, [this.delegate]);
+  _HomeData(
+    this.conference,
+    this.seva,
+    this.tree, [
+    this.delegate,
+    this.posts = const [],
+  ]);
+
+  /// The newest community posts, for the strip on Home.
+  final List<Json> posts;
   final Json? conference;
   final Json seva;
   final Json? tree;
@@ -57,14 +66,12 @@ class _HomeData {
   };
 }
 
-/// Home, built around the national conference: the delegate side (guide, pass, help desk),
-/// the volunteer side (my seva: role, team chat, tasks, meetings, announcements) and the whole
-/// conference team as colourful ghat tiles.
 Future<_HomeData> _loadHome(Session session) async {
   final conf = await session.api.get('/conference') as Json?;
   final seva = await session.api.get('/me/seva') as Json;
   Json? tree;
   Json? delegate;
+  var posts = <Json>[];
   if (conf != null && conf['has_teams'] == true) {
     tree = await session.api.get('/events/${conf['id']}/teams') as Json;
   }
@@ -76,15 +83,29 @@ Future<_HomeData> _loadHome(Session session) async {
       delegate = null;
     }
   }
-  return _HomeData(conf, seva, tree, delegate);
+  try {
+    posts = ((await session.api.get('/feed') as List?) ?? [])
+        .cast<Json>()
+        .where((p) => p['hidden'] != true)
+        .take(6)
+        .toList();
+  } on ApiException {
+    posts = [];
+  }
+  return _HomeData(conf, seva, tree, delegate, posts);
 }
 
-/// Home: who I am (with a little motion), the conference with a live countdown, quick buttons
-/// for the guide, my pass, the gallery and the helpline, then the delegate and volunteer sides.
+/// Home: a saffron header with me in it, the conference with a live countdown, quick actions,
+/// the delegate and volunteer sides, a thought for the day, my volunteer team and the newest
+/// community posts.
 class ConferenceHome extends StatelessWidget {
-  const ConferenceHome({super.key, required this.session, this.onShowPass});
+  const ConferenceHome({
+    super.key,
+    required this.session,
+    this.onOpenCommunity,
+  });
   final Session session;
-  final VoidCallback? onShowPass;
+  final VoidCallback? onOpenCommunity;
 
   @override
   Widget build(BuildContext context) {
@@ -93,51 +114,70 @@ class ConferenceHome extends StatelessWidget {
       builder: (context, d, reload) => RefreshIndicator(
         onRefresh: reload,
         child: ListView(
-          padding: EdgeInsets.fromLTRB(
-            16,
-            MediaQuery.paddingOf(context).top + 12,
-            16,
-            120,
-          ),
+          padding: const EdgeInsets.only(bottom: 120),
           children: [
-            FadeSlideIn(
-              child: _ProfileHeader(session: session, data: d),
+            _HomeHeader(session: session, data: d),
+            Transform.translate(
+              offset: const Offset(0, -46),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (d.conference == null)
+                      const Panel(
+                        child: EmptyNote(
+                          'The conference details appear here once it is published.',
+                        ),
+                      )
+                    else ...[
+                      FadeSlideIn(child: _Countdown(conf: d.conference!)),
+                      const SizedBox(height: 18),
+                      FadeSlideIn(
+                        index: 1,
+                        child: _QuickButtons(
+                          session: session,
+                          data: d,
+                          onChanged: reload,
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      FadeSlideIn(
+                        index: 2,
+                        child: _SideTiles(
+                          session: session,
+                          data: d,
+                          onChanged: reload,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 18),
+                    const FadeSlideIn(index: 3, child: _Thought()),
+                    if (d.places.isNotEmpty) ...[
+                      const SizedBox(height: 22),
+                      FadeSlideIn(
+                        index: 4,
+                        child: _MySeva(
+                          session: session,
+                          data: d,
+                          onChanged: reload,
+                        ),
+                      ),
+                    ],
+                    if (d.posts.isNotEmpty) ...[
+                      const SizedBox(height: 22),
+                      FadeSlideIn(
+                        index: 5,
+                        child: _CommunityStrip(
+                          posts: d.posts,
+                          onOpen: onOpenCommunity,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
             ),
-            const SizedBox(height: 16),
-            if (d.conference == null)
-              const EmptyNote(
-                'The conference details appear here once it is published.',
-              )
-            else ...[
-              FadeSlideIn(index: 1, child: _Hero(conf: d.conference!)),
-              const SizedBox(height: 16),
-              FadeSlideIn(
-                index: 2,
-                child: _QuickButtons(
-                  session: session,
-                  data: d,
-                  onChanged: reload,
-                  onShowPass: onShowPass,
-                ),
-              ),
-              const SizedBox(height: 18),
-              FadeSlideIn(
-                index: 3,
-                child: _SideTiles(
-                  session: session,
-                  data: d,
-                  onShowPass: onShowPass,
-                  onChanged: reload,
-                ),
-              ),
-              if (d.places.isNotEmpty) ...[
-                const SizedBox(height: 18),
-                FadeSlideIn(
-                  index: 4,
-                  child: _MySeva(session: session, data: d, onChanged: reload),
-                ),
-              ],
-            ],
           ],
         ),
       ),
@@ -213,29 +253,6 @@ class VolunteerScreen extends StatelessWidget {
                     if (d.places.isNotEmpty) ...[
                       _MySeva(session: session, data: d, onChanged: reload),
                       const SizedBox(height: 22),
-                    ] else if (d.ghats.isNotEmpty) ...[
-                      Panel(
-                        color: AppColors.saffronSoft,
-                        child: const Row(
-                          children: [
-                            Icon(
-                              Icons.volunteer_activism_outlined,
-                              color: AppColors.saffronInk,
-                            ),
-                            SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                'Want to volunteer at the conference? Call the Ghat Pramukh of the ghat you would like to join. They will add you, and your team chat and tasks appear here.',
-                                style: TextStyle(
-                                  color: AppColors.saffronInk,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 22),
                     ],
                     if (d.ghats.isEmpty)
                       const EmptyNote('The conference team appears here soon.')
@@ -260,22 +277,22 @@ class VolunteerScreen extends StatelessWidget {
   }
 }
 
-/// Me at the top of Home: photo with a slowly turning saffron ring, name, member ID, area and
-/// what I am at the conference.
-class _ProfileHeader extends StatefulWidget {
-  const _ProfileHeader({required this.session, required this.data});
+/// The saffron header of Home: me (photo with a turning ring), greeting, member ID, area, what I
+/// am at the conference, and notifications. Soft circles drift behind it.
+class _HomeHeader extends StatefulWidget {
+  const _HomeHeader({required this.session, required this.data});
   final Session session;
   final _HomeData data;
 
   @override
-  State<_ProfileHeader> createState() => _ProfileHeaderState();
+  State<_HomeHeader> createState() => _HomeHeaderState();
 }
 
-class _ProfileHeaderState extends State<_ProfileHeader>
+class _HomeHeaderState extends State<_HomeHeader>
     with SingleTickerProviderStateMixin {
   late final AnimationController _spin = AnimationController(
     vsync: this,
-    duration: const Duration(seconds: 6),
+    duration: const Duration(seconds: 8),
   )..repeat();
 
   @override
@@ -298,169 +315,214 @@ class _ProfileHeaderState extends State<_ProfileHeader>
         : hour < 17
         ? 'Good afternoon'
         : 'Good evening';
-    final chips = <(IconData, String, Color)>[
-      if (widget.data.isDelegate)
-        (Icons.badge_rounded, 'Delegate', const Color(0xFF3E8BF0)),
+    final chips = <(IconData, String)>[
+      if (widget.data.isDelegate) (Icons.badge_rounded, 'Delegate'),
       for (final pl in widget.data.places.take(2))
         (
           Icons.volunteer_activism_rounded,
           '${pl['role_label']} · ${(pl['team'] as Json)['name']}',
-          AppColors.saffron,
         ),
-      if (p?.status == 'approved')
-        (Icons.verified_rounded, 'Member', AppColors.ok),
+      if (p?.status == 'approved') (Icons.verified_rounded, 'Member'),
     ];
+    final top = MediaQuery.paddingOf(context).top;
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF171A2E).withValues(alpha: 0.06),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
+      padding: EdgeInsets.fromLTRB(20, top + 14, 20, 66),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFFF59A4C), AppColors.saffron, Color(0xFFB8430A)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(36)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
+        clipBehavior: Clip.none,
         children: [
-          Row(
+          // Drifting circles: a gentle sense of motion behind the header.
+          Positioned.fill(
+            child: AnimatedBuilder(
+              animation: _spin,
+              builder: (_, _) {
+                final t = _spin.value * 2 * 3.14159;
+                Widget dot(double size, double x, double y, double a) =>
+                    Positioned(
+                      right: x + 10 * math.cos(t + a),
+                      top: y + 8 * math.sin(t + a),
+                      child: Container(
+                        width: size,
+                        height: size,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white.withValues(alpha: 0.09),
+                        ),
+                      ),
+                    );
+                return Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    dot(140, -50, -60, 0),
+                    dot(70, 90, 40, 2),
+                    dot(36, 30, 96, 4),
+                  ],
+                );
+              },
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              GestureDetector(
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => EditProfileScreen(session: session),
-                  ),
-                ),
-                child: SizedBox(
-                  width: 72,
-                  height: 72,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      RotationTransition(
-                        turns: _spin,
-                        child: Container(
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: SweepGradient(
-                              colors: [
-                                AppColors.saffron,
-                                Color(0xFFFFC98B),
-                                Color(0xFF13235B),
-                                AppColors.saffron,
-                              ],
+              Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => EditProfileScreen(session: session),
+                      ),
+                    ),
+                    child: SizedBox(
+                      width: 66,
+                      height: 66,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          RotationTransition(
+                            turns: _spin,
+                            child: Container(
+                              decoration: const BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: SweepGradient(
+                                  colors: [
+                                    Colors.white,
+                                    Color(0xFFFFD7AE),
+                                    Color(0x00FFFFFF),
+                                    Colors.white,
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
-                        ),
+                          Container(
+                            width: 59,
+                            height: 59,
+                            padding: const EdgeInsets.all(2),
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Initials(
+                              name,
+                              photoUrl: p?.photoUrl,
+                              size: 55,
+                            ),
+                          ),
+                        ],
                       ),
-                      Container(
-                        width: 64,
-                        height: 64,
-                        padding: const EdgeInsets.all(2),
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Initials(name, photoUrl: p?.photoUrl, size: 60),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        Row(
+                          children: [
+                            Text(
+                              '$hello ',
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 13,
+                              ),
+                            ),
+                            const _Wave(),
+                          ],
+                        ),
                         Text(
-                          '$hello ',
+                          name.isEmpty ? 'Welcome' : name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            color: AppColors.muted,
-                            fontSize: 13,
+                            fontFamily: 'Anek',
+                            color: Colors.white,
+                            fontSize: 23,
+                            fontWeight: FontWeight.w800,
+                            height: 1.15,
                           ),
                         ),
-                        const _Wave(),
+                        Text(
+                          [p?.memberId, p?.orgUnitLabel]
+                              .whereType<String>()
+                              .where((x) => x.isNotEmpty)
+                              .join(' · '),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12.5,
+                          ),
+                        ),
                       ],
                     ),
-                    Text(
-                      name.isEmpty ? 'Welcome' : name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontFamily: 'Anek',
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                        height: 1.15,
+                  ),
+                  Material(
+                    color: Colors.white.withValues(alpha: 0.18),
+                    shape: const CircleBorder(),
+                    child: IconButton(
+                      tooltip: 'Notifications',
+                      icon: const Icon(
+                        Icons.notifications_none_rounded,
+                        color: Colors.white,
+                      ),
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => NotificationsScreen(session: session),
+                        ),
                       ),
                     ),
-                    Text(
-                      [p?.memberId, p?.orgUnitLabel]
-                          .whereType<String>()
-                          .where((x) => x.isNotEmpty)
-                          .join(' · '),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: AppColors.muted,
-                        fontSize: 12.5,
+                  ),
+                ],
+              ),
+              if (chips.isNotEmpty) ...[
+                const SizedBox(height: 14),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    for (final (icon, label) in chips)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.35),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(icon, size: 15, color: Colors.white),
+                            const SizedBox(width: 5),
+                            Text(
+                              label,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
                   ],
                 ),
-              ),
-              CircleIconButton(
-                icon: Icons.notifications_none_rounded,
-                tooltip: 'Notifications',
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => NotificationsScreen(session: session),
-                  ),
-                ),
-              ),
+              ],
             ],
           ),
-          if (chips.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: [
-                for (final (icon, label, color) in chips)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(icon, size: 15, color: color),
-                        const SizedBox(width: 5),
-                        Text(
-                          label,
-                          style: TextStyle(
-                            color: color,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
-          ],
         ],
       ),
     );
@@ -499,20 +561,20 @@ class _WaveState extends State<_Wave> with SingleTickerProviderStateMixin {
   );
 }
 
-/// Delegate: the form the first time (when registration is open), then the guide or the pass.
+/// Delegate: the form the first time (when registration is open); after that the guide.
+/// With [edit], a registered delegate opens their form again to change it.
 Future<void> _openDelegate(
   BuildContext context,
   Session session,
   _HomeData data,
   Future<void> Function() onChanged, {
-  VoidCallback? onShowPass,
-  bool thenPass = false,
+  bool edit = false,
 }) async {
   final conf = data.conference!;
   final id = conf['id'] as int;
-  if (!data.isDelegate) {
+  if (!data.isDelegate || edit) {
     final d = data.delegate;
-    if (d == null || d['open'] != true) {
+    if (d == null || (!data.isDelegate && d['open'] != true)) {
       await _registrationClosed(context, session);
       return;
     }
@@ -524,10 +586,10 @@ Future<void> _openDelegate(
       ),
     );
     await onChanged();
-    if (done != true || !context.mounted) return;
+    if (done != true || edit || !context.mounted) return;
   }
   if (!context.mounted) return;
-  if (!thenPass && conf['guide_enabled'] == true) {
+  if (conf['guide_enabled'] == true) {
     await Navigator.push(
       context,
       MaterialPageRoute(
@@ -535,7 +597,52 @@ Future<void> _openDelegate(
       ),
     );
   } else {
-    onShowPass != null ? onShowPass() : await openMyPass(context, session);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'You are registered as a delegate. The guide opens closer to the conference.',
+        ),
+      ),
+    );
+  }
+}
+
+/// The guide is for delegates: anyone else is asked to fill the delegate form first.
+Future<void> _openGuide(
+  BuildContext context,
+  Session session,
+  _HomeData data,
+  Future<void> Function() onChanged,
+) async {
+  if (data.isDelegate) {
+    return _openDelegate(context, session, data, onChanged);
+  }
+  final go = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      icon: const Icon(
+        Icons.explore_rounded,
+        size: 36,
+        color: AppColors.saffron,
+      ),
+      title: const Text('Fill the delegate form first'),
+      content: const Text(
+        'The conference guide – your stay, transport, food and help desk – opens once you have filled the delegate form.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: const Text('Later'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(ctx, true),
+          child: const Text('Fill the form'),
+        ),
+      ],
+    ),
+  );
+  if (go == true && context.mounted) {
+    await _openDelegate(context, session, data, onChanged);
   }
 }
 
@@ -568,72 +675,21 @@ Future<void> _registrationClosed(BuildContext context, Session session) {
   );
 }
 
-/// My pass: delegates see their pass; everyone else is asked to fill the delegate form first.
-Future<void> _openPass(
-  BuildContext context,
-  Session session,
-  _HomeData data,
-  Future<void> Function() onChanged, {
-  VoidCallback? onShowPass,
-}) async {
-  if (data.isDelegate) {
-    onShowPass != null ? onShowPass() : await openMyPass(context, session);
-    return;
-  }
-  final go = await showDialog<bool>(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      icon: const Icon(Icons.badge_rounded, size: 36, color: Color(0xFF3E8BF0)),
-      title: const Text('No pass yet'),
-      content: const Text(
-        'Your conference pass is made when you fill the delegate form. Fill it once and your pass with its QR code appears here.',
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('Later'),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.pop(ctx, true),
-          child: const Text('Fill the form'),
-        ),
-      ],
-    ),
-  );
-  if (go == true && context.mounted) {
-    await _openDelegate(
-      context,
-      session,
-      data,
-      onChanged,
-      onShowPass: onShowPass,
-      thenPass: true,
-    );
-  }
-}
-
-/// Round buttons: guide, my pass, gallery, helpline.
+/// Round actions: guide (delegates), gallery, the team, helpline.
 class _QuickButtons extends StatelessWidget {
   const _QuickButtons({
     required this.session,
     required this.data,
     required this.onChanged,
-    this.onShowPass,
   });
   final Session session;
   final _HomeData data;
   final Future<void> Function() onChanged;
-  final VoidCallback? onShowPass;
   Json get conf => data.conference!;
 
   @override
   Widget build(BuildContext context) {
     final guide = conf['guide_enabled'] == true;
-    void soon() => ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('The guide opens closer to the conference.'),
-      ),
-    );
     Widget b(IconData icon, String label, List<Color> colors, VoidCallback f) =>
         Expanded(
           child: Pressable(
@@ -641,8 +697,8 @@ class _QuickButtons extends StatelessWidget {
             child: Column(
               children: [
                 Container(
-                  width: 58,
-                  height: 58,
+                  width: 60,
+                  height: 60,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(20),
                     gradient: LinearGradient(
@@ -674,36 +730,14 @@ class _QuickButtons extends StatelessWidget {
         );
     return Row(
       children: [
-        b(
-          Icons.explore_rounded,
-          'Guide',
-          const [Color(0xFF4A9BFF), Color(0xFF1E5FD0)],
-          () => guide
-              ? Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        GuideHub(session: session, eventId: conf['id'] as int),
-                  ),
-                )
-              : soon(),
-        ),
-        b(
-          Icons.qr_code_2_rounded,
-          'My pass',
-          const [Color(0xFFF08A3C), Color(0xFFC24F06)],
-          () => _openPass(
-            context,
-            session,
-            data,
-            onChanged,
-            onShowPass: onShowPass,
-          ),
-        ),
+        b(Icons.explore_rounded, 'Guide', const [
+          Color(0xFFF59A4C),
+          AppColors.saffronDeep,
+        ], () => _openGuide(context, session, data, onChanged)),
         b(
           Icons.photo_library_rounded,
           'Gallery',
-          const [Color(0xFFB57BFF), Color(0xFF6D3BD6)],
+          const [Color(0xFFFFB35C), Color(0xFFD9730D)],
           () => guide
               ? Navigator.push(
                   context,
@@ -717,12 +751,27 @@ class _QuickButtons extends StatelessWidget {
                     ),
                   ),
                 )
-              : soon(),
+              : ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Photos appear here during the conference.'),
+                  ),
+                ),
+        ),
+        b(
+          Icons.diversity_3_rounded,
+          'Team',
+          const [Color(0xFFEF8354), Color(0xFFB8430A)],
+          () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => VolunteerScreen(session: session),
+            ),
+          ),
         ),
         b(
           Icons.support_agent_rounded,
           'Helpline',
-          const [Color(0xFF3DD68C), Color(0xFF138A4F)],
+          const [Color(0xFFFF9F43), Color(0xFFC75C00)],
           () {
             final h = conf['helpline'] as String?;
             if (h != null) _call(h);
@@ -733,144 +782,234 @@ class _QuickButtons extends StatelessWidget {
   }
 }
 
-class _Hero extends StatelessWidget {
-  const _Hero({required this.conf});
+/// The conference with a live countdown: days, hours, minutes and seconds ticking.
+class _Countdown extends StatefulWidget {
+  const _Countdown({required this.conf});
   final Json conf;
 
   @override
+  State<_Countdown> createState() => _CountdownState();
+}
+
+class _CountdownState extends State<_Countdown> {
+  Timer? _tick;
+
+  @override
+  void initState() {
+    super.initState();
+    _tick = Timer.periodic(
+      const Duration(seconds: 1),
+      (_) => mounted ? setState(() {}) : null,
+    );
+  }
+
+  @override
+  void dispose() {
+    _tick?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final conf = widget.conf;
     final start = DateTime.parse(conf['starts_at'] as String);
     final end = DateTime.parse(conf['ends_at'] as String);
     final now = DateTime.now();
-    final days = start.difference(now).inHours / 24;
-    final status = now.isAfter(end)
-        ? 'Concluded'
-        : now.isAfter(start)
-        ? 'Happening now'
-        : days < 1
-        ? 'Starts tomorrow'
-        : 'in ${days.ceil()} days';
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
-        gradient: const LinearGradient(
-          colors: [Color(0xFFF08A3C), AppColors.saffron, Color(0xFF13235B)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          stops: [0, 0.45, 1],
+    final left = start.difference(now);
+    final live = now.isAfter(start) && now.isBefore(end);
+    final over = now.isAfter(end);
+    Widget unit(int v, String label) => Expanded(
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: AppColors.saffronSoft,
+          borderRadius: BorderRadius.circular(16),
         ),
+        child: Column(
+          children: [
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 350),
+              transitionBuilder: (c, a) => SlideTransition(
+                position: Tween(
+                  begin: const Offset(0, -0.5),
+                  end: Offset.zero,
+                ).animate(a),
+                child: FadeTransition(opacity: a, child: c),
+              ),
+              child: Text(
+                v.toString().padLeft(2, '0'),
+                key: ValueKey(v),
+                style: const TextStyle(
+                  fontFamily: 'Anek',
+                  fontSize: 26,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.saffronDeep,
+                ),
+              ),
+            ),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: AppColors.saffronInk,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: AppColors.saffron.withValues(alpha: 0.35),
+            color: AppColors.saffron.withValues(alpha: 0.18),
             blurRadius: 24,
             offset: const Offset(0, 10),
           ),
         ],
       ),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                padding: const EdgeInsets.all(2),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.saffronSoft, width: 2),
+                ),
+                child: Image.asset('assets/brand/emblem.png'),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      conf['title'] as String,
+                      style: const TextStyle(
+                        fontFamily: 'Anek',
+                        fontSize: 19,
+                        fontWeight: FontWeight.w800,
+                        height: 1.15,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${_ist(conf['starts_at'] as String, 'd')}–${_ist(conf['ends_at'] as String, 'd MMM yyyy')} · ${conf['venue']}',
+                      style: const TextStyle(
+                        color: AppColors.muted,
+                        fontSize: 12.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          if (over)
+            const Text(
+              'Thank you for being part of it.',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            )
+          else if (live)
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFF59A4C), AppColors.saffronDeep],
+                ),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Text(
+                '● Happening now',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 16,
+                ),
+              ),
+            )
+          else
+            Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white24,
-                    borderRadius: BorderRadius.circular(99),
-                  ),
-                  child: Text(
-                    status,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12.5,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  conf['title'] as String,
-                  style: const TextStyle(
-                    fontFamily: 'Anek',
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                    height: 1.1,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '${_ist(conf['starts_at'] as String, 'd')}–${_ist(conf['ends_at'] as String, 'd MMM yyyy')} · ${conf['venue']}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                if (conf['helpline'] != null) ...[
-                  const SizedBox(height: 12),
-                  InkWell(
-                    onTap: () => _call(conf['helpline'] as String),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.call, color: Colors.white, size: 18),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Helpline ${conf['helpline']}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                unit(left.inDays, 'DAYS'),
+                unit(left.inHours % 24, 'HOURS'),
+                unit(left.inMinutes % 60, 'MINS'),
+                unit(left.inSeconds % 60, 'SECS'),
               ],
             ),
-          ),
-          Container(
-            width: 64,
-            height: 64,
-            padding: const EdgeInsets.all(2),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-            ),
-            child: Image.asset('assets/brand/emblem.png'),
-          ),
         ],
       ),
     );
   }
 }
 
-/// Delegate side and volunteer side, side by side.
+/// Delegate side and volunteer side, side by side, in saffron.
 class _SideTiles extends StatelessWidget {
   const _SideTiles({
     required this.session,
     required this.data,
     required this.onChanged,
-    this.onShowPass,
   });
   final Session session;
   final _HomeData data;
-  final VoidCallback? onShowPass;
   final Future<void> Function() onChanged;
 
-  Future<void> _delegate(BuildContext context) =>
-      _openDelegate(context, session, data, onChanged, onShowPass: onShowPass);
+  /// Registered delegates choose: open the guide or change their form.
+  Future<void> _delegate(BuildContext context) async {
+    if (!data.isDelegate) {
+      return _openDelegate(context, session, data, onChanged);
+    }
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(
+                Icons.explore_rounded,
+                color: AppColors.saffron,
+              ),
+              title: const Text('Open the conference guide'),
+              onTap: () => Navigator.pop(ctx, 'guide'),
+            ),
+            ListTile(
+              leading: const Icon(
+                Icons.edit_note_rounded,
+                color: AppColors.saffron,
+              ),
+              title: const Text('Change my delegate form'),
+              onTap: () => Navigator.pop(ctx, 'edit'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (choice == null || !context.mounted) return;
+    await _openDelegate(
+      context,
+      session,
+      data,
+      onChanged,
+      edit: choice == 'edit',
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    final conf = data.conference!;
-    final guide = conf['guide_enabled'] == true;
     final seva = data.places.isNotEmpty;
     Widget tile(
       String title,
@@ -882,33 +1021,60 @@ class _SideTiles extends StatelessWidget {
       child: Pressable(
         onTap: onTap,
         child: Container(
-          height: 140,
+          height: 150,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(26),
             gradient: LinearGradient(
               colors: colors,
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: colors.last.withValues(alpha: 0.3),
+                blurRadius: 16,
+                offset: const Offset(0, 8),
+              ),
+            ],
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Stack(
             children: [
-              Icon(icon, color: Colors.white, size: 30),
-              const Spacer(),
-              Text(
-                title,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 18,
+              Positioned(
+                right: -14,
+                bottom: -14,
+                child: Icon(
+                  icon,
+                  size: 90,
+                  color: Colors.white.withValues(alpha: 0.14),
                 ),
               ),
-              Text(
-                sub,
-                style: const TextStyle(color: Colors.white70, fontSize: 12.5),
-                maxLines: 2,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.22),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Icon(icon, color: Colors.white, size: 24),
+                  ),
+                  const Spacer(),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 18,
+                    ),
+                  ),
+                  Text(
+                    sub,
+                    style: const TextStyle(color: Colors.white, fontSize: 12.5),
+                    maxLines: 2,
+                  ),
+                ],
               ),
             ],
           ),
@@ -920,12 +1086,10 @@ class _SideTiles extends StatelessWidget {
         tile(
           'Delegate',
           data.isDelegate
-              ? (guide
-                    ? 'Registered · open your guide'
-                    : 'Registered · your pass')
+              ? 'Registered ✓ · open guide'
               : 'Fill the delegate form',
           data.isDelegate ? Icons.verified_rounded : Icons.badge_rounded,
-          const [Color(0xFF3E8BF0), Color(0xFF13235B)],
+          const [Color(0xFFF59A4C), Color(0xFFC24F06)],
           () => _delegate(context),
         ),
         const SizedBox(width: 12),
@@ -935,7 +1099,7 @@ class _SideTiles extends StatelessWidget {
               ? (data.places.first['team'] as Json)['name'] as String
               : 'Ghats, departments, team',
           Icons.volunteer_activism_rounded,
-          const [Color(0xFFF08A3C), Color(0xFFC24F06)],
+          const [Color(0xFFFFB35C), Color(0xFFD9730D)],
           () async {
             await Navigator.push(
               context,
@@ -945,6 +1109,213 @@ class _SideTiles extends StatelessWidget {
             );
             onChanged();
           },
+        ),
+      ],
+    );
+  }
+}
+
+/// A thought for the day – a new one each day.
+class _Thought extends StatelessWidget {
+  const _Thought();
+
+  static const _thoughts = [
+    (
+      'Arise, awake, and stop not till the goal is reached.',
+      'Swami Vivekananda',
+    ),
+    (
+      'Education is the manifestation of the perfection already in man.',
+      'Swami Vivekananda',
+    ),
+    ('Take up one idea. Make that one idea your life.', 'Swami Vivekananda'),
+    ('Strength is life, weakness is death.', 'Swami Vivekananda'),
+    ('The future depends on what you do today.', 'Mahatma Gandhi'),
+    ('Be the change that you wish to see in the world.', 'Mahatma Gandhi'),
+    ('Character, once lost, is lost forever.', 'Swami Vivekananda'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final day = DateTime.now().difference(DateTime(2026)).inDays;
+    final (text, by) = _thoughts[day % _thoughts.length];
+    return Container(
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        color: Colors.white,
+        border: Border.all(color: AppColors.saffronSoft, width: 1.5),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                colors: [Color(0xFFF59A4C), AppColors.saffronDeep],
+              ),
+            ),
+            child: const Icon(
+              Icons.format_quote_rounded,
+              color: Colors.white,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'THOUGHT FOR TODAY',
+                  style: TextStyle(
+                    fontSize: 11,
+                    letterSpacing: 1.1,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.saffron,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '“$text”',
+                  style: const TextStyle(
+                    fontSize: 15.5,
+                    fontWeight: FontWeight.w700,
+                    height: 1.3,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '— $by',
+                  style: const TextStyle(
+                    color: AppColors.muted,
+                    fontSize: 12.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The newest community posts as swipeable cards.
+class _CommunityStrip extends StatelessWidget {
+  const _CommunityStrip({required this.posts, this.onOpen});
+  final List<Json> posts;
+  final VoidCallback? onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SectionTitle(
+          'From the community',
+          action: onOpen == null ? null : 'See all',
+          onAction: onOpen,
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          height: 170,
+          child: ListView.separated(
+            padding: EdgeInsets.zero,
+            scrollDirection: Axis.horizontal,
+            itemCount: posts.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 12),
+            itemBuilder: (context, i) {
+              final p = posts[i];
+              final a = (p['author'] as Json?) ?? {};
+              final photos = ((p['photo_urls'] as List?) ?? []).cast<String>();
+              return Pressable(
+                onTap: onOpen,
+                child: Container(
+                  width: 250,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(22),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.saffron.withValues(alpha: 0.08),
+                        blurRadius: 14,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Initials(
+                            a['name'] as String? ?? '?',
+                            photoUrl: a['photo_url'] as String?,
+                            size: 32,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              a['name'] as String? ?? '',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Expanded(
+                        child: photos.isNotEmpty
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(14),
+                                child: Image.network(
+                                  photos.first,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, _, _) =>
+                                      Container(color: AppColors.saffronSoft),
+                                ),
+                              )
+                            : Text(
+                                p['body'] as String? ?? '',
+                                maxLines: 4,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(height: 1.3),
+                              ),
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.favorite_rounded,
+                            size: 15,
+                            color: AppColors.saffron,
+                          ),
+                          const SizedBox(width: 4),
+                          Text('${p['likes'] ?? 0}'),
+                          const SizedBox(width: 12),
+                          const Icon(
+                            Icons.chat_bubble_rounded,
+                            size: 14,
+                            color: AppColors.muted,
+                          ),
+                          const SizedBox(width: 4),
+                          Text('${p['comments'] ?? 0}'),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
         ),
       ],
     );

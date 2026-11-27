@@ -122,13 +122,15 @@ Future<void> _openEveryTab(WidgetTester tester, {required bool member}) async {
     await settle();
     expect(tester.takeException(), isNull, reason: 'tab $icon');
     if (icon == Icons.person_rounded) {
-      // The QR pass now lives in Me, not on the bottom bar.
-      expect(find.byIcon(Icons.qr_code_2_rounded), findsOneWidget); // the card, not a tab
-      await tester.tap(find.text('My QR pass'));
-      await settle();
-      expect(tester.takeException(), isNull, reason: 'QR pass page');
-      await tester.pageBack();
-      await settle();
+      // No passes anywhere.
+      expect(
+        find.byWidgetPredicate(
+          (w) =>
+              w is Text &&
+              RegExp(r'\bpass\b', caseSensitive: false).hasMatch(w.data ?? ''),
+        ),
+        findsNothing,
+      );
       // The full profile editor opens from Me.
       await tester.tap(find.textContaining('Edit profile').first);
       await settle();
@@ -296,12 +298,9 @@ void main() {
     expect(find.text('Meeting at 6 pm'), findsOneWidget);
     // The team is no longer on Home: it lives behind the Volunteer tile.
     expect(find.text('Karyalaya'), findsNothing);
-    await tester.scrollUntilVisible(
-      find.text('Delegate'),
-      -300,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.tap(find.text('Volunteer').first);
+    await tester.ensureVisible(find.text('Team'));
+    await tester.pump();
+    await tester.tap(find.text('Team'));
     for (var i = 0; i < 15; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
@@ -347,12 +346,7 @@ void main() {
       for (var i = 0; i < 15; i++) {
         await tester.pump(const Duration(milliseconds: 100));
       }
-      await tester.scrollUntilVisible(
-        find.textContaining('Want to volunteer'),
-        300,
-        scrollable: find.byType(Scrollable).first,
-      );
-      expect(find.textContaining('Want to volunteer'), findsOneWidget);
+      expect(find.textContaining('Want to volunteer'), findsNothing);
       expect(find.text('Karyalaya'), findsOneWidget);
     },
   );
@@ -374,15 +368,13 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('My pass asks for the delegate form before there is a pass', (
-    tester,
-  ) async {
+  testWidgets('The guide opens only after the delegate form', (tester) async {
     await _openEveryTab(tester, member: false);
-    await tester.tap(find.text('My pass'));
+    await tester.tap(find.text('Guide'));
     for (var i = 0; i < 10; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
-    expect(find.text('No pass yet'), findsOneWidget);
+    expect(find.text('Fill the delegate form first'), findsOneWidget);
     await tester.tap(find.text('Fill the form'));
     for (var i = 0; i < 15; i++) {
       await tester.pump(const Duration(milliseconds: 100));
@@ -407,9 +399,11 @@ void main() {
     await _openEveryTab(tester, member: true);
     expect(find.text('Fresh Person'), findsWidgets);
     expect(find.textContaining('ABVP-IN-000001'), findsWidgets);
-    for (final b in ['Guide', 'My pass', 'Gallery', 'Helpline']) {
+    for (final b in ['Guide', 'Gallery', 'Team', 'Helpline', 'DAYS']) {
       expect(find.text(b), findsOneWidget, reason: b);
     }
+    expect(find.text('My pass'), findsNothing);
+    expect(find.text('THOUGHT FOR TODAY'), findsOneWidget);
   });
 }
 

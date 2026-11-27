@@ -614,6 +614,37 @@ class _PostCardState extends State<PostCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (m['pending'] == true)
+                  Container(
+                    margin: const EdgeInsets.only(top: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.saffronSoft,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.hourglass_top_rounded,
+                          size: 15,
+                          color: AppColors.saffronInk,
+                        ),
+                        SizedBox(width: 6),
+                        Text(
+                          'Waiting for approval · only you can see it',
+                          style: TextStyle(
+                            color: AppColors.saffronInk,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 if ((m['body'] as String?)?.isNotEmpty == true) ...[
                   const SizedBox(height: 10),
                   PostText(m['body'] as String, session: widget.session),
@@ -1377,6 +1408,15 @@ class _ComposeScreenState extends State<ComposeScreen> {
         'photos[]',
         _photos,
       ) as Post;
+      if (created['pending'] == true && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Sent for approval. Your post appears for everyone once an admin approves it.',
+            ),
+          ),
+        );
+      }
       if (mounted) Navigator.pop(context, created);
     } on ApiException catch (e) {
       setState(() => _error = e.message);

@@ -12,7 +12,6 @@ import 'edit_profile_screen.dart';
 import 'events_screen.dart';
 import 'feed_screen.dart';
 import 'guide/guide_hub.dart';
-import 'pass_screen.dart';
 
 /// Everyone signed in who is not (yet) an approved member: conference delegates, guests,
 /// applicants. Community, events, the guide and passes work straight away; membership is
@@ -41,7 +40,7 @@ class _AccountShellState extends State<AccountShell> {
     final pages = [
       ConferenceHome(
         session: widget.session,
-        onShowPass: () => openMyPass(context, widget.session),
+        onOpenCommunity: () => setState(() => _tab = 1),
       ),
       FeedScreen(session: widget.session),
       AccountMeScreen(session: widget.session),
@@ -124,11 +123,6 @@ class AccountMeScreen extends StatelessWidget {
               const SizedBox(height: 12),
               FadeSlideIn(
                 index: 1,
-                child: MyQrCard(session: session, memberId: p?.memberId),
-              ),
-              const SizedBox(height: 12),
-              FadeSlideIn(
-                index: 1,
                 child: Panel(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -149,7 +143,7 @@ class AccountMeScreen extends StatelessWidget {
                       const SizedBox(height: 8),
                       Text(
                         app == null
-                            ? 'Members get a member pass, member-only events and Vibhag spaces.'
+                            ? 'Members get member-only events and Vibhag spaces.'
                             : app.status == 'submitted'
                             ? 'With ${app.reviewingOffice ?? 'your district office'} for review.'
                             : (app.decisionNote ?? ''),
