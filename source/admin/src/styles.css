@@ -610,7 +610,10 @@ tr.click.on td { background: var(--surface-2) }
 .ct-dept { display: grid; gap: 6px; padding: 10px 12px; border-radius: 14px; background: var(--surface-2); border-left: 4px solid var(--c) }
 .ct-dept-head { display: flex; gap: 8px; align-items: center } .ct-dept-head b { flex: 1 }
 .ct-person { display: flex; gap: 10px; align-items: center; padding: 4px 0; flex-wrap: wrap }
-.ct-form { display: grid; grid-template-columns: 1.3fr 1fr 1fr auto auto; gap: 6px; align-items: center }
+.ct-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 6px; align-items: center }
 .ct-form .input { height: 36px }
 .ok-text { color: var(--ok); font-weight: 600 }
 @media (max-width: 900px) { .ct-form { grid-template-columns: 1fr 1fr } }
+.ct-find { grid-column: 1 / -1; display: flex; gap: 6px }
+.ct-find .input { flex: 1 }
+.ct-found { grid-column: 1 / -1; background: var(--ok-soft, #E7F6EC); color: var(--ok, #157F3B); border-radius: 10px; padding: 6px 10px; font-size: 13px }

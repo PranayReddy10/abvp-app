@@ -73,6 +73,7 @@ Route::prefix('v1')->group(function () {
         Route::get('teams/{team}/messages', [\App\Http\Controllers\Api\V1\ConferenceTeamController::class, 'messages']);
         Route::post('teams/{team}/messages', [\App\Http\Controllers\Api\V1\ConferenceTeamController::class, 'post'])->middleware('throttle:60,1');
         Route::post('teams/{team}/members', [\App\Http\Controllers\Api\V1\ConferenceTeamController::class, 'addMember']);
+        Route::get('team-members/lookup', [\App\Http\Controllers\Api\V1\ConferenceTeamController::class, 'lookup']);
         Route::patch('team-members/{member}', [\App\Http\Controllers\Api\V1\ConferenceTeamController::class, 'updateMember']);
         Route::delete('team-members/{member}', [\App\Http\Controllers\Api\V1\ConferenceTeamController::class, 'removeMember']);
         Route::post('teams/{team}/meetings', [\App\Http\Controllers\Api\V1\ConferenceTeamController::class, 'meeting']);
@@ -182,6 +183,7 @@ Route::prefix('v1')->group(function () {
 
             Route::get('members', [Admin\MemberController::class, 'index']);
             Route::get('accounts', [Admin\MemberController::class, 'accounts']);
+            Route::post('accounts', [Admin\AccountController::class, 'store']);
             Route::get('accounts/{user}', [Admin\AccountController::class, 'show']);
             Route::post('accounts/{user}/block', [Admin\AccountController::class, 'block']);
             Route::delete('accounts/{user}', [Admin\AccountController::class, 'destroy']);

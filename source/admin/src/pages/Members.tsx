@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, type FormEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { api } from '../api'
+import { api, ApiError } from '../api'
+import { useAuth } from '../auth'
 import { VerifiedBadge } from '../components/icons'
 import { qs } from '../api'
 import { Avatar, Empty, ErrorBox, Pill, Skeleton } from '../components/ui'
@@ -32,10 +33,12 @@ function Accounts() {
   const [filter, setFilter] = useState('all')
   const [page, setPage] = useState(1)
   const [open, setOpen] = useState<number | null>(null)
+  const [adding, setAdding] = useState(false)
   const { data, meta, error, loading, reload } = useFetch<Account[]>(`/admin/accounts${qs({ q: search, status: filter, page })}`)
   const lastPage = Number(meta.last_page ?? 1)
   return (
     <>
+      {adding && <AddAccount onClose={() => setAdding(false)} onCreated={reload} onAdded={(id) => { setAdding(false); setFilter('all'); setSearch(''); setQ(''); setPage(1); reload(); setOpen(id) }} />}
       <div className="toolbar" style={{ justifyContent: 'space-between', marginBottom: 14 }}>
         <div className="chips" role="tablist" aria-label="Filter accounts">
           {ACCOUNT_FILTERS.map(([k, l]) => <button key={k} role="tab" aria-selected={filter === k} className={`chip ${filter === k ? 'on' : ''}`} onClick={() => { setFilter(k); setPage(1) }}>{l}</button>)}
@@ -43,6 +46,7 @@ function Accounts() {
         <form onSubmit={(e) => { e.preventDefault(); setPage(1); setSearch(q) }}>
           <input className="input" style={{ width: 280 }} placeholder="Name, mobile or email" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search accounts" />
         </form>
+        {!adding && <button className="btn primary" onClick={() => setAdding(true)}>+ Add member</button>}
       </div>
       <ErrorBox error={error} />
       <div className="grid2" style={{ gridTemplateColumns: open ? 'minmax(0,1.5fr) minmax(0,1fr)' : '1fr', alignItems: 'start' }}>
@@ -183,7 +187,7 @@ function AccountCard({ id, onClose, onChanged }: { id: number; onClose: () => vo
 
 export default function Members() {
   const [params] = useSearchParams()
-  const [view, setView] = useState<'members' | 'accounts'>(params.get('view') === 'accounts' ? 'accounts' : 'members')
+  const [view, setView] = useState<'members' | 'accounts'>(params.get('view') === 'members' ? 'members' : 'accounts')
   const [q, setQ] = useState(params.get('q') ?? '')
   const [search, setSearch] = useState(params.get('q') ?? '')
   const [page, setPage] = useState(1)
@@ -195,10 +199,10 @@ export default function Members() {
     <main className="content">
       <div className="page-head">
         <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
-          <h1>{view === 'members' ? 'Members' : 'All accounts'}</h1>
+          <h1>Members</h1>
           <div className="login-tabs" role="tablist" aria-label="Members or all accounts" style={{ minWidth: 300 }}>
+            <button type="button" role="tab" aria-selected={view === 'accounts'} className={view === 'accounts' ? 'on' : ''} onClick={() => setView('accounts')}>All members</button>
             <button type="button" role="tab" aria-selected={view === 'members'} className={view === 'members' ? 'on' : ''} onClick={() => setView('members')}>Approved members</button>
-            <button type="button" role="tab" aria-selected={view === 'accounts'} className={view === 'accounts' ? 'on' : ''} onClick={() => setView('accounts')}>All accounts</button>
           </div>
         </div>
         {view === 'members' && (
@@ -290,5 +294,73 @@ function MemberCard({ id, onClose }: { id: number; onClose: () => void }) {
       </div>
       <div className="dl"><span>Admin roles</span>{data.roles.length === 0 ? <b>None</b> : data.roles.map((r) => <b key={r.id}>{r.label}, {r.org_unit}</b>)}</div>
     </section>
+  )
+}
+
+interface Unit { id: number; name: string; type?: string }
+
+/** State → district → … : each choice opens the areas inside it. */
+function AreaChain({ onChange }: { onChange: (id: number | null) => void }) {
+  const { me } = useAuth()
+  const scope = me?.roles[0]?.org_unit ?? null
+  const [path, setPath] = useState<Unit[]>([])
+  const parent = path.length ? path[path.length - 1] : scope
+  const kids = useFetch<Unit[]>(parent ? `/org/units?parent_id=${parent.id}` : null)
+  function pick(level: number, id: string, list: Unit[]) {
+    const u = list.find((x) => String(x.id) === id)
+    const next = [...path.slice(0, level), ...(u ? [u] : [])]
+    setPath(next)
+    onChange(next.length ? next[next.length - 1].id : scope?.id ?? null)
+  }
+  return (
+    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+      {path.map((u, i) => (
+        <span key={u.id} className="pill">{u.name} <button type="button" style={{ border: 0, background: 'none', cursor: 'pointer', padding: '0 2px' }} aria-label={`Change ${u.name}`} onClick={() => pick(i, '', [])}>×</button></span>
+      ))}
+      {kids.data && kids.data.length > 0 && (
+        <select className="input" style={{ maxWidth: 240 }} value="" onChange={(e) => pick(path.length, e.target.value, kids.data!)} aria-label="Area">
+          <option value="">{path.length === 0 ? `Choose state / area in ${scope?.name ?? 'India'}…` : `Inside ${parent?.name}…`}</option>
+          {kids.data.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
+        </select>
+      )}
+    </div>
+  )
+}
+
+/** Add a person directly: they get an account, a member ID and (optionally) a password. */
+function AddAccount({ onClose, onAdded, onCreated }: { onClose: () => void; onAdded: (id: number) => void; onCreated: () => void }) {
+  const [f, setF] = useState({ name: '', mobile: '', password: '', approve: true })
+  const { me } = useAuth()
+  const [area, setArea] = useState<number | null>(me?.roles[0]?.org_unit?.id ?? null)
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState<unknown>(null)
+  const [done, setDone] = useState<{ user_id: number; name: string; member_id: string | null } | null>(null)
+  async function save(e: FormEvent) {
+    e.preventDefault(); setErr(null); setBusy(true)
+    try {
+      const r = await api.post<{ user_id: number; name: string; member_id: string | null }>('/admin/accounts', { ...f, password: f.password || null, org_unit_id: area })
+      setDone(r.data); onCreated()
+    } catch (x) { setErr(x instanceof ApiError && x.fields ? new ApiError(422, 'X', Object.values(x.fields)[0][0]) : x) } finally { setBusy(false) }
+  }
+  if (done) return (
+    <section className="card" style={{ marginBottom: 14 }}>
+      <h2 style={{ marginTop: 0 }}>{done.name} added</h2>
+      <p>Member ID <b className="mono">{done.member_id ?? '—'}</b>. They can sign in with their mobile{f.password ? ' and the password you set' : ''}.</p>
+      <div className="toolbar"><button className="btn primary" onClick={() => onAdded(done.user_id)}>Open profile</button><button className="btn" onClick={() => { setDone(null); setF({ name: '', mobile: '', password: '', approve: true }) }}>Add another</button></div>
+    </section>
+  )
+  return (
+    <form className="card" style={{ marginBottom: 14, display: 'grid', gap: 12 }} onSubmit={save}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><h2 style={{ margin: 0 }}>Add member</h2><button type="button" className="btn small" onClick={onClose}>Close</button></div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
+        <div className="field"><label htmlFor="am-name">Full name</label><input id="am-name" className="input" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} required minLength={2} autoFocus /></div>
+        <div className="field"><label htmlFor="am-mob">Mobile</label><input id="am-mob" className="input" inputMode="tel" placeholder="10-digit number" value={f.mobile} onChange={(e) => setF({ ...f, mobile: e.target.value })} required /></div>
+        <div className="field"><label htmlFor="am-pw">Password (optional)</label><input id="am-pw" className="input" type="text" minLength={8} placeholder="At least 8 characters" value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} /></div>
+      </div>
+      <div className="field"><label>Area</label><AreaChain onChange={setArea} /></div>
+      <label style={{ display: 'flex', gap: 8, alignItems: 'center' }}><input type="checkbox" checked={f.approve} onChange={(e) => setF({ ...f, approve: e.target.checked })} /> Approve as member straight away</label>
+      <ErrorBox error={err} />
+      <div><button className="btn primary" disabled={busy}>{busy ? 'Adding…' : 'Add member'}</button></div>
+    </form>
   )
 }

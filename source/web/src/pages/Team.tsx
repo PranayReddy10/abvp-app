@@ -104,7 +104,7 @@ export function MySeva() {
   const s = seva.data
   return (
     <section style={{ marginBottom: 34 }}>
-      <h2 style={{ fontSize: 28, fontWeight: 800, marginBottom: 12 }}>My seva</h2>
+      <h2 style={{ fontSize: 28, fontWeight: 800, marginBottom: 12 }}>Volunteer</h2>
       <div className="chips" style={{ marginBottom: 14 }}>
         {s.places.map((p) => <span key={p.member_id} className="status-pill" style={{ background: `${p.team.color ?? '#E3620C'}22`, color: p.team.color ?? '#B84C04' }}>{p.role_label} · {p.team.name}{p.ghat ? ` · ${p.ghat.name}` : ''}</span>)}
       </div>

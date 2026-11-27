@@ -6,10 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\ProfileResource;
 use App\Models\AppNotification;
 use App\Models\EventRegistration;
+use App\Models\EventTeamMember;
+use App\Models\MemberProfile;
+use App\Models\OrgUnit;
 use App\Models\Post;
 use App\Models\PostComment;
 use App\Models\User;
 use App\Services\AccessControl;
+use App\Services\AccountIds;
 use App\Services\Audit;
 use App\Support\ApiException;
 use App\Support\Mobile;
@@ -24,6 +28,54 @@ use Illuminate\Support\Facades\Storage;
 class AccountController extends Controller
 {
     public function __construct(private AccessControl $access) {}
+
+    /** An admin adds a person directly: account, profile in an area, member ID, optional password. */
+    public function store(Request $request, AccountIds $ids)
+    {
+        $this->authorizeIn('accounts.manage');
+        $data = $request->validate([
+            'name' => ['required', 'string', 'min:2', 'max:120'],
+            'mobile' => ['required', 'string', 'max:20'],
+            'org_unit_id' => ['nullable', 'integer', 'exists:org_units,id'],
+            'password' => ['nullable', 'string', 'min:8', 'max:72'],
+            'approve' => ['boolean'],
+        ]);
+        $mobile = Mobile::normalize($data['mobile']);
+        if (! $mobile) {
+            throw new ApiException('INVALID_MOBILE', 'Enter a valid 10-digit Indian mobile number.');
+        }
+        if (User::where('mobile', $mobile)->exists()) {
+            throw new ApiException('ACCOUNT_EXISTS', 'An account with this mobile number already exists. Find it under All accounts.', 409);
+        }
+        $unit = isset($data['org_unit_id']) ? OrgUnit::find($data['org_unit_id']) : null;
+        $grants = $this->access->grants($request->user(), 'accounts.manage')->map->orgUnit->filter();
+        $national = $grants->contains(fn ($u) => $u->type === 'national' || $u->parent_id === null);
+        if (! $national && (! $unit || ! $grants->contains(fn ($g) => $g->contains($unit)))) {
+            throw new ApiException('FORBIDDEN_SCOPE', 'Choose an area inside your own area.', 403);
+        }
+
+        $user = DB::transaction(function () use ($data, $mobile, $unit, $ids) {
+            $user = User::create(['mobile' => $mobile, 'name' => $data['name']]);
+            if (! empty($data['password'])) {
+                $user->forceFill(['password' => $data['password'], 'password_set_at' => now()])->save();
+            }
+            $profile = new MemberProfile(['full_name' => $data['name'], 'org_unit_id' => $unit?->id]);
+            $profile->user_id = $user->id;
+            if ($data['approve'] ?? true) {
+                $profile->membership_status = MemberProfile::STATUS_APPROVED;
+                $profile->approved_at = now();
+            }
+            $profile->save();
+            $user->setRelation('profile', $profile);
+            $ids->ensure($user);
+
+            return $user;
+        });
+        rescue(fn () => EventTeamMember::linkUser($user), null, true);
+        Audit::record('account.created_by_admin', $user, null, ['name' => $data['name'], 'approved' => $data['approve'] ?? true]);
+
+        return $this->ok(['user_id' => $user->id, 'name' => $data['name'], 'mobile' => $user->mobile, 'member_id' => $user->profile?->fresh()?->member_id], 201);
+    }
 
     public function show(Request $request, User $user)
     {

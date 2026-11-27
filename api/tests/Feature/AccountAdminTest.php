@@ -98,4 +98,27 @@ class AccountAdminTest extends TestCase
         Sanctum::actingAs($super);
         $this->postJson("/api/v1/admin/accounts/{$state->id}/block", ['blocked' => true])->assertOk();
     }
+
+    public function test_admin_adds_a_member_with_an_area_and_password(): void
+    {
+        Sanctum::actingAs($this->admin('super_admin', 'Bharat'));
+        $hyd = OrgUnit::where('name', 'Hyderabad')->value('id');
+        $r = $this->postJson('/api/v1/admin/accounts', ['name' => 'Ravi Kumar', 'mobile' => '9876544410', 'org_unit_id' => $hyd, 'password' => 'Secret@2026', 'approve' => true])
+            ->assertCreated();
+        $this->assertNotEmpty($r->json('data.member_id'));
+        $u = User::where('mobile', '+919876544410')->firstOrFail();
+        $this->assertSame('approved', $u->profile->membership_status);
+        $this->assertSame($hyd, $u->profile->org_unit_id);
+        $this->postJson('/api/v1/admin/accounts', ['name' => 'Again', 'mobile' => '9876544410'])->assertStatus(409)->assertJsonPath('error.code', 'ACCOUNT_EXISTS');
+
+        $this->app['auth']->forgetGuards();
+        $this->postJson('/api/v1/auth/password', ['login' => '9876544410', 'password' => 'Secret@2026'])->assertOk();
+    }
+
+    public function test_district_admin_adds_only_inside_their_area(): void
+    {
+        Sanctum::actingAs($this->admin('district_admin', 'Hyderabad'));
+        $this->postJson('/api/v1/admin/accounts', ['name' => 'Out Side', 'mobile' => '9876544411'])->assertStatus(403);
+        $this->postJson('/api/v1/admin/accounts', ['name' => 'In Side', 'mobile' => '9876544411', 'org_unit_id' => OrgUnit::where('name', 'Hyderabad')->value('id')])->assertCreated();
+    }
 }

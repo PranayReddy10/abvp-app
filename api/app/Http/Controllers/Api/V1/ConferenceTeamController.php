@@ -11,6 +11,7 @@ use App\Models\EventTeamMember;
 use App\Models\EventTeamMessage;
 use App\Models\Meeting;
 use App\Models\MeetingInvitee;
+use App\Models\MemberProfile;
 use App\Models\User;
 use App\Services\Audit;
 use App\Services\ConferenceTeams;
@@ -169,15 +170,24 @@ class ConferenceTeamController extends Controller
         $this->guardManage($user, $team);
         $roles = $team->parent_id === null ? EventTeam::HEAD_ROLES : ['pramukh', 'saha_pramukh', 'volunteer'];
         $data = $request->validate([
-            'name' => ['required', 'string', 'min:2', 'max:120'],
+            'member_id' => ['nullable', 'string', 'max:40'],
+            'name' => [$request->filled('member_id') ? 'nullable' : 'required', 'string', 'min:2', 'max:120'],
             'mobile' => ['nullable', 'string', 'max:20'],
             'role' => ['required', Rule::in($roles)],
             'note' => ['nullable', 'string', 'max:190'],
         ]);
+        $linked = null;
+        if (! empty($data['member_id'])) {
+            $linked = $this->findAccount($data['member_id']) ?? throw new ApiException('NOT_FOUND', 'No account has this member ID or mobile.', 404);
+            $data['name'] = ($data['name'] ?? null) ?: ($linked->profile?->full_name ?: $linked->name);
+            $data['mobile'] = $linked->mobile;
+        }
+        unset($data['member_id']);
         if (! empty($data['mobile']) && ! Mobile::normalize($data['mobile'])) {
             throw new ApiException('INVALID_MOBILE', 'Enter a valid 10-digit Indian mobile number.');
         }
         $member = new EventTeamMember($data + ['team_id' => $team->id, 'sort' => (int) EventTeamMember::where('team_id', $team->id)->max('sort') + 1]);
+        $member->user_id = $linked?->id;
         $member->linkByMobile();
         $member->save();
         if ($member->user_id) {
@@ -376,6 +386,41 @@ class ConferenceTeamController extends Controller
         if (! $this->teams->canChat($user, $team)) {
             throw new ApiException('NOT_IN_TEAM', 'Team chat is for the people in this team.', 403);
         }
+    }
+
+    /** Heads and admins: find an account by member ID or mobile to add it to a team. */
+    public function lookup(Request $request)
+    {
+        $request->validate(['q' => ['required', 'string', 'min:4', 'max:40']]);
+        $user = $request->user();
+        $event = ConferenceTeams::current();
+        $isHead = EventTeamMember::where('user_id', $user->id)->whereIn('role', [...EventTeam::HEAD_ROLES, 'pramukh', 'saha_pramukh'])->exists();
+        if (! $isHead && ! ($event && $this->teams->isAdmin($user, $event))) {
+            throw new ApiException('HEADS_ONLY', 'Only team heads and admins can look people up.', 403);
+        }
+        $found = $this->findAccount($request->string('q')->toString());
+        if (! $found) {
+            throw new ApiException('NOT_FOUND', 'No account has this member ID or mobile.', 404);
+        }
+
+        return $this->ok([
+            'user_id' => $found->id,
+            'name' => $found->profile?->full_name ?: $found->name,
+            'mobile' => $found->mobile,
+            'member_id' => $found->profile?->member_id,
+            'area' => $found->profile?->orgUnit?->label(),
+        ]);
+    }
+
+    private function findAccount(string $q): ?User
+    {
+        $q = trim($q);
+        $userId = MemberProfile::where('member_id', strtoupper($q))->value('user_id');
+        if (! $userId && ($m = Mobile::normalize($q))) {
+            $userId = User::where('mobile', $m)->value('id');
+        }
+
+        return $userId ? User::where('id', $userId)->where('status', '!=', 'deleted')->with('profile.orgUnit')->first() : null;
     }
 
     private function guardManage(User $user, EventTeam $team): void

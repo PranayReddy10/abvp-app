@@ -183,17 +183,40 @@ function GhatPanel({ ghat, roles, eventId, onClose, onChanged }: { ghat: Ghat; r
   )
 }
 
+interface Found { user_id: number; name: string; mobile: string; member_id: string | null; area: string | null }
+
 function AddPerson({ teamId, roleChoices, roles, onDone }: { teamId: number; roleChoices: string[]; roles: Record<string, string>; onDone: () => void }) {
   const [f, setF] = useState({ name: '', mobile: '', role: roleChoices[roleChoices.length - 1] })
+  const [idq, setIdq] = useState('')
+  const [found, setFound] = useState<Found | null>(null)
+  const [finding, setFinding] = useState(false)
   const [err, setErr] = useState<unknown>(null)
+  async function find() {
+    if (idq.trim().length < 4) return
+    setErr(null); setFinding(true)
+    try {
+      const r = await api.get<Found>(`/team-members/lookup?q=${encodeURIComponent(idq.trim())}`)
+      setFound(r.data); setF({ ...f, name: r.data.name, mobile: r.data.mobile.replace(/^\+91/, '') })
+    } catch (x) { setFound(null); setErr(x) } finally { setFinding(false) }
+  }
   async function save(e: FormEvent) {
     e.preventDefault(); setErr(null)
-    try { await api.post(`/teams/${teamId}/members`, { ...f, mobile: f.mobile || null }); onDone() } catch (x) { setErr(x) }
+    try {
+      await api.post(`/teams/${teamId}/members`, { ...f, mobile: f.mobile || null, member_id: found ? (found.member_id ?? found.mobile) : null })
+      onDone()
+    } catch (x) { setErr(x) }
   }
   return (
     <form className="ct-form" onSubmit={save}>
-      <input className="input" placeholder="Name" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} required autoFocus />
-      <input className="input" placeholder="Mobile" inputMode="tel" value={f.mobile} onChange={(e) => setF({ ...f, mobile: e.target.value })} />
+      <div className="ct-find">
+        <input className="input" placeholder="Member ID or mobile – e.g. ABVP-TG-000123" value={idq} autoFocus
+          onChange={(e) => { setIdq(e.target.value); setFound(null) }}
+          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); find() } }} aria-label="Member ID or mobile" />
+        <button type="button" className="btn small" onClick={find} disabled={finding || idq.trim().length < 4}>{finding ? 'Finding…' : 'Find'}</button>
+      </div>
+      {found && <div className="ct-found">✓ Found <b>{found.name}</b>{found.member_id && <> · <span className="mono">{found.member_id}</span></>}{found.area && <> · {found.area}</>}</div>}
+      <input className="input" placeholder="Name" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} required />
+      <input className="input" placeholder="Mobile" inputMode="tel" value={f.mobile} onChange={(e) => { setF({ ...f, mobile: e.target.value }); setFound(null) }} />
       <select className="input" value={f.role} onChange={(e) => setF({ ...f, role: e.target.value })}>{roleChoices.map((r) => <option key={r} value={r}>{roles[r]}</option>)}</select>
       <button className="btn primary small">Add</button>
       <button type="button" className="btn small" onClick={onDone}>Cancel</button>

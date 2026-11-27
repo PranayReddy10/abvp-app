@@ -214,4 +214,31 @@ class ConferenceTeamsTest extends TestCase
             ->assertOk()->assertJsonPath('data.totals.ghats', count(LoadConferenceTeams::SHEET));
         $this->getJson('/api/v1/conference')->assertOk()->assertJsonPath('data.id', $this->event->id);
     }
+
+    public function test_heads_add_people_by_member_id(): void
+    {
+        $this->postJson('/api/v1/auth/send-otp', ['mobile' => '9876533301'])->assertOk();
+        $this->postJson('/api/v1/auth/register', ['mobile' => '9876533301', 'code' => '123456', 'name' => 'Kiran Rao'])->assertOk();
+        $this->app['auth']->forgetGuards();
+        $kiran = User::where('mobile', '+919876533301')->firstOrFail();
+        $mid = $kiran->profile->member_id;
+        $this->assertNotEmpty($mid);
+
+        // Someone in no team cannot look people up.
+        Sanctum::actingAs(User::create(['mobile' => '+919876500097', 'name' => 'Nobody']));
+        $this->getJson('/api/v1/team-members/lookup?q='.$mid)->assertStatus(403);
+
+        Sanctum::actingAs($this->admin('super_admin', 'Bharat'));
+        $this->getJson('/api/v1/team-members/lookup?q='.strtolower($mid))->assertOk()
+            ->assertJsonPath('data.name', 'Kiran Rao')->assertJsonPath('data.mobile', '+919876533301');
+        $this->getJson('/api/v1/team-members/lookup?q=9876533301')->assertOk()->assertJsonPath('data.member_id', $mid);
+        $this->getJson('/api/v1/team-members/lookup?q=ABVP-XX-999999')->assertNotFound();
+
+        $team = $this->dept('Bhojan', 'Kitchen');
+        $this->postJson("/api/v1/teams/{$team->id}/members", ['member_id' => $mid, 'role' => 'volunteer'])->assertCreated()
+            ->assertJsonPath('data.name', 'Kiran Rao');
+        $row = EventTeamMember::where('team_id', $team->id)->where('name', 'Kiran Rao')->firstOrFail();
+        $this->assertSame($kiran->id, $row->user_id);
+        $this->assertSame('+919876533301', $row->mobile);
+    }
 }
