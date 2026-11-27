@@ -287,6 +287,11 @@ function CoverBox({ id, url, onSaved }: { id: number; url: string | null; onSave
       setBusy(false)
     }
   }
+  async function remove() {
+    if (!confirm('Remove the cover photo?')) return
+    setBusy(true); setErr(null)
+    try { await api.del(`/admin/events/${id}/cover`); onSaved() } catch (e) { setErr(e) } finally { setBusy(false) }
+  }
   return (
     <>
       <h3>Cover photo</h3>
@@ -298,6 +303,7 @@ function CoverBox({ id, url, onSaved }: { id: number; url: string | null; onSave
             {busy ? 'Uploading…' : url ? 'Replace photo' : 'Upload photo'}
             <input type="file" accept="image/jpeg,image/png,image/webp" hidden disabled={busy} onChange={(ev) => upload(ev.target.files?.[0])} />
           </label>
+          {url && <button type="button" className="btn danger" style={{ marginLeft: 8 }} disabled={busy} onClick={remove}>Delete photo</button>}
           <p className="muted" style={{ fontSize: 12.5, margin: '6px 0 0' }}>Wide photo, JPG/PNG/WebP up to 4 MB.<br />Shown on the event card in the app.</p>
         </div>
       </div>

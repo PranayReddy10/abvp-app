@@ -236,6 +236,8 @@ Route::prefix('v1')->group(function () {
             Route::post('events/{event}/conference-teams/load-sheet', [Admin\ConferenceTeamAdminController::class, 'loadSheet']);
             Route::post('events/{event}/conference-teams/import', [Admin\ConferenceTeamAdminController::class, 'import']);
             Route::get('events/{event}/conference-teams/export', [Admin\ConferenceTeamAdminController::class, 'export']);
+            Route::post('events/{event}/conference-teams/reorder', [Admin\ConferenceTeamAdminController::class, 'reorder']);
+            Route::post('conference-teams/{team}/members/reorder', [Admin\ConferenceTeamAdminController::class, 'reorderMembers']);
             Route::patch('conference-teams/{team}', [Admin\ConferenceTeamAdminController::class, 'update']);
             Route::delete('conference-teams/{team}', [Admin\ConferenceTeamAdminController::class, 'destroy']);
             Route::post('events/{event}/teams', [Admin\OperationsController::class, 'storeTeam']);
@@ -250,6 +252,7 @@ Route::prefix('v1')->group(function () {
             Route::post('events/{event}/announcements', [Admin\OperationsController::class, 'announce']);
             Route::get('events/{event}/logistics', [Admin\LogisticsController::class, 'overview']);
             Route::post('events/{event}/cover', [Admin\EventController::class, 'cover']);
+            Route::delete('events/{event}/cover', [Admin\EventController::class, 'removeCover']);
             Route::get('events/{event}/guide', [Admin\GuideController::class, 'index']);
             Route::put('events/{event}/guide/settings', [Admin\GuideController::class, 'settings']);
             Route::post('events/{event}/guide/items', [Admin\GuideController::class, 'store']);

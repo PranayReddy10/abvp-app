@@ -27,6 +27,16 @@ export default function ConferenceTeam() {
   const [q, setQ] = useState('')
   const [missing, setMissing] = useState(false)
   const [tool, setTool] = useState<'import' | 'ghat' | null>(null)
+  const [arrange, setArrange] = useState(false)
+  async function moveGhat(gid: number, dir: -1 | 1) {
+    if (!id || !tree.data) return
+    const ids = tree.data.ghats.map((g) => g.id)
+    const i = ids.indexOf(gid), j = i + dir
+    if (j < 0 || j >= ids.length) return
+    ;[ids[i], ids[j]] = [ids[j], ids[i]]
+    await api.post(`/admin/events/${id}/conference-teams/reorder`, { ids })
+    tree.reload()
+  }
   const [loadingSheet, setLoadingSheet] = useState(false)
   const [sheetErr, setSheetErr] = useState<unknown>(null)
   const loadSheet = async () => {
@@ -58,6 +68,7 @@ export default function ConferenceTeam() {
         </div>
         <div className="toolbar">
           {id && <button className="btn" disabled={loadingSheet} onClick={loadSheet}>{loadingSheet ? 'Loading…' : 'Load from sheet'}</button>}
+          <button className={`btn ${arrange ? 'primary' : ''}`} onClick={() => setArrange(!arrange)}>{arrange ? 'Done arranging' : '↕ Arrange order'}</button>
           <button className="btn" onClick={() => setTool(tool === 'ghat' ? null : 'ghat')}>+ Ghat</button>
           <button className="btn" onClick={() => setTool(tool === 'import' ? null : 'import')}>Import CSV</button>
           {id && <button className="btn" onClick={() => download(`/admin/events/${id}/conference-teams/export`, 'conference-team.csv')}>Download CSV</button>}
@@ -79,8 +90,16 @@ export default function ConferenceTeam() {
 
       <div className="grid2" style={{ gridTemplateColumns: selected ? 'minmax(0,1.25fr) minmax(0,1fr)' : '1fr', alignItems: 'start' }}>
         <section className="ct-grid">
-          {!tree.data ? (conf.error || tree.error ? null : <Skeleton rows={6} />) : tree.data.ghats.length === 0 ? <Empty>No ghats yet. Press “Load from sheet” to add the 17 ghats and names from the organising sheets.</Empty> : ghats.filter((x) => x.visible).map(({ g, departments }) => (
-            <button key={g.id} className={`ct-card ${open === g.id ? 'on' : ''}`} style={{ ['--c' as string]: g.color ?? '#E3620C' }} onClick={() => setOpen(open === g.id ? null : g.id)}>
+          {!tree.data ? (conf.error || tree.error ? null : <Skeleton rows={6} />) : tree.data.ghats.length === 0 ? <Empty>No ghats yet. Press “Load from sheet” to add the 17 ghats and names from the organising sheets.</Empty> : ghats.filter((x) => x.visible).map(({ g, departments }, gi, all) => (
+            <div key={g.id} className="ct-wrap">
+            {arrange && (
+              <div className="ct-move">
+                <span>{gi + 1}.</span>
+                <button type="button" className="btn small" disabled={gi === 0} onClick={() => moveGhat(g.id, -1)} aria-label={`Move ${g.name} up`}>↑ Up</button>
+                <button type="button" className="btn small" disabled={gi === all.length - 1} onClick={() => moveGhat(g.id, 1)} aria-label={`Move ${g.name} down`}>↓ Down</button>
+              </div>
+            )}
+            <button className={`ct-card ${open === g.id ? 'on' : ''}`} style={{ ['--c' as string]: g.color ?? '#E3620C' }} onClick={() => setOpen(open === g.id ? null : g.id)}>
               <div className="ct-card-head">
                 <b>{g.name}</b>
                 <span>{g.counts.departments} dept · {g.counts.people} people</span>
@@ -105,6 +124,7 @@ export default function ConferenceTeam() {
                 ))}
               </div>
             </button>
+            </div>
           ))}
         </section>
         {selected && id && <GhatPanel key={selected.id} ghat={selected} roles={tree.data!.roles} eventId={id} onClose={() => setOpen(null)} onChanged={tree.reload} />}
@@ -154,6 +174,20 @@ function GhatPanel({ ghat, roles, eventId, onClose, onChanged }: { ghat: Ghat; r
   const [adding, setAdding] = useState<number | null>(null)
   const [addingDept, setAddingDept] = useState(false)
   const [err, setErr] = useState<unknown>(null)
+  async function moveDept(did: number, dir: -1 | 1) {
+    const ids = ghat.departments.map((d) => d.id)
+    const i = ids.indexOf(did), j = i + dir
+    if (j < 0 || j >= ids.length) return
+    ;[ids[i], ids[j]] = [ids[j], ids[i]]
+    try { await api.post(`/admin/events/${eventId}/conference-teams/reorder`, { parent_id: ghat.id, ids }); onChanged() } catch (x) { setErr(x) }
+  }
+  async function movePerson(teamId: number, people: Person[], pid: number, dir: -1 | 1) {
+    const ids = people.map((p) => p.id)
+    const i = ids.indexOf(pid), j = i + dir
+    if (j < 0 || j >= ids.length) return
+    ;[ids[i], ids[j]] = [ids[j], ids[i]]
+    try { await api.post(`/admin/conference-teams/${teamId}/members/reorder`, { ids }); onChanged() } catch (x) { setErr(x) }
+  }
   async function removeTeam(id: number, name: string) {
     if (!confirm(`Remove ${name} and everyone listed in it?`)) return
     try { await api.del(`/admin/conference-teams/${id}`); onChanged(); if (id === ghat.id) onClose() } catch (x) { setErr(x) }
@@ -166,14 +200,23 @@ function GhatPanel({ ghat, roles, eventId, onClose, onChanged }: { ghat: Ghat; r
       </div>
       <ErrorBox error={err} />
       <h3 className="ct-sub">Ghat heads</h3>
-      {ghat.heads.map((p) => <PersonRow key={p.id} p={p} roleChoices={HEAD_ROLES} roles={roles} onChanged={onChanged} />)}
+      {ghat.heads.map((p, i) => <PersonRow key={p.id} p={p} roleChoices={HEAD_ROLES} roles={roles} onChanged={onChanged}
+        onUp={i > 0 ? () => movePerson(ghat.id, ghat.heads, p.id, -1) : undefined}
+        onDown={i < ghat.heads.length - 1 ? () => movePerson(ghat.id, ghat.heads, p.id, 1) : undefined} />)}
       {adding === ghat.id ? <AddPerson teamId={ghat.id} roleChoices={HEAD_ROLES} roles={roles} onDone={() => { setAdding(null); onChanged() }} /> : <button className="btn small ghost" onClick={() => setAdding(ghat.id)}>+ Add ghat head</button>}
 
-      {ghat.departments.map((d) => (
+      {ghat.departments.map((d, di) => (
         <div key={d.id} className="ct-dept">
-          <div className="ct-dept-head"><b>{d.name}</b><span className="muted">{d.people.length}</span><button className="btn small ghost" onClick={() => removeTeam(d.id, d.name)} title="Remove department">×</button></div>
+          <div className="ct-dept-head"><b>{d.name}</b><span className="muted">{d.people.length}</span>
+            <span className="ct-arrows">
+              <button className="btn small ghost" disabled={di === 0} onClick={() => moveDept(d.id, -1)} title="Move department up" aria-label={`Move ${d.name} up`}>↑</button>
+              <button className="btn small ghost" disabled={di === ghat.departments.length - 1} onClick={() => moveDept(d.id, 1)} title="Move department down" aria-label={`Move ${d.name} down`}>↓</button>
+            </span>
+            <button className="btn small ghost" onClick={() => removeTeam(d.id, d.name)} title="Remove department">×</button></div>
           {d.people.length === 0 && <span className="muted" style={{ fontSize: 13 }}>No one yet.</span>}
-          {d.people.map((p) => <PersonRow key={p.id} p={p} roleChoices={DEPT_ROLES} roles={roles} onChanged={onChanged} />)}
+          {d.people.map((p, i) => <PersonRow key={p.id} p={p} roleChoices={DEPT_ROLES} roles={roles} onChanged={onChanged}
+            onUp={i > 0 ? () => movePerson(d.id, d.people, p.id, -1) : undefined}
+            onDown={i < d.people.length - 1 ? () => movePerson(d.id, d.people, p.id, 1) : undefined} />)}
           {adding === d.id ? <AddPerson teamId={d.id} roleChoices={DEPT_ROLES} roles={roles} onDone={() => { setAdding(null); onChanged() }} /> : <button className="btn small ghost" onClick={() => setAdding(d.id)}>+ Add person</button>}
         </div>
       ))}
@@ -225,7 +268,7 @@ function AddPerson({ teamId, roleChoices, roles, onDone }: { teamId: number; rol
   )
 }
 
-function PersonRow({ p, roleChoices, roles, onChanged }: { p: Person; roleChoices: string[]; roles: Record<string, string>; onChanged: () => void }) {
+function PersonRow({ p, roleChoices, roles, onChanged, onUp, onDown }: { p: Person; roleChoices: string[]; roles: Record<string, string>; onChanged: () => void; onUp?: () => void; onDown?: () => void }) {
   const [edit, setEdit] = useState(false)
   const [f, setF] = useState({ name: p.name, mobile: p.mobile ?? '', role: p.role })
   const [err, setErr] = useState<unknown>(null)
@@ -249,6 +292,12 @@ function PersonRow({ p, roleChoices, roles, onChanged }: { p: Person; roleChoice
   )
   return (
     <div className="ct-person">
+      {(onUp || onDown) && (
+        <span className="ct-arrows col">
+          <button type="button" className="btn small ghost" disabled={!onUp} onClick={onUp} aria-label={`Move ${p.name} up`}>↑</button>
+          <button type="button" className="btn small ghost" disabled={!onDown} onClick={onDown} aria-label={`Move ${p.name} down`}>↓</button>
+        </span>
+      )}
       <Avatar name={p.name} size={34} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <b>{p.name}</b> <span className="pill mute">{p.role_label}</span>

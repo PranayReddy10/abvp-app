@@ -241,4 +241,23 @@ class ConferenceTeamsTest extends TestCase
         $this->assertSame($kiran->id, $row->user_id);
         $this->assertSame('+919876533301', $row->mobile);
     }
+
+    public function test_admin_reorders_ghats_departments_and_people(): void
+    {
+        Sanctum::actingAs($this->admin('super_admin', 'Bharat'));
+        $ghats = EventTeam::where('event_id', $this->event->id)->whereNull('parent_id')->orderBy('sort')->pluck('id')->all();
+        $moved = array_merge([end($ghats)], array_slice($ghats, 0, -1));
+        $this->postJson("/api/v1/admin/events/{$this->event->id}/conference-teams/reorder", ['ids' => $moved])->assertOk()
+            ->assertJsonPath('data.ghats.0.id', end($ghats));
+
+        $k = $this->ghat('Karyalaya');
+        $depts = $k->children()->pluck('id')->reverse()->values()->all();
+        $this->postJson("/api/v1/admin/events/{$this->event->id}/conference-teams/reorder", ['parent_id' => $k->id, 'ids' => $depts])->assertOk();
+        $this->assertSame($depts[0], $k->children()->first()->id);
+
+        $heads = $k->members()->pluck('id')->reverse()->values()->all();
+        $this->postJson("/api/v1/admin/conference-teams/{$k->id}/members/reorder", ['ids' => $heads])->assertOk();
+        $this->assertSame($heads[0], $k->members()->first()->id);
+        $this->deleteJson("/api/v1/admin/events/{$this->event->id}/cover")->assertOk();
+    }
 }

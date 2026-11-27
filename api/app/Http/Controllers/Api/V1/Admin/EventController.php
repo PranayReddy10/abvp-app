@@ -435,4 +435,17 @@ class EventController extends Controller
 
         return $this->ok(['cover_url' => \Illuminate\Support\Facades\URL::temporarySignedRoute('media.event', now()->addDay(), ['event' => $event->id])]);
     }
+
+    /** Remove the event's cover photo. */
+    public function removeCover(Request $request, Event $event)
+    {
+        $this->guard($request, $event);
+        if ($event->cover_path) {
+            \Illuminate\Support\Facades\Storage::disk(config('abvp.media_disk'))->delete($event->cover_path);
+        }
+        $event->forceFill(['cover_path' => null])->save();
+        \App\Services\Audit::record('event.cover_removed', $event);
+
+        return $this->ok(['cover_url' => null]);
+    }
 }

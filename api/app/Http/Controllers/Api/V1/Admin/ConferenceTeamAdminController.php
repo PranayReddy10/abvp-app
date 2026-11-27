@@ -50,6 +50,38 @@ class ConferenceTeamAdminController extends Controller
         return $this->index($request, $event->fresh());
     }
 
+    /** Put ghats (no parent_id) or one ghat's departments in the order given. */
+    public function reorder(Request $request, Event $event)
+    {
+        $this->authorizeIn('events.manage', $event->orgUnit);
+        $data = $request->validate([
+            'parent_id' => ['nullable', 'integer'],
+            'ids' => ['required', 'array', 'max:200'],
+            'ids.*' => ['integer'],
+        ]);
+        DB::transaction(function () use ($data, $event) {
+            foreach (array_values($data['ids']) as $i => $id) {
+                EventTeam::where('event_id', $event->id)->where('parent_id', $data['parent_id'] ?? null)->whereKey($id)->update(['sort' => $i + 1]);
+            }
+        });
+
+        return $this->index($request, $event);
+    }
+
+    /** Put the people of one ghat or department in the order given. */
+    public function reorderMembers(Request $request, EventTeam $team)
+    {
+        $this->authorizeIn('events.manage', $team->event->orgUnit);
+        $data = $request->validate(['ids' => ['required', 'array', 'max:300'], 'ids.*' => ['integer']]);
+        DB::transaction(function () use ($data, $team) {
+            foreach (array_values($data['ids']) as $i => $id) {
+                EventTeamMember::where('team_id', $team->id)->whereKey($id)->update(['sort' => $i + 1]);
+            }
+        });
+
+        return $this->index($request, $team->event);
+    }
+
     /** Add a ghat (no parent) or a department (parent = a ghat). */
     public function store(Request $request, Event $event)
     {

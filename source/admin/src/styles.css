@@ -623,3 +623,10 @@ tr.click.on td { background: var(--surface-2) }
 .vid-list { display: grid; gap: 8px; margin-bottom: 10px }
 .vid { display: flex; gap: 10px; align-items: center; padding: 8px; border: 1px solid var(--line); border-radius: 12px }
 .vid-thumb { width: 72px; height: 44px; border-radius: 8px; background: #1f1f1f center / cover; color: #fff; display: grid; place-items: center; text-decoration: none; font-size: 16px; flex: none }
+.ct-wrap { display: grid; gap: 6px; align-content: start }
+.ct-move { display: flex; gap: 6px; align-items: center; font-weight: 700; color: var(--muted) }
+.ct-arrows { display: inline-flex; gap: 2px; margin-left: auto }
+.ct-arrows .btn { padding: 2px 8px; min-height: 0 }
+.ct-arrows.col { flex-direction: column; margin-left: 0 }
+.ct-arrows.col .btn { padding: 0 6px; line-height: 1.1 }
+.ct-dept-head .ct-arrows + .btn { margin-left: 0 }
