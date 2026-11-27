@@ -473,3 +473,84 @@ class _QrCard extends StatelessWidget {
     ),
   );
 }
+
+/// Opens the pass as its own page (the QR moved off the bottom bar into Me).
+Future<void> openMyPass(BuildContext context, Session session) =>
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => Scaffold(
+          appBar: AppBar(title: const Text('My QR pass')),
+          body: PassScreen(session: session),
+        ),
+      ),
+    );
+
+/// The card at the top of Me that opens the QR pass.
+class MyQrCard extends StatelessWidget {
+  const MyQrCard({super.key, required this.session, this.memberId});
+  final Session session;
+  final String? memberId;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(24),
+        onTap: () => openMyPass(context, session),
+        child: Ink(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            gradient: const LinearGradient(
+              colors: [Color(0xFFF08A3C), Color(0xFFC24F06)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Icon(
+                  Icons.qr_code_2_rounded,
+                  size: 52,
+                  color: Color(0xFF171A2E),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'My QR pass',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    Text(
+                      memberId == null
+                          ? 'Show it at the gate and the food counter'
+                          : '$memberId · show it at the gate',
+                      style: const TextStyle(color: Colors.white70),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right_rounded, color: Colors.white),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

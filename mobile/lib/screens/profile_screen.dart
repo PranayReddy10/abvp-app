@@ -10,6 +10,7 @@ import '../widgets/password_sheet.dart';
 import 'duties_screen.dart';
 import 'events_screen.dart';
 import 'help_screen.dart';
+import 'pass_screen.dart';
 import 'scanner_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -162,6 +163,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ],
           ),
+          const SizedBox(height: 16),
+          MyQrCard(session: widget.session, memberId: p.memberId),
           const SizedBox(height: 20),
           if (_message != null) ...[
             ErrorBanner(_message!),

@@ -40,10 +40,9 @@ class _AccountShellState extends State<AccountShell> {
     final pages = [
       ConferenceHome(
         session: widget.session,
-        onShowPass: () => setState(() => _tab = 2),
+        onShowPass: () => openMyPass(context, widget.session),
       ),
       FeedScreen(session: widget.session),
-      PassScreen(session: widget.session),
       AccountMeScreen(session: widget.session),
     ];
     return Scaffold(
@@ -55,7 +54,6 @@ class _AccountShellState extends State<AccountShell> {
         items: [
           (Icons.home_rounded, tr('nav.home')),
           (Icons.forum_rounded, tr('nav.community')),
-          (Icons.qr_code_2_rounded, tr('nav.pass')),
           (Icons.person_rounded, tr('nav.me')),
         ],
       ),
@@ -121,6 +119,11 @@ class AccountMeScreen extends StatelessWidget {
                     ],
                   ),
                 ),
+              ),
+              const SizedBox(height: 12),
+              FadeSlideIn(
+                index: 1,
+                child: MyQrCard(session: session, memberId: p?.memberId),
               ),
               const SizedBox(height: 12),
               FadeSlideIn(

@@ -36,10 +36,9 @@ class _MemberShellState extends State<MemberShell> {
       // The national conference first: delegate side, my seva, the whole team.
       ConferenceHome(
         session: widget.session,
-        onShowPass: () => setState(() => _tab = 2),
+        onShowPass: () => openMyPass(context, widget.session),
       ),
       FeedScreen(session: widget.session),
-      PassScreen(session: widget.session),
       CalendarScreen(session: widget.session),
       ProfileScreen(session: widget.session),
     ];
@@ -53,7 +52,6 @@ class _MemberShellState extends State<MemberShell> {
         items: [
           (Icons.home_rounded, tr('nav.home')),
           (Icons.forum_rounded, tr('nav.community')),
-          (Icons.qr_code_2_rounded, tr('nav.pass')),
           (Icons.calendar_month_rounded, tr('nav.calendar')),
           (Icons.person_rounded, tr('nav.me')),
         ],

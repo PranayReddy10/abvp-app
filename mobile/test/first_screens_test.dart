@@ -111,7 +111,6 @@ Future<void> _openEveryTab(WidgetTester tester, {required bool member}) async {
   expect(tester.takeException(), isNull);
   final tabs = [
     Icons.forum_rounded,
-    Icons.qr_code_2_rounded,
     if (member) Icons.calendar_month_rounded,
     Icons.person_rounded,
     Icons.home_rounded,
@@ -120,6 +119,15 @@ Future<void> _openEveryTab(WidgetTester tester, {required bool member}) async {
     await tester.tap(find.byIcon(icon).last);
     await settle();
     expect(tester.takeException(), isNull, reason: 'tab $icon');
+    if (icon == Icons.person_rounded) {
+      // The QR pass now lives in Me, not on the bottom bar.
+      expect(find.byIcon(Icons.qr_code_2_rounded), findsOneWidget); // the card, not a tab
+      await tester.tap(find.text('My QR pass'));
+      await settle();
+      expect(tester.takeException(), isNull, reason: 'QR pass page');
+      await tester.pageBack();
+      await settle();
+    }
   }
 }
 
@@ -283,6 +291,15 @@ void main() {
     }
     expect(find.text('Shri A Shyam Kiran'), findsOneWidget);
     expect(find.text('Adhiveshan office'), findsOneWidget);
+    expect(find.text('1 of 1 reachable'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    await tester.tap(find.text('Adhiveshan office'));
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(find.text('Gowtham'), findsOneWidget);
+    expect(find.text('KARYALAYA'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -290,14 +307,14 @@ void main() {
     'someone with no seva sees the team and the invitation, not a chat',
     (tester) async {
       await _openEveryTab(tester, member: false);
-      expect(find.text('Seva team'), findsOneWidget);
+      expect(find.text('Volunteer'), findsOneWidget);
       await tester.scrollUntilVisible(
-        find.textContaining('Want to do seva'),
+        find.textContaining('Want to volunteer'),
         300,
         scrollable: find.byType(Scrollable).first,
       );
-      expect(find.textContaining('Want to do seva'), findsOneWidget);
-      expect(find.text('My seva'), findsNothing);
+      expect(find.textContaining('Want to volunteer'), findsOneWidget);
+      expect(find.text('Volunteer'), findsOneWidget); // the tile only, no section
     },
   );
 }
