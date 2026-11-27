@@ -17,7 +17,7 @@ interface Guide {
   kinds: Kind[]; prants: string[]; items: Item[]
 }
 
-const EMOJI: Record<string, string> = { stay: '🛏️', arrival: '🚌', food: '🍛', office: '🏢', session: '🎤', exhibit: '🖼️', facility: '🅿️', tourist: '🛕', emergency: '🚑' }
+const EMOJI: Record<string, string> = { stay: '🛏️', arrival: '🚌', food: '🍛', office: '🏢', session: '🎤', exhibit: '🖼️', facility: '🅿️', tourist: '🛕', emergency: '🚑', gallery: '📷' }
 const HINT: Record<string, string> = {
   stay: 'Where each prant stays, and who to call there.',
   arrival: 'Airport, stations and bus stands: the desk, its lead and how to reach the venue.',
@@ -27,6 +27,7 @@ const HINT: Record<string, string> = {
   exhibit: 'Digital showcase: history, pictures and stories.',
   facility: 'Parking, washrooms, water, cloak room.',
   tourist: 'Places to visit nearby.',
+  gallery: 'Event gallery: add an album (title + photos) for each day or programme. Delegates see it in the guide.',
   emergency: 'Emergency numbers (108, 112…: put the number as the contact phone) and each hall with its emergency lead members – write the hall in “Where exactly”.',
 }
 

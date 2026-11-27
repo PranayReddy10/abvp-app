@@ -130,4 +130,54 @@ class SignupAndDelegateTest extends TestCase
         $this->getJson('/api/v1/guide/events')->assertOk()->assertJsonPath('data.0.event.delegate_registration_open', true);
         $this->getJson("/api/v1/events/{$event->id}/guide")->assertOk()->assertJsonPath('data.event.delegate_registration_open', true);
     }
+
+    public function test_sign_up_with_an_area_from_the_admin_panel(): void
+    {
+        $hyd = OrgUnit::where('name', 'Hyderabad')->firstOrFail();
+        $this->postJson('/api/v1/auth/send-otp', ['mobile' => '9876500031'])->assertOk();
+        $this->postJson('/api/v1/auth/register', [
+            'mobile' => '9876500031', 'code' => '123456', 'name' => 'Priya Reddy', 'email' => 'priya@example.com',
+            'gender' => 'female', 'org_unit_id' => $hyd->id, 'password' => 'Secret@2026', 'password_confirmation' => 'Secret@2026',
+        ])->assertOk()->assertJsonPath('data.user.prant', 'Telangana');
+        $u = User::where('mobile', '+919876500031')->firstOrFail();
+        $this->assertSame($hyd->id, $u->profile->org_unit_id);
+        $this->assertSame('female', $u->gender);
+        $this->assertNotEmpty($u->profile->member_id);
+        $this->assertStringContainsString('HYD', $u->profile->member_id);
+    }
+
+    public function test_app_delegate_form_with_names_responsibility_and_travel(): void
+    {
+        $event = $this->conference();
+        $user = User::create(['mobile' => '+919876500041', 'name' => 'Kiran Kumar Rao', 'email' => 'k@example.com']);
+        Sanctum::actingAs($user);
+        $this->getJson("/api/v1/events/{$event->id}/delegate")->assertOk()
+            ->assertJsonPath('data.prefill.first_name', 'Kiran Kumar')->assertJsonPath('data.prefill.surname', 'Rao')
+            ->assertJsonPath('data.prefill.mobile', '9876500041')->assertJsonPath('data.prefill.email', 'k@example.com');
+
+        $form = [
+            'first_name' => 'Kiran', 'surname' => 'Rao', 'mobile' => '9876500041', 'email' => null, 'gender' => 'male',
+            'prant' => 'Telangana', 'responsibility' => 'Zilla Sanghatan Mantri', 'mode' => 'bus', 'reference' => 'TSRTC',
+            'arriving_at' => now()->addDays(9)->setTime(7, 0)->toIso8601String(), 'arrival_point' => 'MGBS Bus Station',
+            'departing_at' => now()->addDays(13)->setTime(19, 0)->toIso8601String(),
+        ];
+        // Everything except email is required in the app form.
+        $this->putJson("/api/v1/events/{$event->id}/delegate", ['responsibility' => null] + $form)->assertStatus(422);
+        $this->putJson("/api/v1/events/{$event->id}/delegate", ['departing_at' => null] + $form)->assertStatus(422);
+
+        $this->putJson("/api/v1/events/{$event->id}/delegate", $form)->assertCreated()
+            ->assertJsonPath('data.full_name', 'Kiran Rao')
+            ->assertJsonPath('data.details.responsibility', 'Zilla Sanghatan Mantri')
+            ->assertJsonPath('data.travel.mode', 'bus');
+        $this->assertNotNull(EventRegistration::where('user_id', $user->id)->value('id'));
+    }
+
+    public function test_gallery_is_a_guide_section(): void
+    {
+        $event = $this->conference();
+        Sanctum::actingAs(User::create(['mobile' => '+919876500051', 'name' => 'A']));
+        $kinds = collect($this->getJson("/api/v1/events/{$event->id}/guide")->assertOk()->json('data.sections'))->pluck('kind');
+        $this->assertContains('gallery', $kinds);
+        $this->getJson("/api/v1/events/{$event->id}/guide/gallery")->assertOk();
+    }
 }

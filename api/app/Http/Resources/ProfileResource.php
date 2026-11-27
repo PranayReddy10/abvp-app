@@ -25,6 +25,10 @@ class ProfileResource extends JsonResource
                 'id' => $this->orgUnit->id,
                 'name' => $this->orgUnit->name,
                 'label' => $this->orgUnit->label(),
+                'type' => $this->orgUnit->type,
+                // For the app's state → district picker.
+                'state_id' => $this->orgUnit->type === 'state' ? $this->orgUnit->id : $this->orgUnit->ancestorOfType('state')?->id,
+                'district_id' => $this->orgUnit->type === 'district' ? $this->orgUnit->id : $this->orgUnit->ancestorOfType('district')?->id,
             ] : null,
             'institution' => $this->institution,
             'course' => $this->course,

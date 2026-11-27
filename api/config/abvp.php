@@ -88,6 +88,7 @@ return [
         'facility' => ['title' => 'Campus', 'hindi' => 'परिसर', 'icon' => 'parking'],
         'tourist' => ['title' => 'Tourist places', 'hindi' => 'पर्यटन', 'icon' => 'tourist'],
         'emergency' => ['title' => 'Emergency', 'hindi' => 'आपातकाल', 'icon' => 'emergency'],
+        'gallery' => ['title' => 'Gallery', 'hindi' => 'चित्र दीर्घा', 'icon' => 'gallery'],
     ],
 
     // ABVP prants (organisational states) offered when adding accommodation. Edit to match the

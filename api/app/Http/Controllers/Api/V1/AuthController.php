@@ -91,11 +91,17 @@ class AuthController extends Controller
             'email' => ['nullable', 'email', 'max:190'],
             'gender' => ['nullable', 'in:male,female,other'],
             'prant' => ['nullable', 'string', 'max:80'],
+            // The area from the admin panel's Areas (state, or a district inside it).
+            'org_unit_id' => ['nullable', 'integer', \Illuminate\Validation\Rule::exists('org_units', 'id')->where('is_active', true)],
             'institution' => ['nullable', 'string', 'max:150'],
             'occupation' => ['nullable', 'string', 'max:80'],
             'device_name' => ['nullable', 'string', 'max:60'],
             'google_link_token' => ['nullable', 'string', 'max:2000'],
         ]);
+        $unit = ! empty($data['org_unit_id']) ? \App\Models\OrgUnit::find($data['org_unit_id']) : null;
+        if ($unit && empty($data['prant'])) {
+            $data['prant'] = ($unit->type === 'state' ? $unit : $unit->ancestorOfType('state'))?->name;
+        }
         $mobile = $this->mobile($request);
         $google = $request->filled('google_link_token') ? $this->readLinkToken($request->string('google_link_token')) : null;
 
@@ -127,6 +133,19 @@ class AuthController extends Controller
                 throw new ApiException('GOOGLE_ALREADY_LINKED', 'This Google account is already linked to another mobile number.', 409);
             }
             $user->forceFill(['google_id' => $google['sub'], 'google_email' => $google['email']]);
+        }
+
+        if ($unit) {
+            $user->save();
+            $profile = \App\Models\MemberProfile::firstOrNew(['user_id' => $user->id]);
+            if (! $profile->exists || ! $profile->org_unit_id) {
+                $profile->user_id = $user->id;
+                $profile->full_name = $profile->full_name ?: (string) $user->name;
+                $profile->org_unit_id = $unit->id;
+                $profile->gender ??= $data['gender'] ?? null;
+                $profile->save();
+                $user->setRelation('profile', $profile);
+            }
         }
 
         $response = $this->issue($request, $user, $isNew, ['google_linked' => (bool) $google], verified: $otpOn);

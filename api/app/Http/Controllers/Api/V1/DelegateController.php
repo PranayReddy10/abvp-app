@@ -37,7 +37,7 @@ class DelegateController extends Controller
             'open' => $event->delegate_registration_open && $event->ends_at->isFuture(),
             'registration' => $reg && ! in_array($reg->status, [Reg::CANCELLED, Reg::REJECTED], true) ? $this->present($reg, $travel) : null,
             // Pre-fill from the sign-up details.
-            'prefill' => ['full_name' => $user->profile?->full_name ?: $user->name, 'gender' => $user->profile?->gender ?? $user->gender, 'prant' => $user->prant, 'institution' => $user->profile?->institution ?? $user->institution],
+            'prefill' => $this->prefill($user),
             'options' => [
                 'prants' => config('abvp.prants'),
                 'arrival_points' => GuideItem::where('event_id', $event->id)->where('kind', 'arrival')->orderBy('sort')->pluck('title'),
@@ -50,26 +50,39 @@ class DelegateController extends Controller
     public function save(Request $request, Event $event)
     {
         $this->open($event);
+        // The app's form: surname, first name, mobile, email, gender, prant, responsibility, arrival,
+        // departure and travel. The older website form (full name, food, emergency contact) still works.
+        $new = $request->filled('first_name');
         $data = $request->validate([
-            'full_name' => ['required', 'string', 'min:2', 'max:100'],
+            'first_name' => ['nullable', 'string', 'min:1', 'max:60'],
+            'surname' => [$new ? 'required' : 'nullable', 'string', 'max:60'],
+            'full_name' => [$new ? 'nullable' : 'required', 'string', 'min:2', 'max:100'],
+            'mobile' => [$new ? 'required' : 'nullable', 'string', 'regex:/^[0-9+ -]{10,16}$/'],
+            'email' => ['nullable', 'email', 'max:190'],
+            'responsibility' => [$new ? 'required' : 'nullable', 'string', 'max:120'],
             'gender' => ['required', 'in:male,female,other'],
             'prant' => ['required', 'string', 'max:80'],
             'institution' => ['nullable', 'string', 'max:150'],
-            'food' => ['required', 'in:'.implode(',', array_keys(self::FOOD))],
-            'emergency_name' => ['required', 'string', 'max:100'],
-            'emergency_phone' => ['required', 'string', 'regex:/^[0-9+ -]{6,20}$/'],
+            'food' => [$new ? 'nullable' : 'required', 'in:'.implode(',', array_keys(self::FOOD))],
+            'emergency_name' => [$new ? 'nullable' : 'required', 'string', 'max:100'],
+            'emergency_phone' => [$new ? 'nullable' : 'required', 'string', 'regex:/^[0-9+ -]{6,20}$/'],
             'mode' => ['required', 'in:'.implode(',', array_keys(self::MODES))],
             'reference' => ['nullable', 'string', 'max:60'],
             'arriving_at' => ['required', 'date'],
             'arrival_point' => ['required', 'string', 'max:120'],
-            'departing_at' => ['nullable', 'date', 'after:arriving_at'],
-            'needs_pickup' => ['required', 'boolean'],
-            'needs_stay' => ['required', 'boolean'],
+            'departing_at' => [$new ? 'required' : 'nullable', 'date', 'after:arriving_at'],
+            'needs_pickup' => ['sometimes', 'boolean'],
+            'needs_stay' => ['sometimes', 'boolean'],
             'notes' => ['nullable', 'string', 'max:500'],
         ], [
             'emergency_phone.regex' => 'Enter a phone number with digits only.',
+            'mobile.regex' => 'Enter a valid mobile number.',
             'departing_at.after' => 'Departure must be after arrival.',
         ]);
+        if ($new) {
+            $data['full_name'] = trim($data['first_name'].' '.$data['surname']);
+        }
+        $data += ['needs_pickup' => false, 'needs_stay' => true];
         $user = $request->user();
 
         [$reg, $travel] = DB::transaction(function () use ($data, $event, $user) {
@@ -89,8 +102,11 @@ class DelegateController extends Controller
             $reg->guest_name = $data['full_name'];
             $reg->guest_organisation = $data['prant'];
             $reg->details = [
+                'first_name' => $data['first_name'] ?? null, 'surname' => $data['surname'] ?? null,
+                'mobile' => $data['mobile'] ?? $user->mobile, 'email' => $data['email'] ?? null,
+                'responsibility' => $data['responsibility'] ?? null,
                 'gender' => $data['gender'], 'prant' => $data['prant'], 'institution' => $data['institution'] ?? null,
-                'food' => $data['food'], 'emergency_name' => $data['emergency_name'], 'emergency_phone' => $data['emergency_phone'],
+                'food' => $data['food'] ?? null, 'emergency_name' => $data['emergency_name'] ?? null, 'emergency_phone' => $data['emergency_phone'] ?? null,
             ];
             $reg->save();
 
@@ -102,7 +118,7 @@ class DelegateController extends Controller
             ]);
 
             // Remember the basics for next time.
-            foreach (['gender', 'prant', 'institution'] as $f) {
+            foreach (['gender', 'prant', 'institution', 'email'] as $f) {
                 if (empty($user->{$f}) && ! empty($data[$f])) {
                     $user->{$f} = $data[$f];
                 }
@@ -129,6 +145,26 @@ class DelegateController extends Controller
         $this->events->cancel($reg);
 
         return $this->ok(['cancelled' => true]);
+    }
+
+    /** Pre-fill from the account and profile; a saved form wins. */
+    private function prefill(\App\Models\User $user): array
+    {
+        $name = trim((string) ($user->profile?->full_name ?: $user->name));
+        $parts = preg_split('/\s+/', $name) ?: [];
+        $surname = count($parts) > 1 ? array_pop($parts) : '';
+
+        return [
+            'full_name' => $name,
+            'first_name' => implode(' ', $parts) ?: $name,
+            'surname' => $surname,
+            'mobile' => preg_replace('/^\+91/', '', (string) $user->mobile),
+            'email' => $user->email,
+            'gender' => $user->profile?->gender ?? $user->gender,
+            'prant' => $user->prant ?? $user->profile?->orgUnit?->ancestorOfType('state')?->name,
+            'institution' => $user->profile?->institution ?? $user->institution,
+            'responsibility' => $user->responsibilities()->first()?->title ?? null,
+        ];
     }
 
     private function present(Reg $reg, ?EventTravel $t): array
