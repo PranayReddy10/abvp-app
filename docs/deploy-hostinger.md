@@ -78,6 +78,14 @@ php artisan config:cache
 php artisan route:cache
 ```
 
+### Conference volunteer team (ghats and departments)
+
+```bash
+php artisan abvp:load-conference-teams
+```
+
+Loads the 72nd National Conference structure from the organising sheets – 17 ghats, their Ghat Pramukh / Saha Pramukh / Palak, every department and its Pramukh – and sets the conference to 24–27 Dec 2026 (`--keep-details` leaves the name and dates alone). Safe to run again. Then in the admin panel → **Conference team**: add phone numbers (or paste a CSV `ghat,department,role,name,mobile`). Each person is linked the moment they sign in with that number and gets **My seva** in the app and website: their role, team chat, meetings, tasks and announcements. Ghat heads and department Pramukhs can add volunteers, post announcements, schedule meetings and assign tasks from the app. Everyone signed in can browse the whole team with phone numbers; visitors see names and roles only.
+
 ### Admin sign-in
 
 The admin panel offers two ways in:

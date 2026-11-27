@@ -46,6 +46,7 @@ function Nav() {
         <nav className={`nav-links ${open ? 'open' : ''}`} aria-label="Main">
           {conf && <NavLink to={`/guide/${conf.event.id}`}>Conference guide</NavLink>}
           {conf?.event.delegate_registration_open && <NavLink to={`/conference/${conf.event.id}/register`}>Register</NavLink>}
+          <NavLink to="/conference/team">Team</NavLink>
           <NavLink to="/events">Events</NavLink>
           <NavLink to="/community">Community</NavLink>
           {me && <NavLink to="/me">My space</NavLink>}

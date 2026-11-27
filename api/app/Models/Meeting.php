@@ -10,7 +10,7 @@ class Meeting extends Model
 {
     protected $fillable = [
         'kind', 'title', 'agenda', 'mode', 'link', 'provider', 'venue', 'starts_at', 'ends_at',
-        'organiser_id', 'org_unit_id', 'vibhag_id', 'status', 'minutes',
+        'organiser_id', 'org_unit_id', 'vibhag_id', 'event_team_id', 'status', 'minutes',
     ];
 
     protected function casts(): array

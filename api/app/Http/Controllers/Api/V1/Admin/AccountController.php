@@ -108,6 +108,7 @@ class AccountController extends Controller
             $user->roleAssignments()->delete();
             $user->responsibilities()->delete();
             $user->tokens()->delete();
+            \App\Models\EventTeamMember::where('user_id', $user->id)->update(['user_id' => null, 'mobile' => null]);
             $user->profile?->delete();
             $user->forceFill([
                 'name' => 'Deleted account',

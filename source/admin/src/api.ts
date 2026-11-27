@@ -67,3 +67,15 @@ export function qs(params: Record<string, string | number | undefined | null>): 
   const s = p.toString()
   return s ? `?${s}` : ''
 }
+
+/** Download a file (CSV export) with the signed-in token. */
+export async function download(path: string, filename: string): Promise<void> {
+  const res = await fetch(BASE + path, { headers: { Authorization: `Bearer ${token.get() ?? ''}` } })
+  if (!res.ok) throw new ApiError(res.status, `HTTP_${res.status}`, 'Download failed.')
+  const url = URL.createObjectURL(await res.blob())
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(url)
+}

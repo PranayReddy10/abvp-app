@@ -3,6 +3,7 @@ import { Link, Navigate } from 'react-router-dom'
 import { nameOf, useAuth } from '../auth'
 import { useConference } from '../components/Layout'
 import PassCard from '../components/PassCard'
+import { MySeva } from './Team'
 import { Icon, KIND, Orbs, Reveal, Skeleton, grad } from '../components/ui'
 import type { Pass } from '../types'
 import { useFetch } from '../useFetch'
@@ -22,7 +23,7 @@ export default function Me() {
     e && { to: `/guide/${e.id}`, kind: 'stay', icon: 'sparkle' as const, t: 'Conference guide', s: 'Stay, transport, food, emergency' },
     e?.delegate_registration_open && { to: `/conference/${e.id}/register`, kind: 'arrival', icon: 'ticket' as const, t: registered ? 'My registration' : 'Register as delegate', s: registered ? 'See or edit your details' : 'Get your pass in minutes' },
     e && { to: `/support/${e.id}`, kind: 'support', icon: 'support' as const, t: 'Help desk', s: 'Chat or raise a ticket' },
-    { to: '/events', kind: 'office', icon: 'calendar' as const, t: 'Events', s: 'Upcoming programmes near you' },
+    { to: '/conference/team', kind: 'office', icon: 'calendar' as const, t: 'Conference team', s: 'Ghats, departments, who to call' },
     { to: '/community', kind: 'exhibit', icon: 'chat' as const, t: 'Community', s: 'Posts, photos and updates' },
   ].filter(Boolean) as { to: string; kind: string; icon: 'sparkle'; t: string; s: string }[]
 
@@ -61,6 +62,8 @@ export default function Me() {
           </motion.div>
         ))}
       </div>
+
+      <MySeva />
 
       <h2 style={{ fontSize: 28, fontWeight: 800, marginBottom: 16 }}>My passes</h2>
       {passes.loading && !passes.data ? <Skeleton h={300} n={1} /> : passes.data?.length ? (

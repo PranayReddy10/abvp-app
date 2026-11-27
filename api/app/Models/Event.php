@@ -77,4 +77,9 @@ class Event extends Model
             && ($this->registration_opens_at === null || $this->registration_opens_at->isPast())
             && ($this->registration_closes_at ?? $this->starts_at)->isFuture();
     }
+
+    public function teams(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(EventTeam::class);
+    }
 }

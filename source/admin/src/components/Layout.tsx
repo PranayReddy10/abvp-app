@@ -55,7 +55,7 @@ export default function Layout() {
         <h6>Membership</h6>
         {can('members.view') && <Item to="/approvals" icon="approvals" label="Approvals" count={dash?.pending_applications} />}
         {can('members.view') && <Item to="/members" icon="members" label="Members" />}
-        {can('events.manage') && <><h6>Events</h6><Item to="/events" icon="events" label="Events" /></>}
+        {can('events.manage') && <><h6>Events</h6><Item to="/conference-team" icon="members" label="Conference team" /><Item to="/events" icon="events" label="Events" /></>}
         <h6>Organisation work</h6>
         {can('meetings.schedule') && <Item to="/meetings" icon="meetings" label="Meetings" />}
         {can('circulars.issue') && <Item to="/circulars" icon="circulars" label="Circulars" />}

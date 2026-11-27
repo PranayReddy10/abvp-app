@@ -55,6 +55,8 @@ Route::prefix('v1')->group(function () {
     Route::middleware('throttle:60,1')->group(function () {
         Route::get('guide/events', [GuideController::class, 'myEvents']);
         Route::get('public/events', [EventController::class, 'publicIndex']);
+        Route::get('conference', [\App\Http\Controllers\Api\V1\ConferenceTeamController::class, 'conference']);
+        Route::get('events/{event}/teams', [\App\Http\Controllers\Api\V1\ConferenceTeamController::class, 'tree']);
         Route::get('public/events/{event}', [EventController::class, 'publicShow']);
         Route::get('guide/prants', [GuideController::class, 'prants']);
         Route::get('events/{event}/guide', [GuideController::class, 'hub']);
@@ -65,6 +67,16 @@ Route::prefix('v1')->group(function () {
         Route::get('auth/me', [AuthController::class, 'me']);
         Route::post('auth/logout', [AuthController::class, 'logout']);
         Route::put('me/password', [AuthController::class, 'setPassword']);
+
+        // Conference volunteer tree: my seva, team chat, heads' tools.
+        Route::get('me/seva', [\App\Http\Controllers\Api\V1\ConferenceTeamController::class, 'mySeva']);
+        Route::get('teams/{team}/messages', [\App\Http\Controllers\Api\V1\ConferenceTeamController::class, 'messages']);
+        Route::post('teams/{team}/messages', [\App\Http\Controllers\Api\V1\ConferenceTeamController::class, 'post'])->middleware('throttle:60,1');
+        Route::post('teams/{team}/members', [\App\Http\Controllers\Api\V1\ConferenceTeamController::class, 'addMember']);
+        Route::patch('team-members/{member}', [\App\Http\Controllers\Api\V1\ConferenceTeamController::class, 'updateMember']);
+        Route::delete('team-members/{member}', [\App\Http\Controllers\Api\V1\ConferenceTeamController::class, 'removeMember']);
+        Route::post('teams/{team}/meetings', [\App\Http\Controllers\Api\V1\ConferenceTeamController::class, 'meeting']);
+        Route::post('teams/{team}/tasks', [\App\Http\Controllers\Api\V1\ConferenceTeamController::class, 'task']);
 
         Route::get('me/profile', [ProfileController::class, 'show']);
         Route::patch('me/profile', [ProfileController::class, 'update']);
@@ -215,6 +227,12 @@ Route::prefix('v1')->group(function () {
             Route::delete('events/{event}/staff/{staff}', [Admin\EventController::class, 'removeStaff']);
             Route::get('events/{event}/live', [Admin\EventController::class, 'live']);
             Route::get('events/{event}/teams', [Admin\OperationsController::class, 'teams']);
+            Route::get('events/{event}/conference-teams', [Admin\ConferenceTeamAdminController::class, 'index']);
+            Route::post('events/{event}/conference-teams', [Admin\ConferenceTeamAdminController::class, 'store']);
+            Route::post('events/{event}/conference-teams/import', [Admin\ConferenceTeamAdminController::class, 'import']);
+            Route::get('events/{event}/conference-teams/export', [Admin\ConferenceTeamAdminController::class, 'export']);
+            Route::patch('conference-teams/{team}', [Admin\ConferenceTeamAdminController::class, 'update']);
+            Route::delete('conference-teams/{team}', [Admin\ConferenceTeamAdminController::class, 'destroy']);
             Route::post('events/{event}/teams', [Admin\OperationsController::class, 'storeTeam']);
             Route::delete('events/{event}/teams/{team}', [Admin\OperationsController::class, 'deleteTeam']);
             Route::get('events/{event}/duties', [Admin\OperationsController::class, 'duties']);

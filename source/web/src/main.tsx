@@ -11,6 +11,7 @@ import Home from './pages/Home'
 import Me from './pages/Me'
 import Profile from './pages/Profile'
 import { EventPage, Events } from './pages/Events'
+import Team from './pages/Team'
 import Support from './pages/Support'
 import './styles.css'
 
@@ -27,6 +28,7 @@ createRoot(document.getElementById('root')!).render(
             <Route path="support/:id" element={<Support />} />
             <Route path="community" element={<Community />} />
             <Route path="events" element={<Events />} />
+            <Route path="conference/team" element={<Team />} />
             <Route path="events/:id" element={<EventPage />} />
             <Route path="me" element={<Me />} />
             <Route path="me/edit" element={<Profile />} />

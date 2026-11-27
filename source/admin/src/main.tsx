@@ -20,6 +20,7 @@ import Roles from './pages/Roles'
 import Settings from './pages/Settings'
 import Account from './pages/Account'
 import Areas from './pages/Areas'
+import ConferenceTeam from './pages/ConferenceTeam'
 import Vibhags from './pages/Vibhags'
 import './styles.css'
 
@@ -48,6 +49,7 @@ function App() {
         <Route path="settings" element={<Settings />} />
         <Route path="account" element={<Account />} />
         <Route path="areas" element={<Areas />} />
+        <Route path="conference-team" element={<ConferenceTeam />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

@@ -172,6 +172,7 @@ class AuthController extends Controller
             'last_login_at' => now(),
         ])->save();
         app(\App\Services\AccountIds::class)->ensure($user);
+        \App\Models\EventTeamMember::linkUser($user); // conference roles entered by phone
         $token = $user->createToken($request->input('device_name', 'app'), ['*'], now()->addDays(60));
 
         return $this->ok([
