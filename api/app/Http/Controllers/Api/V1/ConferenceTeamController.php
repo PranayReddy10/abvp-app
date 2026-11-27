@@ -341,6 +341,8 @@ class ConferenceTeamController extends Controller
             'mobile' => $phones ? $m->mobile : null,
             'has_mobile' => (bool) $m->mobile,
             'linked' => $m->user_id !== null,
+            // Their member ID, to open their profile or follow them in the app.
+            'member_id' => $p?->member_id,
             'note' => $m->note,
             'photo_url' => $p?->photo_path ? \Illuminate\Support\Facades\URL::temporarySignedRoute('media.photo', now()->addHour(), ['profile' => $p->id]) : null,
         ];

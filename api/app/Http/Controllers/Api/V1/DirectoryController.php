@@ -21,12 +21,15 @@ class DirectoryController extends Controller
         $viewer = $request->user();
         $isAdmin = $access->can($viewer, 'members.view');
 
-        if (! $isAdmin && ! $viewer->isApprovedMember()) {
-            throw new ApiException('NOT_A_MEMBER', 'Profiles are visible to approved members.', 403);
+        // Invited guests (dignitaries) only see their invitation, not the directory.
+        if (! $isAdmin && ! $viewer->isApprovedMember() && \App\Models\EventRegistration::where('user_id', $viewer->id)->where('kind', 'guest')->exists()
+            && ! \App\Models\EventRegistration::where('user_id', $viewer->id)->where('kind', '!=', 'guest')->exists()) {
+            throw new ApiException('NOT_A_MEMBER', 'Profiles are not available for invited guests.', 403);
         }
-
+        // Everyone signed in can open a profile (the community and the conference team are open to
+        // all); details marked "All members" stay hidden from people who are not approved members.
         $profile = MemberProfile::where('member_id', $memberId)
-            ->where('membership_status', MemberProfile::STATUS_APPROVED)
+            ->whereHas('user', fn ($q) => $q->where('status', 'active'))
             ->with('orgUnit', 'user.vibhags', 'user.responsibilities.orgUnit', 'user.responsibilities.vibhag')
             ->firstOrFail();
 
@@ -114,7 +117,7 @@ class DirectoryController extends Controller
             }
 
             return match ($p->privacyFor($field)) {
-                'members' => true,
+                'members' => $viewer->isApprovedMember() || $isOfficeBearer,
                 'my_unit' => $isOfficeBearer || ($viewerProfile && $viewerProfile->org_unit_id === $p->org_unit_id),
                 'office_bearers' => $isOfficeBearer,
                 default => false,

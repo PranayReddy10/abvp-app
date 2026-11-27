@@ -156,15 +156,18 @@ function Settings({ guide, id, onSaved }: { guide: Guide; id: number; onSaved: (
   )
 }
 
-function Editor({ eventId, kinds, prants, item, initial, onClose, onSaved }: {
+function Editor({ eventId, kinds, prants, item: initialItem, initial, onClose, onSaved }: {
   eventId: number; kinds: Kind[]; prants: string[]; item: Item | null; initial: Draft
   onClose: () => void; onSaved: (msg: string, keepOpen?: boolean) => void
 }) {
+  // After "Add", the drawer stays open on the new item so photos and videos can be added at once.
+  const [item, setItem] = useState<Item | null>(initialItem)
+  const [pending, setPending] = useState<File[]>([])
   const [d, setD] = useState<Draft>(initial)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<unknown>(null)
-  const [photos, setPhotos] = useState<string[]>(item?.photo_urls ?? [])
-  const [videos, setVideos] = useState<Video[]>(item?.videos ?? [])
+  const [photos, setPhotos] = useState<string[]>(initialItem?.photo_urls ?? [])
+  const [videos, setVideos] = useState<Video[]>(initialItem?.videos ?? [])
   const [vTitle, setVTitle] = useState('')
   const [vUrl, setVUrl] = useState('')
   const [progress, setProgress] = useState<string | null>(null)
@@ -192,21 +195,36 @@ function Editor({ eventId, kinds, prants, item, initial, onClose, onSaved }: {
       contacts: d.contacts.filter((c) => c.name || c.member_id).map((c) => ({ name: c.name || null, role: c.role || null, phone: c.phone || null, member_id: c.member_id || null, is_lead: c.is_lead })),
     }
     try {
-      if (item) await api.patch(`/admin/guide-items/${item.id}`, body)
-      else await api.post(`/admin/events/${eventId}/guide/items`, body)
-      onSaved(item ? `Saved “${d.title}”.` : d.kind === 'gallery' ? `Added album “${d.title}”. Open it to add photos and videos.` : `Added “${d.title}”. Edit it to add photos.`)
+      if (item) {
+        await api.patch(`/admin/guide-items/${item.id}`, body)
+        onSaved(`Saved “${d.title}”.`)
+      } else {
+        const r = await api.post<Item>(`/admin/events/${eventId}/guide/items`, body)
+        setItem(r.data)
+        if (pending.length) {
+          const files = pending
+          setPending([])
+          await upload(files, r.data)
+        }
+        onSaved(d.kind === 'gallery' ? `Added album “${d.title}”. Add more photos and videos below.` : `Added “${d.title}”.`, true)
+      }
     } catch (x) { setErr(x) } finally { setBusy(false) }
   }
 
-  async function upload(files: File[]) {
-    if (!files.length || !item) return
+  async function upload(files: File[], target: Item | null = item) {
+    if (!files.length) return
+    if (!target) {
+      // Not saved yet: keep the files and upload them right after "Add".
+      setPending([...pending, ...files].slice(0, maxPhotos))
+      return
+    }
     setBusy(true); setErr(null)
     try {
       for (const [n, file] of files.slice(0, maxPhotos - photos.length).entries()) {
         setProgress(`Uploading photo ${n + 1} of ${files.length}…`)
         const form = new FormData()
         form.append('photo', file)
-        const r = await api.post<Item>(`/admin/guide-items/${item.id}/photos`, form)
+        const r = await api.post<Item>(`/admin/guide-items/${target.id}/photos`, form)
         setPhotos(r.data.photo_urls)
       }
       onSaved(files.length > 1 ? `${files.length} photos added.` : 'Photo added.', true)
@@ -245,6 +263,40 @@ function Editor({ eventId, kinds, prants, item, initial, onClose, onSaved }: {
   }
 
   const maps = ['arrival', 'stay', 'tourist', 'facility', 'office'].includes(d.kind)
+  // Each section asks only what it needs.
+  const k = d.kind
+  const show = {
+    where: k !== 'gallery',
+    timings: !['gallery', 'emergency'].includes(k),
+    landmark: !['gallery', 'exhibit', 'session', 'emergency', 'tourist'].includes(k),
+    color: ['food', 'office', 'facility', 'stay', 'exhibit', 'session'].includes(k),
+    tags: !['gallery', 'exhibit'].includes(k),
+    contacts: k !== 'gallery',
+  }
+  const photoFirst = k === 'gallery' || k === 'exhibit'
+  const labels = {
+    title: k === 'gallery' ? 'Album name *' : k === 'exhibit' ? 'Exhibit / stall name *' : 'Name *',
+    sub: k === 'gallery' ? 'Date or programme' : k === 'exhibit' ? 'Theme – one line' : 'Short line',
+    about: k === 'gallery' ? 'About this album' : k === 'exhibit' ? 'What it is – the story visitors read' : 'About',
+    where: k === 'exhibit' ? 'Hall and stall number' : 'Where exactly',
+  }
+  const photoBlock = (
+    <fieldset className="fs">
+      <legend>{k === 'gallery' ? 'Photos' : k === 'exhibit' ? 'Pictures of the exhibit' : 'Photos'}</legend>
+      <div className="ph-grid">
+        {photos.map((u, i) => (
+          <div key={u} className="ph"><img src={u} alt={`Photo ${i + 1}`} /><button type="button" onClick={() => removePhoto(i)} aria-label={`Remove photo ${i + 1}`}>✕</button></div>
+        ))}
+        {pending.map((f, i) => (
+          <div key={`p${i}`} className="ph"><img src={URL.createObjectURL(f)} alt={f.name} /><button type="button" onClick={() => setPending(pending.filter((_, j) => j !== i))} aria-label={`Remove ${f.name}`}>✕</button></div>
+        ))}
+        {photos.length + pending.length < maxPhotos && <label className="ph add">+<input type="file" accept="image/jpeg,image/png,image/webp" multiple hidden onChange={(e) => { upload(Array.from(e.target.files ?? [])); e.target.value = '' }} /></label>}
+      </div>
+      {!item && pending.length > 0 && <small className="muted">{pending.length} photo{pending.length === 1 ? '' : 's'} will upload when you press “Add to guide”.</small>}
+      {gallery && <small className="muted">Up to {maxPhotos} photos per album – pick many at once. {photos.length}/{maxPhotos}</small>}
+      {progress && <div className="notice" role="status">{progress}</div>}
+    </fieldset>
+  )
   // Portal: the page wrapper animates with a transform, which would trap a fixed overlay inside it.
   return createPortal(
     <div className="drawer-wrap" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose() }}>
@@ -261,23 +313,25 @@ function Editor({ eventId, kinds, prants, item, initial, onClose, onSaved }: {
               <datalist id="prants">{prants.map((p) => <option key={p} value={p} />)}</datalist>
             </div>
           )}
-          <div className="field"><label htmlFor="gi-title">Name *</label><input id="gi-title" className="input" required value={d.title} onChange={(e) => set({ title: e.target.value })} placeholder={d.kind === 'stay' ? 'SVIT Engineering College' : d.kind === 'arrival' ? 'RGI Airport' : 'Name'} /></div>
-          <div className="field"><label htmlFor="gi-sub">Short line</label><input id="gi-sub" className="input" value={d.subtitle ?? ''} onChange={(e) => set({ subtitle: e.target.value })} placeholder={d.kind === 'food' ? 'What is served' : 'One line under the name'} /></div>
-          <div className="row2">
-            <div className="field"><label htmlFor="gi-loc">Where exactly</label><input id="gi-loc" className="input" value={d.location ?? ''} onChange={(e) => set({ location: e.target.value })} placeholder="Hall B, Stall 7, left of the stage" /></div>
-            <div className="field"><label htmlFor="gi-time">Timings</label><input id="gi-time" className="input" value={d.timings ?? ''} onChange={(e) => set({ timings: e.target.value })} placeholder="7 AM – 10 PM" /></div>
-          </div>
-          <div className="row2">
-            <div className="field"><label htmlFor="gi-mark">How to spot it</label><input id="gi-mark" className="input" value={d.landmark ?? ''} onChange={(e) => set({ landmark: e.target.value })} placeholder="Green flag with a lotus" /></div>
-            <div className="field"><label htmlFor="gi-color">Colour</label>
+          <div className="field"><label htmlFor="gi-title">{labels.title}</label><input id="gi-title" className="input" required value={d.title} onChange={(e) => set({ title: e.target.value })} placeholder={d.kind === 'stay' ? 'SVIT Engineering College' : d.kind === 'arrival' ? 'RGI Airport' : 'Name'} /></div>
+          <div className="field"><label htmlFor="gi-sub">{labels.sub}</label><input id="gi-sub" className="input" value={d.subtitle ?? ''} onChange={(e) => set({ subtitle: e.target.value })} placeholder={k === 'food' ? 'What is served' : k === 'gallery' ? '24 Dec · Inauguration' : k === 'exhibit' ? 'ABVP – 75 years of student movement' : 'One line under the name'} /></div>
+          {photoFirst && photoBlock}
+          {photoFirst && <div className="field"><label htmlFor="gi-desc">{labels.about}</label><textarea id="gi-desc" className="input" rows={k === 'exhibit' ? 6 : 3} value={d.description ?? ''} onChange={(e) => set({ description: e.target.value })} placeholder={k === 'exhibit' ? 'What visitors see here, the history behind it, who made it…' : ''} /></div>}
+          {(show.where || show.timings) && <div className="row2">
+            {show.where && <div className="field"><label htmlFor="gi-loc">{labels.where}</label><input id="gi-loc" className="input" value={d.location ?? ''} onChange={(e) => set({ location: e.target.value })} placeholder="Hall B, Stall 7, left of the stage" /></div>}
+            {show.timings && <div className="field"><label htmlFor="gi-time">Timings</label><input id="gi-time" className="input" value={d.timings ?? ''} onChange={(e) => set({ timings: e.target.value })} placeholder="7 AM – 10 PM" /></div>}
+          </div>}
+          {(show.landmark || show.color) && <div className="row2">
+            {show.landmark && <div className="field"><label htmlFor="gi-mark">How to spot it</label><input id="gi-mark" className="input" value={d.landmark ?? ''} onChange={(e) => set({ landmark: e.target.value })} placeholder="Green flag with a lotus" /></div>}
+            {show.color && <div className="field"><label htmlFor="gi-color">Colour</label>
               <div className="color-row">
                 <input id="gi-color" type="color" value={d.color ?? '#E3620C'} onChange={(e) => set({ color: e.target.value.toUpperCase() })} />
                 {d.color ? <button type="button" className="btn small ghost" onClick={() => set({ color: null })}>No colour</button> : <span className="muted">Optional</span>}
               </div>
-            </div>
-          </div>
-          <div className="field"><label htmlFor="gi-tags">Tags</label><input id="gi-tags" className="input" value={d.tags} onChange={(e) => set({ tags: e.target.value })} placeholder="Veg, Jain, Girls, 24x7 – separated by commas" /></div>
-          <div className="field"><label htmlFor="gi-desc">About</label><textarea id="gi-desc" className="input" rows={3} value={d.description ?? ''} onChange={(e) => set({ description: e.target.value })} /></div>
+            </div>}
+          </div>}
+          {show.tags && <div className="field"><label htmlFor="gi-tags">Tags</label><input id="gi-tags" className="input" value={d.tags} onChange={(e) => set({ tags: e.target.value })} placeholder="Veg, Jain, Girls, 24x7 – separated by commas" /></div>}
+          {!photoFirst && <div className="field"><label htmlFor="gi-desc">{labels.about}</label><textarea id="gi-desc" className="input" rows={3} value={d.description ?? ''} onChange={(e) => set({ description: e.target.value })} /></div>}
 
           {maps && (
             <fieldset className="fs">
@@ -296,8 +350,8 @@ function Editor({ eventId, kinds, prants, item, initial, onClose, onSaved }: {
             </fieldset>
           )}
 
-          <fieldset className="fs">
-            <legend>Who to contact</legend>
+          {show.contacts && <fieldset className="fs">
+            <legend>{k === 'exhibit' ? 'Guide at the stall (optional)' : 'Who to contact'}</legend>
             {d.contacts.map((c, i) => (
               <div key={i} className={`contact-row ${c.is_lead ? 'lead' : ''}`}>
                 <label className="lead-toggle" title="Lead"><input type="checkbox" checked={c.is_lead} onChange={(e) => setContact(i, { is_lead: e.target.checked })} />★</label>
@@ -310,21 +364,10 @@ function Editor({ eventId, kinds, prants, item, initial, onClose, onSaved }: {
             ))}
             <button type="button" className="btn small" onClick={() => set({ contacts: [...d.contacts, { name: '', role: 'Team', phone: '', is_lead: false, member_id: '' }] })}>+ Add person</button>
             <small className="muted">★ marks the lead, shown first. These numbers are public: anyone who opens the guide can call them. Add a Member ID to link someone; their verified badge and mobile are used.</small>
-          </fieldset>
+          </fieldset>}
 
-          {item && (
-            <fieldset className="fs">
-              <legend>Photos</legend>
-              <div className="ph-grid">
-                {photos.map((u, i) => (
-                  <div key={u} className="ph"><img src={u} alt={`Photo ${i + 1}`} /><button type="button" onClick={() => removePhoto(i)} aria-label={`Remove photo ${i + 1}`}>✕</button></div>
-                ))}
-                {photos.length < maxPhotos && <label className="ph add">+<input type="file" accept="image/jpeg,image/png,image/webp" multiple={gallery} hidden onChange={(e) => { upload(Array.from(e.target.files ?? [])); e.target.value = '' }} /></label>}
-              </div>
-              {gallery && <small className="muted">Up to {maxPhotos} photos per album – you can pick many at once. {photos.length}/{maxPhotos}</small>}
-              {progress && <div className="notice" role="status">{progress}</div>}
-            </fieldset>
-          )}
+          {!photoFirst && photoBlock}
+          {gallery && !item && <p className="muted" style={{ fontSize: 13 }}>Videos can be added right after you press “Add to guide”.</p>}
           {item && gallery && (
             <fieldset className="fs">
               <legend>Videos</legend>

@@ -60,12 +60,17 @@ class AccessAndPrivacyTest extends TestCase
         $this->getJson('/api/v1/members/M1')->assertJsonPath('data.mobile', null);
     }
 
-    public function test_non_members_cannot_browse_profiles(): void
+    public function test_non_members_see_profiles_without_member_only_details(): void
     {
-        $this->member('+919800000001', 'M1');
+        $m = $this->member('+919800000001', 'M1');
+        $m->profile->forceFill(['privacy' => ['institution' => 'members', 'mobile' => 'members']])->save();
         Sanctum::actingAs(User::create(['mobile' => '+919800000009']));
 
-        $this->getJson('/api/v1/members/M1')->assertStatus(403)->assertJsonPath('error.code', 'NOT_A_MEMBER');
+        $this->getJson('/api/v1/members/M1')->assertOk()
+            ->assertJsonPath('data.member_id', 'M1')
+            ->assertJsonPath('data.mobile', null)
+            ->assertJsonPath('data.institution', null);
+        $this->getJson('/api/v1/members/NOPE')->assertNotFound();
     }
 
     public function test_admin_can_only_assign_roles_below_their_own(): void

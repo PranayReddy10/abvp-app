@@ -236,7 +236,8 @@ class FeedController extends Controller
     public function follow(Request $request, string $memberId)
     {
         $viewer = $this->member($request);
-        $target = MemberProfile::where('member_id', $memberId)->where('membership_status', 'approved')->first()?->user ?? abort(404);
+        $target = MemberProfile::where('member_id', $memberId)->first()?->user ?? abort(404);
+        abort_unless($target->status === 'active', 404);
         if ($target->id === $viewer->id) {
             throw new ApiException('SELF_FOLLOW', 'You cannot follow yourself.');
         }
