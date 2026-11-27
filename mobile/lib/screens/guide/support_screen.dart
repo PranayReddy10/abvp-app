@@ -14,16 +14,51 @@ import '../../widgets/motion.dart';
 import 'guide_widgets.dart';
 
 /// Support for one event: start a chat, raise a ticket, or open an earlier conversation.
+/// The help page for the current conference: emergency call, chat with the help desk, raise
+/// a request, and my requests. Used everywhere the app offers help or emergency.
+Future<void> openHelp(BuildContext context, Session session) async {
+  Json? conf;
+  try {
+    conf = await session.api.get('/conference') as Json?;
+  } on ApiException {
+    conf = null;
+  }
+  if (!context.mounted) return;
+  if (conf == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Help opens once the conference is published.'),
+      ),
+    );
+    return;
+  }
+  await Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => SupportScreen(
+        session: session,
+        eventId: conf!['id'] as int,
+        eventTitle: conf['title'] as String,
+        helpline: conf['helpline'] as String?,
+      ),
+    ),
+  );
+}
+
 class SupportScreen extends StatefulWidget {
   const SupportScreen({
     super.key,
     required this.session,
     required this.eventId,
     required this.eventTitle,
+    this.helpline,
   });
   final Session session;
   final int eventId;
   final String eventTitle;
+
+  /// The conference helpline, shown as the emergency call at the top.
+  final String? helpline;
 
   @override
   State<SupportScreen> createState() => _SupportScreenState();
@@ -122,6 +157,21 @@ class _SupportScreenState extends State<SupportScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: staggered([
+                    if (widget.helpline != null) ...[
+                      _Action(
+                        icon: Icons.emergency_rounded,
+                        title: 'Emergency – call now',
+                        subtitle:
+                            'Helpline ${widget.helpline} · or dial 112 / 108',
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFF6B4A), Color(0xFFC81E1E)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        onTap: () => callNumber(widget.helpline!),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
                     _Action(
                       icon: Icons.chat_bubble_rounded,
                       title: tr('support.chat'),

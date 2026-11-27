@@ -17,6 +17,7 @@ import '../duties_screen.dart';
 import '../edit_profile_screen.dart';
 import '../guide/guide_hub.dart';
 import '../guide/guide_sections.dart';
+import '../guide/support_screen.dart';
 import 'delegate_form.dart';
 import '../meeting_screen.dart';
 import '../notifications_screen.dart';
@@ -768,15 +769,10 @@ class _QuickButtons extends StatelessWidget {
             ),
           ),
         ),
-        b(
-          Icons.support_agent_rounded,
-          'Helpline',
-          const [Color(0xFFFF9F43), Color(0xFFC75C00)],
-          () {
-            final h = conf['helpline'] as String?;
-            if (h != null) _call(h);
-          },
-        ),
+        b(Icons.emergency_rounded, 'Help', const [
+          Color(0xFFFF7A45),
+          Color(0xFFC81E1E),
+        ], () => openHelp(context, session)),
       ],
     );
   }
@@ -967,46 +963,9 @@ class _SideTiles extends StatelessWidget {
   final _HomeData data;
   final Future<void> Function() onChanged;
 
-  /// Registered delegates choose: open the guide or change their form.
-  Future<void> _delegate(BuildContext context) async {
-    if (!data.isDelegate) {
-      return _openDelegate(context, session, data, onChanged);
-    }
-    final choice = await showModalBottomSheet<String>(
-      context: context,
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(
-                Icons.explore_rounded,
-                color: AppColors.saffron,
-              ),
-              title: const Text('Open the conference guide'),
-              onTap: () => Navigator.pop(ctx, 'guide'),
-            ),
-            ListTile(
-              leading: const Icon(
-                Icons.edit_note_rounded,
-                color: AppColors.saffron,
-              ),
-              title: const Text('Change my delegate form'),
-              onTap: () => Navigator.pop(ctx, 'edit'),
-            ),
-          ],
-        ),
-      ),
-    );
-    if (choice == null || !context.mounted) return;
-    await _openDelegate(
-      context,
-      session,
-      data,
-      onChanged,
-      edit: choice == 'edit',
-    );
-  }
+  /// First time the form; after that straight into the guide (which has "Edit my delegate form").
+  Future<void> _delegate(BuildContext context) =>
+      _openDelegate(context, session, data, onChanged);
 
   @override
   Widget build(BuildContext context) {

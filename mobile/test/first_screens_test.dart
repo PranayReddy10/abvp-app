@@ -395,11 +395,23 @@ void main() {
     expect(find.text('Delegate registration is not open yet'), findsOneWidget);
   });
 
+  testWidgets('Help on Home opens the help page with an emergency call', (
+    tester,
+  ) async {
+    await _openEveryTab(tester, member: false);
+    await tester.tap(find.text('Help'));
+    for (var i = 0; i < 15; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(find.text('Emergency – call now'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('Home starts with my details and quick buttons', (tester) async {
     await _openEveryTab(tester, member: true);
     expect(find.text('Fresh Person'), findsWidgets);
     expect(find.textContaining('ABVP-IN-000001'), findsWidgets);
-    for (final b in ['Guide', 'Gallery', 'Team', 'Helpline', 'DAYS']) {
+    for (final b in ['Guide', 'Gallery', 'Team', 'Help', 'DAYS']) {
       expect(find.text(b), findsOneWidget, reason: b);
     }
     expect(find.text('My pass'), findsNothing);

@@ -10,7 +10,7 @@ import '../widgets/password_sheet.dart';
 import 'duties_screen.dart';
 import 'edit_profile_screen.dart';
 import 'events_screen.dart';
-import 'help_screen.dart';
+import 'guide/support_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key, required this.session});
@@ -250,12 +250,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     style: TextStyle(fontWeight: FontWeight.w700),
                   ),
                   trailing: const Icon(Icons.chevron_right),
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => MyHelpScreen(session: widget.session),
-                    ),
-                  ),
+                  onTap: () => openHelp(context, widget.session),
                 ),
               ],
             ),

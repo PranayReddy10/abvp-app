@@ -9,6 +9,7 @@ import '../../widgets/format.dart';
 import '../../widgets/kit.dart';
 import '../../widgets/motion.dart';
 import 'guide_sections.dart';
+import '../conference/delegate_form.dart' show DelegateFormScreen;
 import 'support_screen.dart';
 import 'guide_widgets.dart';
 
@@ -82,6 +83,36 @@ class _GuideHubState extends State<GuideHub> {
     }
   }
 
+  /// Open my delegate form to change it, from inside the guide.
+  Future<void> _editDelegateForm() async {
+    try {
+      final d = await widget.session.api.get(
+        '/events/${widget.eventId}/delegate',
+      ) as Json;
+      if (!mounted) return;
+      final saved = await Navigator.push<bool>(
+        context,
+        MaterialPageRoute(
+          builder: (_) => DelegateFormScreen(
+            session: widget.session,
+            eventId: widget.eventId,
+            data: d,
+          ),
+        ),
+      );
+      if (saved == true && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Your delegate form is saved.')),
+        );
+      }
+    } on ApiException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(e.message)));
+      }
+    }
+  }
+
   void _openSection(Json s) {
     final hub = _hub!;
     if (s['kind'] == 'support' && hub['signed_in'] != true) {
@@ -138,6 +169,7 @@ class _GuideHubState extends State<GuideHub> {
             session: widget.session,
             eventId: widget.eventId,
             eventTitle: hub['event']['title'] as String,
+            helpline: hub['event']['helpline'] as String?,
           ),
         ),
       );
@@ -336,7 +368,7 @@ class _GuideHubState extends State<GuideHub> {
                             Tooltip(
                               message: '${tr('guide.helpline')} $helpline',
                               child: Pressable(
-                                onTap: () => callNumber(helpline),
+                                onTap: () => _openSection(support),
                                 child: Container(
                                   padding: const EdgeInsets.fromLTRB(
                                     12,
@@ -482,6 +514,21 @@ class _GuideHubState extends State<GuideHub> {
                   ),
                 ),
               ),
+              if (widget.session.me != null)
+                Transform.translate(
+                  offset: const Offset(0, -28),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: OutlinedButton.icon(
+                        onPressed: _editDelegateForm,
+                        icon: const Icon(Icons.edit_note_rounded),
+                        label: const Text('Edit my delegate form'),
+                      ),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
