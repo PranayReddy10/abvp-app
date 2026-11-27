@@ -16,7 +16,7 @@ class Post extends Model
 
     protected function casts(): array
     {
-        return ['photos' => 'array', 'hidden_at' => 'datetime', 'reviewed_at' => 'datetime'];
+        return ['photos' => 'array', 'hidden_at' => 'datetime', 'reviewed_at' => 'datetime', 'pending_at' => 'datetime'];
     }
 
     public function author(): BelongsTo
@@ -45,6 +45,12 @@ class Post extends Model
     }
 
     /** Posts this member may see: visible, and addressed to them. */
+    /** Community → "Posts need approval": new posts wait for an admin unless the author moderates. */
+    public static function approvalRequired(): bool
+    {
+        return rescue(fn () => \App\Models\Setting::value('community.approval_required', '0') === '1', false, false);
+    }
+
     public function scopeVisibleTo(Builder $q, User $viewer): Builder
     {
         $unit = $viewer->profile?->orgUnit;

@@ -177,4 +177,36 @@ class FeedTest extends TestCase
         $this->post("/api/v1/admin/events/$id/cover", ['cover' => UploadedFile::fake()->image('c.jpg', 1200, 700)], ['Accept' => 'application/json'])->assertOk();
         $this->getJson("/api/v1/admin/events/$id")->assertJsonPath('data.cover_url', fn ($u) => str_contains($u, '/media/events/'));
     }
+
+    public function test_posts_wait_for_approval_when_switched_on_and_admins_post_directly(): void
+    {
+        $admin = $this->member('Hyderabad admin');
+        RoleAssignment::create(['user_id' => $admin->id, 'role' => 'super_admin', 'org_unit_id' => OrgUnit::where('name', 'Bharat')->value('id')]);
+        Sanctum::actingAs($admin);
+        $this->getJson('/api/v1/admin/moderation/settings')->assertOk()->assertJsonPath('data.approval_required', false);
+        $this->putJson('/api/v1/admin/moderation/settings', ['approval_required' => true])->assertOk()->assertJsonPath('data.approval_required', true);
+
+        $author = $this->member('Ravi');
+        $id = $this->createPost($author, ['body' => 'Hello everyone'])->assertCreated()->assertJsonPath('data.pending', true)->json('data.id');
+        $reader = $this->member('Sita');
+        Sanctum::actingAs($reader);
+        $this->getJson('/api/v1/feed')->assertJsonCount(0, 'data');
+
+        // An admin's own post goes live straight away.
+        $this->createPost($admin, ['body' => 'Welcome to the conference'])->assertCreated()->assertJsonPath('data.pending', false);
+
+        Sanctum::actingAs($admin);
+        $this->getJson('/api/v1/admin/moderation/settings')->assertJsonPath('data.pending', 1);
+        $this->getJson('/api/v1/admin/moderation?status=pending')->assertJsonCount(1, 'data')->assertJsonPath('data.0.pending', true);
+        $this->postJson("/api/v1/admin/moderation/posts/$id", ['action' => 'approve'])->assertJsonPath('data.hidden', false);
+        $this->assertSame(1, AppNotification::where('user_id', $author->id)->where('type', 'post_approved')->count());
+
+        Sanctum::actingAs($reader);
+        $this->getJson('/api/v1/feed')->assertJsonCount(2, 'data');
+
+        // Switched off: posts go live again.
+        Sanctum::actingAs($admin);
+        $this->putJson('/api/v1/admin/moderation/settings', ['approval_required' => false])->assertOk();
+        $this->createPost($author, ['body' => 'Live now'])->assertJsonPath('data.pending', false);
+    }
 }

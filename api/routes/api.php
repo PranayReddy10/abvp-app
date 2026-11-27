@@ -257,6 +257,8 @@ Route::prefix('v1')->group(function () {
             Route::post('guide-items/{item}/photos', [Admin\GuideController::class, 'addPhoto']);
             Route::delete('guide-items/{item}/photos/{index}', [Admin\GuideController::class, 'removePhoto'])->whereNumber('index');
             Route::get('moderation', [Admin\ModerationController::class, 'index']);
+            Route::get('moderation/settings', [Admin\ModerationController::class, 'settings']);
+            Route::put('moderation/settings', [Admin\ModerationController::class, 'saveSettings']);
             Route::post('moderation/posts/{post}', [Admin\ModerationController::class, 'act']);
             Route::get('settings/sign-in', [Admin\SignInSettingsController::class, 'show']);
             Route::put('settings/sign-in', [Admin\SignInSettingsController::class, 'update']);

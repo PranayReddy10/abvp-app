@@ -87,7 +87,10 @@ class FeedController extends Controller
         $disk = config('abvp.media_disk');
         $photos = collect($request->file('photos', []))->map(fn ($f) => $f->storeAs('posts/'.now()->format('Y/m'), Str::uuid().'.'.$f->extension(), ['disk' => $disk, 'visibility' => 'private']))->all();
 
-        $post = DB::transaction(function () use ($data, $viewer, $photos, $original) {
+        $needsApproval = Post::approvalRequired()
+            && ! app(\App\Services\AccessControl::class)->can($viewer, 'feed.moderate');
+
+        $post = DB::transaction(function () use ($data, $viewer, $photos, $original, $needsApproval) {
             $post = Post::create([
                 'user_id' => $viewer->id,
                 'body' => $data['body'] ?? null,
@@ -97,6 +100,9 @@ class FeedController extends Controller
                 'repost_of_id' => $original?->id,
                 'photos' => $photos ?: null,
             ]);
+            if ($needsApproval) {
+                $post->forceFill(['hidden_at' => now(), 'pending_at' => now(), 'hidden_reason' => 'Waiting for approval'])->save();
+            }
             foreach (Post::extractTags($post->body) as $tag) {
                 DB::table('post_tags')->insert(['post_id' => $post->id, 'tag' => $tag, 'created_at' => now()]);
             }
@@ -316,6 +322,7 @@ class FeedController extends Controller
                 'reposted' => $reposted->has($p->id),
                 'is_mine' => $p->user_id === $viewer->id,
                 'hidden' => $p->hidden_at !== null,
+                'pending' => $p->pending_at !== null && $p->hidden_at !== null,
                 'at' => $p->created_at->toIso8601String(),
             ];
         };

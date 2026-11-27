@@ -617,3 +617,6 @@ tr.click.on td { background: var(--surface-2) }
 .ct-find { grid-column: 1 / -1; display: flex; gap: 6px }
 .ct-find .input { flex: 1 }
 .ct-found { grid-column: 1 / -1; background: var(--ok-soft, #E7F6EC); color: var(--ok, #157F3B); border-radius: 10px; padding: 6px 10px; font-size: 13px }
+.mod-settings { display: flex; gap: 16px; align-items: center; margin-bottom: 14px }
+.composer { display: grid; gap: 10px; margin-bottom: 16px }
+.composer textarea { resize: vertical; min-height: 80px }
