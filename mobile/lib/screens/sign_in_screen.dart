@@ -7,7 +7,7 @@ import '../state/session.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/motion.dart';
-import 'guide/guide_hub.dart';
+import '../widgets/area_picker.dart';
 import '../l10n.dart';
 
 class SignInScreen extends StatefulWidget {
@@ -23,6 +23,10 @@ class _SignInScreenState extends State<SignInScreen> {
   final _code = TextEditingController();
   final _password = TextEditingController();
   final _name = TextEditingController();
+  final _email = TextEditingController();
+  final _confirm = TextEditingController();
+  String? _gender;
+  int? _unitId;
 
   /// code: SMS code · password: mobile + password · create: new account with a password.
   String _mode = 'code';
@@ -35,10 +39,6 @@ class _SignInScreenState extends State<SignInScreen> {
   @override
   void initState() {
     super.initState();
-    // Guests have no account: near a conference the guide opens straight away.
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) => maybeOpenGuide(context, widget.session),
-    );
     if (!widget.session.otpEnabled) _mode = 'password';
     widget.session.addListener(_onSession);
   }
@@ -218,10 +218,6 @@ class _SignInScreenState extends State<SignInScreen> {
     key: const ValueKey('mobile'),
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      GuideEntry(
-        session: widget.session,
-        padding: const EdgeInsets.only(bottom: 22),
-      ),
       Text(tr('signin.title'), style: text.headlineSmall),
       const SizedBox(height: 6),
       Text(
@@ -343,10 +339,6 @@ class _SignInScreenState extends State<SignInScreen> {
       key: ValueKey(_mode),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        GuideEntry(
-          session: widget.session,
-          padding: const EdgeInsets.only(bottom: 22),
-        ),
         Text(
           creating ? tr('signin.create') : tr('signin.title'),
           style: text.headlineSmall,
@@ -369,6 +361,35 @@ class _SignInScreenState extends State<SignInScreen> {
               labelText: tr('signin.name'),
               prefixIcon: const Icon(Icons.person_outline),
             ),
+          ),
+          const SizedBox(height: 14),
+          TextField(
+            controller: _email,
+            keyboardType: TextInputType.emailAddress,
+            autofillHints: const [AutofillHints.email],
+            decoration: const InputDecoration(
+              labelText: 'Email (optional)',
+              prefixIcon: Icon(Icons.alternate_email_rounded),
+            ),
+          ),
+          const SizedBox(height: 14),
+          DropdownButtonFormField<String>(
+            initialValue: _gender,
+            decoration: const InputDecoration(
+              labelText: 'Gender',
+              prefixIcon: Icon(Icons.wc_rounded),
+            ),
+            items: const [
+              DropdownMenuItem(value: 'male', child: Text('Male')),
+              DropdownMenuItem(value: 'female', child: Text('Female')),
+              DropdownMenuItem(value: 'other', child: Text('Other')),
+            ],
+            onChanged: (v) => setState(() => _gender = v),
+          ),
+          const SizedBox(height: 14),
+          AreaPicker(
+            api: widget.session.api,
+            onChanged: (id, _) => _unitId = id,
           ),
           const SizedBox(height: 14),
         ],
@@ -409,6 +430,19 @@ class _SignInScreenState extends State<SignInScreen> {
           ),
           onSubmitted: (_) => _passwordAction(),
         ),
+        if (creating) ...[
+          const SizedBox(height: 14),
+          TextField(
+            controller: _confirm,
+            obscureText: !_showPassword,
+            autofillHints: const [AutofillHints.newPassword],
+            decoration: const InputDecoration(
+              labelText: 'Confirm password',
+              prefixIcon: Icon(Icons.lock_reset_rounded),
+            ),
+            onSubmitted: (_) => _passwordAction(),
+          ),
+        ],
         const SizedBox(height: 18),
         FilledButton(
           onPressed: _busy ? null : _passwordAction,
@@ -448,9 +482,24 @@ class _SignInScreenState extends State<SignInScreen> {
   }
 
   void _passwordAction() {
-    if (_mode == 'create' && _password.text.length < 8) {
-      setState(() => _error = tr('signin.short'));
-      return;
+    if (_mode == 'create') {
+      final missing = [
+        if (_name.text.trim().length < 2) 'your name',
+        if (_gender == null) 'gender',
+        if (_unitId == null) 'your state and district',
+      ];
+      if (missing.isNotEmpty) {
+        setState(() => _error = 'Please add ${missing.join(', ')}.');
+        return;
+      }
+      if (_password.text.length < 8) {
+        setState(() => _error = tr('signin.short'));
+        return;
+      }
+      if (_password.text != _confirm.text) {
+        setState(() => _error = 'The two passwords do not match.');
+        return;
+      }
     }
     _run(
       () => _mode == 'create'
@@ -458,6 +507,9 @@ class _SignInScreenState extends State<SignInScreen> {
               name: _name.text.trim(),
               mobile: _mobile.text,
               password: _password.text,
+              email: _email.text.trim().isEmpty ? null : _email.text.trim(),
+              gender: _gender,
+              orgUnitId: _unitId,
               googleLinkToken: _googleLink?.linkToken,
             )
           : widget.session.passwordLogin(_mobile.text, _password.text),

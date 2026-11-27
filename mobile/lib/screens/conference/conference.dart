@@ -13,7 +13,11 @@ import '../../widgets/kit.dart';
 import '../../widgets/loader.dart';
 import '../../widgets/motion.dart';
 import '../duties_screen.dart';
+import '../edit_profile_screen.dart';
 import '../guide/guide_hub.dart';
+import '../guide/guide_sections.dart';
+import '../pass_screen.dart';
+import 'delegate_form.dart';
 import '../meeting_screen.dart';
 import '../notifications_screen.dart';
 
@@ -36,10 +40,14 @@ Future<void> _wa(String m) => launchUrl(
 
 /// Everything the home needs in one go: the conference, my seva and the team tree.
 class _HomeData {
-  _HomeData(this.conference, this.seva, this.tree);
+  _HomeData(this.conference, this.seva, this.tree, [this.delegate]);
   final Json? conference;
   final Json seva;
   final Json? tree;
+
+  /// GET /events/{id}/delegate: whether I have filled the delegate form.
+  final Json? delegate;
+  bool get isDelegate => delegate?['registration'] != null;
   List<Json> get places => ((seva['places'] as List?) ?? []).cast<Json>();
   List<Json> get chats => ((seva['chats'] as List?) ?? []).cast<Json>();
   List<Json> get ghats => ((tree?['ghats'] as List?) ?? []).cast<Json>();
@@ -52,25 +60,36 @@ class _HomeData {
 /// Home, built around the national conference: the delegate side (guide, pass, help desk),
 /// the volunteer side (my seva: role, team chat, tasks, meetings, announcements) and the whole
 /// conference team as colourful ghat tiles.
+Future<_HomeData> _loadHome(Session session) async {
+  final conf = await session.api.get('/conference') as Json?;
+  final seva = await session.api.get('/me/seva') as Json;
+  Json? tree;
+  Json? delegate;
+  if (conf != null && conf['has_teams'] == true) {
+    tree = await session.api.get('/events/${conf['id']}/teams') as Json;
+  }
+  if (conf != null) {
+    try {
+      delegate =
+          await session.api.get('/events/${conf['id']}/delegate') as Json?;
+    } on ApiException {
+      delegate = null;
+    }
+  }
+  return _HomeData(conf, seva, tree, delegate);
+}
+
+/// Home: who I am (with a little motion), the conference with a live countdown, quick buttons
+/// for the guide, my pass, the gallery and the helpline, then the delegate and volunteer sides.
 class ConferenceHome extends StatelessWidget {
   const ConferenceHome({super.key, required this.session, this.onShowPass});
   final Session session;
   final VoidCallback? onShowPass;
 
-  Future<_HomeData> _load() async {
-    final conf = await session.api.get('/conference') as Json?;
-    final seva = await session.api.get('/me/seva') as Json;
-    Json? tree;
-    if (conf != null && conf['has_teams'] == true) {
-      tree = await session.api.get('/events/${conf['id']}/teams') as Json;
-    }
-    return _HomeData(conf, seva, tree);
-  }
-
   @override
   Widget build(BuildContext context) {
     return Loader<_HomeData>(
-      load: _load,
+      load: () => _loadHome(session),
       builder: (context, d, reload) => RefreshIndicator(
         onRefresh: reload,
         child: ListView(
@@ -81,74 +100,40 @@ class ConferenceHome extends StatelessWidget {
             120,
           ),
           children: [
-            _Greeting(session: session),
-            const SizedBox(height: 14),
+            FadeSlideIn(
+              child: _ProfileHeader(session: session, data: d),
+            ),
+            const SizedBox(height: 16),
             if (d.conference == null)
               const EmptyNote(
                 'The conference details appear here once it is published.',
               )
             else ...[
-              FadeSlideIn(child: _Hero(conf: d.conference!)),
-              const SizedBox(height: 14),
+              FadeSlideIn(index: 1, child: _Hero(conf: d.conference!)),
+              const SizedBox(height: 16),
               FadeSlideIn(
-                index: 1,
+                index: 2,
+                child: _QuickButtons(
+                  session: session,
+                  conf: d.conference!,
+                  onShowPass: onShowPass,
+                ),
+              ),
+              const SizedBox(height: 18),
+              FadeSlideIn(
+                index: 3,
                 child: _SideTiles(
                   session: session,
                   data: d,
                   onShowPass: onShowPass,
+                  onChanged: reload,
                 ),
               ),
               if (d.places.isNotEmpty) ...[
                 const SizedBox(height: 18),
                 FadeSlideIn(
-                  index: 2,
+                  index: 4,
                   child: _MySeva(session: session, data: d, onChanged: reload),
-                ),
-              ],
-              if (d.ghats.isNotEmpty) ...[
-                const SizedBox(height: 22),
-                SectionTitle(
-                  'Conference team',
-                  action: 'Search',
-                  onAction: () => showSearch(
-                    context: context,
-                    delegate: _TeamSearch(
-                      session: session,
-                      ghats: d.ghats,
-                      manageable: d.manageable,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                _GhatGrid(
-                  session: session,
-                  ghats: d.ghats,
-                  manageable: d.manageable,
-                  onChanged: reload,
-                ),
-              ],
-              if (d.places.isEmpty && d.ghats.isNotEmpty) ...[
-                const SizedBox(height: 16),
-                Panel(
-                  color: AppColors.saffronSoft,
-                  child: const Row(
-                    children: [
-                      Icon(
-                        Icons.volunteer_activism_outlined,
-                        color: AppColors.saffronInk,
-                      ),
-                      SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          'Want to volunteer at the conference? Call the Ghat Pramukh of the ghat you would like to join. They will add you, and your team chat and tasks appear here.',
-                          style: TextStyle(
-                            color: AppColors.saffronInk,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
               ],
             ],
@@ -159,33 +144,467 @@ class ConferenceHome extends StatelessWidget {
   }
 }
 
-class _Greeting extends StatelessWidget {
-  const _Greeting({required this.session});
+/// The whole conference team: my volunteer place, every ghat as a card, and how to join.
+class VolunteerScreen extends StatelessWidget {
+  const VolunteerScreen({super.key, required this.session});
   final Session session;
 
   @override
   Widget build(BuildContext context) {
-    final me = session.me;
-    final name = me?.profile?.fullName.isNotEmpty == true
-        ? me!.profile!.fullName
-        : (me?.name ?? '');
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            'Namaste${name.isEmpty ? '' : ', ${name.split(' ').first}'}',
-            style: Theme.of(context).textTheme.headlineSmall,
+    return Scaffold(
+      body: Loader<_HomeData>(
+        load: () => _loadHome(session),
+        builder: (context, d, reload) => RefreshIndicator(
+          onRefresh: reload,
+          child: CustomScrollView(
+            slivers: [
+              SliverAppBar(
+                pinned: true,
+                expandedHeight: 150,
+                backgroundColor: const Color(0xFFC24F06),
+                foregroundColor: Colors.white,
+                actions: [
+                  if (d.ghats.isNotEmpty)
+                    IconButton(
+                      tooltip: 'Search the team',
+                      icon: const Icon(Icons.search_rounded),
+                      onPressed: () => showSearch(
+                        context: context,
+                        delegate: _TeamSearch(
+                          session: session,
+                          ghats: d.ghats,
+                          manageable: d.manageable,
+                        ),
+                      ),
+                    ),
+                ],
+                flexibleSpace: FlexibleSpaceBar(
+                  title: const Text(
+                    'Volunteer',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
+                  ),
+                  background: DecoratedBox(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Color(0xFFF08A3C), Color(0xFFC24F06)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                    ),
+                    child: Align(
+                      alignment: const Alignment(0.85, 0.1),
+                      child: Icon(
+                        Icons.volunteer_activism_rounded,
+                        size: 90,
+                        color: Colors.white.withValues(alpha: 0.18),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
+                sliver: SliverList.list(
+                  children: [
+                    if (d.places.isNotEmpty) ...[
+                      _MySeva(session: session, data: d, onChanged: reload),
+                      const SizedBox(height: 22),
+                    ] else if (d.ghats.isNotEmpty) ...[
+                      Panel(
+                        color: AppColors.saffronSoft,
+                        child: const Row(
+                          children: [
+                            Icon(
+                              Icons.volunteer_activism_outlined,
+                              color: AppColors.saffronInk,
+                            ),
+                            SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'Want to volunteer at the conference? Call the Ghat Pramukh of the ghat you would like to join. They will add you, and your team chat and tasks appear here.',
+                                style: TextStyle(
+                                  color: AppColors.saffronInk,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 22),
+                    ],
+                    if (d.ghats.isEmpty)
+                      const EmptyNote('The conference team appears here soon.')
+                    else ...[
+                      const SectionTitle('Conference team'),
+                      const SizedBox(height: 10),
+                      _GhatGrid(
+                        session: session,
+                        ghats: d.ghats,
+                        manageable: d.manageable,
+                        onChanged: reload,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
-        CircleIconButton(
-          icon: Icons.notifications_none_rounded,
-          tooltip: 'Notifications',
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => NotificationsScreen(session: session),
+      ),
+    );
+  }
+}
+
+/// Me at the top of Home: photo with a slowly turning saffron ring, name, member ID, area and
+/// what I am at the conference.
+class _ProfileHeader extends StatefulWidget {
+  const _ProfileHeader({required this.session, required this.data});
+  final Session session;
+  final _HomeData data;
+
+  @override
+  State<_ProfileHeader> createState() => _ProfileHeaderState();
+}
+
+class _ProfileHeaderState extends State<_ProfileHeader>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _spin = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 6),
+  )..repeat();
+
+  @override
+  void dispose() {
+    _spin.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final session = widget.session;
+    final me = session.me;
+    final p = me?.profile;
+    final name = p?.fullName.isNotEmpty == true
+        ? p!.fullName
+        : (me?.name ?? '');
+    final hour = DateTime.now().hour;
+    final hello = hour < 12
+        ? 'Good morning'
+        : hour < 17
+        ? 'Good afternoon'
+        : 'Good evening';
+    final chips = <(IconData, String, Color)>[
+      if (widget.data.isDelegate)
+        (Icons.badge_rounded, 'Delegate', const Color(0xFF3E8BF0)),
+      for (final pl in widget.data.places.take(2))
+        (
+          Icons.volunteer_activism_rounded,
+          '${pl['role_label']} · ${(pl['team'] as Json)['name']}',
+          AppColors.saffron,
+        ),
+      if (p?.status == 'approved')
+        (Icons.verified_rounded, 'Member', AppColors.ok),
+    ];
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF171A2E).withValues(alpha: 0.06),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              GestureDetector(
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => EditProfileScreen(session: session),
+                  ),
+                ),
+                child: SizedBox(
+                  width: 72,
+                  height: 72,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      RotationTransition(
+                        turns: _spin,
+                        child: Container(
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: SweepGradient(
+                              colors: [
+                                AppColors.saffron,
+                                Color(0xFFFFC98B),
+                                Color(0xFF13235B),
+                                AppColors.saffron,
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      Container(
+                        width: 64,
+                        height: 64,
+                        padding: const EdgeInsets.all(2),
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Initials(name, photoUrl: p?.photoUrl, size: 60),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          '$hello ',
+                          style: const TextStyle(
+                            color: AppColors.muted,
+                            fontSize: 13,
+                          ),
+                        ),
+                        const _Wave(),
+                      ],
+                    ),
+                    Text(
+                      name.isEmpty ? 'Welcome' : name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontFamily: 'Anek',
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        height: 1.15,
+                      ),
+                    ),
+                    Text(
+                      [p?.memberId, p?.orgUnitLabel]
+                          .whereType<String>()
+                          .where((x) => x.isNotEmpty)
+                          .join(' · '),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppColors.muted,
+                        fontSize: 12.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              CircleIconButton(
+                icon: Icons.notifications_none_rounded,
+                tooltip: 'Notifications',
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => NotificationsScreen(session: session),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (chips.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (final (icon, label, color) in chips)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(icon, size: 15, color: color),
+                        const SizedBox(width: 5),
+                        Text(
+                          label,
+                          style: TextStyle(
+                            color: color,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// A small namaste that bows now and then.
+class _Wave extends StatefulWidget {
+  const _Wave();
+
+  @override
+  State<_Wave> createState() => _WaveState();
+}
+
+class _WaveState extends State<_Wave> with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 2400),
+  )..repeat();
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+    animation: _c,
+    builder: (_, child) {
+      final t = _c.value;
+      final bow = t < 0.3 ? (t < 0.15 ? t / 0.15 : (0.3 - t) / 0.15) : 0.0;
+      return Transform.rotate(angle: -0.35 * bow, child: child);
+    },
+    child: const Text('🙏', style: TextStyle(fontSize: 14)),
+  );
+}
+
+/// Round buttons: guide, my pass, gallery, helpline.
+class _QuickButtons extends StatelessWidget {
+  const _QuickButtons({
+    required this.session,
+    required this.conf,
+    this.onShowPass,
+  });
+  final Session session;
+  final Json conf;
+  final VoidCallback? onShowPass;
+
+  @override
+  Widget build(BuildContext context) {
+    final guide = conf['guide_enabled'] == true;
+    void soon() => ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('The guide opens closer to the conference.'),
+      ),
+    );
+    Widget b(IconData icon, String label, List<Color> colors, VoidCallback f) =>
+        Expanded(
+          child: Pressable(
+            onTap: f,
+            child: Column(
+              children: [
+                Container(
+                  width: 58,
+                  height: 58,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    gradient: LinearGradient(
+                      colors: colors,
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: colors.last.withValues(alpha: 0.3),
+                        blurRadius: 12,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: Icon(icon, color: Colors.white, size: 28),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
             ),
           ),
+        );
+    return Row(
+      children: [
+        b(
+          Icons.explore_rounded,
+          'Guide',
+          const [Color(0xFF4A9BFF), Color(0xFF1E5FD0)],
+          () => guide
+              ? Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        GuideHub(session: session, eventId: conf['id'] as int),
+                  ),
+                )
+              : soon(),
+        ),
+        b(
+          Icons.qr_code_2_rounded,
+          'My pass',
+          const [Color(0xFFF08A3C), Color(0xFFC24F06)],
+          () =>
+              onShowPass != null ? onShowPass!() : openMyPass(context, session),
+        ),
+        b(
+          Icons.photo_library_rounded,
+          'Gallery',
+          const [Color(0xFFB57BFF), Color(0xFF6D3BD6)],
+          () => guide
+              ? Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => GuideSectionScreen(
+                      session: session,
+                      event: conf,
+                      kind: 'gallery',
+                      title: 'Gallery',
+                      hindi: 'चित्र दीर्घा',
+                    ),
+                  ),
+                )
+              : soon(),
+        ),
+        b(
+          Icons.support_agent_rounded,
+          'Helpline',
+          const [Color(0xFF3DD68C), Color(0xFF138A4F)],
+          () {
+            final h = conf['helpline'] as String?;
+            if (h != null) _call(h);
+          },
         ),
       ],
     );
@@ -315,11 +734,51 @@ class _SideTiles extends StatelessWidget {
   const _SideTiles({
     required this.session,
     required this.data,
+    required this.onChanged,
     this.onShowPass,
   });
   final Session session;
   final _HomeData data;
   final VoidCallback? onShowPass;
+  final Future<void> Function() onChanged;
+
+  /// First time: the delegate form. After that: the guide (or the pass until the guide opens).
+  Future<void> _delegate(BuildContext context) async {
+    final conf = data.conference!;
+    final id = conf['id'] as int;
+    final guide = conf['guide_enabled'] == true;
+    if (!data.isDelegate) {
+      final d = data.delegate;
+      if (d == null || d['open'] != true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Delegate registration is not open yet.'),
+          ),
+        );
+        return;
+      }
+      final done = await Navigator.push<bool>(
+        context,
+        MaterialPageRoute(
+          builder: (_) =>
+              DelegateFormScreen(session: session, eventId: id, data: d),
+        ),
+      );
+      await onChanged();
+      if (done != true || !context.mounted) return;
+    }
+    if (!context.mounted) return;
+    if (guide) {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => GuideHub(session: session, eventId: id),
+        ),
+      );
+    } else {
+      onShowPass != null ? onShowPass!() : openMyPass(context, session);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -373,47 +832,32 @@ class _SideTiles extends StatelessWidget {
       children: [
         tile(
           'Delegate',
-          guide
-              ? 'Stay, transport, food, help desk'
-              : 'Your pass · guide opens soon',
-          Icons.explore_rounded,
+          data.isDelegate
+              ? (guide
+                    ? 'Registered · open your guide'
+                    : 'Registered · your pass')
+              : 'Fill the delegate form',
+          data.isDelegate ? Icons.verified_rounded : Icons.badge_rounded,
           const [Color(0xFF3E8BF0), Color(0xFF13235B)],
-          () => guide
-              ? Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        GuideHub(session: session, eventId: conf['id'] as int),
-                  ),
-                )
-              : onShowPass?.call(),
+          () => _delegate(context),
         ),
         const SizedBox(width: 12),
         tile(
           'Volunteer',
           seva
               ? (data.places.first['team'] as Json)['name'] as String
-              : 'Ghats and departments',
+              : 'Ghats, departments, team',
           Icons.volunteer_activism_rounded,
           const [Color(0xFFF08A3C), Color(0xFFC24F06)],
-          () => seva
-              ? Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => TeamChatScreen(
-                      session: session,
-                      teamId: data.chats.first['team_id'] as int,
-                    ),
-                  ),
-                )
-              : showSearch(
-                  context: context,
-                  delegate: _TeamSearch(
-                    session: session,
-                    ghats: data.ghats,
-                    manageable: data.manageable,
-                  ),
-                ),
+          () async {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => VolunteerScreen(session: session),
+              ),
+            );
+            onChanged();
+          },
         ),
       ],
     );

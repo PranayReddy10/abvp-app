@@ -76,6 +76,9 @@ class Session extends ChangeNotifier {
     required String mobile,
     required String password,
     String? googleLinkToken,
+    String? email,
+    String? gender,
+    int? orgUnitId,
   }) async {
     await _signedIn(
       await api.post('/auth/register', {
@@ -83,6 +86,9 @@ class Session extends ChangeNotifier {
         'mobile': mobile,
         'password': password,
         'password_confirmation': password,
+        'email': ?email,
+        'gender': ?gender,
+        'org_unit_id': ?orgUnitId,
         'device_name': 'mobile',
         'google_link_token': ?googleLinkToken,
       }) as Map<String, dynamic>,

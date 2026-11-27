@@ -222,7 +222,12 @@ class _GuideSectionScreenState extends State<GuideSectionScreen> {
                                       'p': _regions.length,
                                       'n': count,
                                     })
-                                  : tr('sec.places', {'n': count}),
+                                  : tr(
+                                      widget.kind == 'gallery'
+                                          ? 'sec.albums'
+                                          : 'sec.places',
+                                      {'n': count},
+                                    ),
                               style: const TextStyle(color: Colors.white70),
                             ),
                         ],
@@ -260,8 +265,88 @@ class _GuideSectionScreenState extends State<GuideSectionScreen> {
       'tourist' => [ExhibitCarousel(items: items, onOpen: _open, tall: false)],
       'session' => _sessions(items),
       'emergency' => _emergency(items),
+      'gallery' => _gallery(items),
       _ => _cards(items),
     };
+  }
+
+  // ---- Gallery: an album per day or programme ----
+  List<Widget> _gallery(List<Json> albums) {
+    final all = [
+      for (final a in albums)
+        ...((a['photo_urls'] as List?) ?? []).cast<String>(),
+    ];
+    if (all.isEmpty) return [EmptyNote(tr('sec.empty'))];
+    var offset = 0;
+    final out = <Widget>[];
+    for (final a in albums) {
+      final photos = ((a['photo_urls'] as List?) ?? []).cast<String>();
+      if (photos.isEmpty) continue;
+      final start = offset;
+      offset += photos.length;
+      out.add(
+        FadeSlideIn(
+          index: out.length,
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 22),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  a['title'] as String? ?? '',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                if ((a['description'] as String?)?.isNotEmpty == true)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text(
+                      a['description'] as String,
+                      style: const TextStyle(color: AppColors.muted),
+                    ),
+                  ),
+                const SizedBox(height: 10),
+                GridView.builder(
+                  padding: EdgeInsets.zero,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: photos.length,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    mainAxisSpacing: 6,
+                    crossAxisSpacing: 6,
+                  ),
+                  itemBuilder: (context, i) => GestureDetector(
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            _PhotoViewer(photos: all, start: start + i),
+                      ),
+                    ),
+                    child: Hero(
+                      tag: photos[i],
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(i == 0 ? 18 : 10),
+                        child: Image.network(
+                          photos[i],
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) =>
+                              Container(color: AppColors.line),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+    return out;
   }
 
   // ---- Accommodation: pick your prant ----
@@ -1778,6 +1863,45 @@ class _InfoRow extends StatelessWidget {
           ),
         ),
       ],
+    ),
+  );
+}
+
+/// Full-screen photos: swipe between them, pinch to zoom.
+class _PhotoViewer extends StatefulWidget {
+  const _PhotoViewer({required this.photos, required this.start});
+  final List<String> photos;
+  final int start;
+
+  @override
+  State<_PhotoViewer> createState() => _PhotoViewerState();
+}
+
+class _PhotoViewerState extends State<_PhotoViewer> {
+  late final PageController _page = PageController(initialPage: widget.start);
+  late int _at = widget.start;
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    backgroundColor: Colors.black,
+    appBar: AppBar(
+      backgroundColor: Colors.black,
+      foregroundColor: Colors.white,
+      title: Text('${_at + 1} / ${widget.photos.length}'),
+    ),
+    body: PageView.builder(
+      controller: _page,
+      itemCount: widget.photos.length,
+      onPageChanged: (i) => setState(() => _at = i),
+      itemBuilder: (_, i) => InteractiveViewer(
+        maxScale: 4,
+        child: Center(
+          child: Hero(
+            tag: widget.photos[i],
+            child: Image.network(widget.photos[i], fit: BoxFit.contain),
+          ),
+        ),
+      ),
     ),
   );
 }

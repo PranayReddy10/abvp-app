@@ -8,6 +8,7 @@ import '../widgets/kit.dart';
 import '../widgets/motion.dart';
 import '../widgets/password_sheet.dart';
 import 'conference/conference.dart';
+import 'edit_profile_screen.dart';
 import 'events_screen.dart';
 import 'feed_screen.dart';
 import 'guide/guide_hub.dart';
@@ -183,11 +184,17 @@ class AccountMeScreen extends StatelessWidget {
                       children: [
                         ListTile(
                           leading: const Icon(Icons.edit_outlined),
-                          title: const Text('Edit details, area and photo'),
+                          title: const Text('Edit profile'),
                           subtitle: const Text(
-                            'Name, date of birth, district, Vibhags',
+                            'Photo, name, gender, email, area, college',
                           ),
-                          onTap: () => session.editApplication(true),
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  EditProfileScreen(session: session),
+                            ),
+                          ),
                         ),
                         ListTile(
                           leading: const Icon(Icons.lock_outline),

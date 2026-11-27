@@ -81,6 +81,8 @@ Future<void> _openEveryTab(WidgetTester tester, {required bool member}) async {
           ? (member ? _seva : _emptySeva)
           : path.endsWith('/events/9/teams')
           ? _tree
+          : path.endsWith('/events/9/delegate')
+          ? _delegate
           : path.contains('/teams/') && path.endsWith('/messages')
           ? _chat
           : path.endsWith('/me/qr')
@@ -127,6 +129,14 @@ Future<void> _openEveryTab(WidgetTester tester, {required bool member}) async {
       expect(tester.takeException(), isNull, reason: 'QR pass page');
       await tester.pageBack();
       await settle();
+      // The full profile editor opens from Me.
+      await tester.tap(find.textContaining('Edit profile').first);
+      await settle();
+      expect(find.text('Add photo'), findsOneWidget);
+      expect(tester.takeException(), isNull, reason: 'edit profile');
+      await tester.pageBack();
+      await settle();
+      expect(find.text('Gate check-in'), findsNothing);
     }
   }
 }
@@ -274,16 +284,31 @@ void main() {
   ) async {
     await _openEveryTab(tester, member: true);
     expect(find.text('72nd National Conference – Bhagyanagar'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Meeting at 6 pm'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(
       find.text('Pramukh · Adhiveshan office · Karyalaya'),
       findsOneWidget,
     );
     expect(find.text('Meeting at 6 pm'), findsOneWidget);
-
+    // The team is no longer on Home: it lives behind the Volunteer tile.
+    expect(find.text('Karyalaya'), findsNothing);
+    await tester.scrollUntilVisible(
+      find.text('Delegate'),
+      -300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('Volunteer').first);
+    for (var i = 0; i < 15; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
     await tester.scrollUntilVisible(
       find.text('Karyalaya'),
       300,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: find.byType(Scrollable).last,
     );
     await tester.tap(find.text('Karyalaya'));
     for (var i = 0; i < 10; i++) {
@@ -318,13 +343,69 @@ void main() {
     (tester) async {
       await _openEveryTab(tester, member: false);
       expect(find.text('Volunteer'), findsOneWidget);
+      await tester.tap(find.text('Volunteer'));
+      for (var i = 0; i < 15; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
       await tester.scrollUntilVisible(
         find.textContaining('Want to volunteer'),
         300,
         scrollable: find.byType(Scrollable).first,
       );
       expect(find.textContaining('Want to volunteer'), findsOneWidget);
-      expect(find.text('Volunteer'), findsOneWidget); // the tile only, no section
+      expect(find.text('Karyalaya'), findsOneWidget);
     },
   );
+
+  testWidgets('Delegate opens the form first, filled from the account', (
+    tester,
+  ) async {
+    await _openEveryTab(tester, member: false);
+    expect(find.text('Fill the delegate form'), findsOneWidget);
+    await tester.tap(find.text('Delegate'));
+    for (var i = 0; i < 15; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(find.text('Delegate registration'), findsOneWidget);
+    expect(find.text('Fresh'), findsOneWidget); // first name
+    expect(find.text('Person'), findsOneWidget); // surname
+    expect(find.text('9800000000'), findsOneWidget);
+    expect(find.text('Responsibility'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Home starts with my details and quick buttons', (tester) async {
+    await _openEveryTab(tester, member: true);
+    expect(find.text('Fresh Person'), findsWidgets);
+    expect(find.textContaining('ABVP-IN-000001'), findsWidgets);
+    for (final b in ['Guide', 'My pass', 'Gallery', 'Helpline']) {
+      expect(find.text(b), findsOneWidget, reason: b);
+    }
+  });
 }
+
+final _delegate = {
+  'event': _conference,
+  'open': true,
+  'registration': null,
+  'prefill': {
+    'full_name': 'Fresh Person',
+    'first_name': 'Fresh',
+    'surname': 'Person',
+    'mobile': '9800000000',
+    'email': null,
+    'gender': null,
+    'prant': 'Telangana',
+    'institution': null,
+    'responsibility': null,
+  },
+  'options': {
+    'prants': ['Delhi', 'Telangana'],
+    'arrival_points': ['Secunderabad Railway Station'],
+    'modes': [
+      {'key': 'train', 'label': 'Train'},
+      {'key': 'bus', 'label': 'Bus'},
+    ],
+    'food': <dynamic>[],
+  },
+};

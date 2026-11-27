@@ -8,10 +8,10 @@ import '../widgets/common.dart';
 import '../widgets/motion.dart';
 import '../widgets/password_sheet.dart';
 import 'duties_screen.dart';
+import 'edit_profile_screen.dart';
 import 'events_screen.dart';
 import 'help_screen.dart';
 import 'pass_screen.dart';
-import 'scanner_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key, required this.session});
@@ -163,7 +163,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
+          OutlinedButton.icon(
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => EditProfileScreen(session: widget.session),
+              ),
+            ),
+            icon: const Icon(Icons.edit_rounded),
+            label: const Text('Edit profile – photo, name, area and more'),
+          ),
+          const SizedBox(height: 12),
           MyQrCard(session: widget.session, memberId: p.memberId),
           const SizedBox(height: 20),
           if (_message != null) ...[
@@ -251,32 +262,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ],
             ),
           ),
-          if (me.canCheckIn) ...[
-            const SizedBox(height: 16),
-            Card(
-              child: ListTile(
-                leading: const Icon(
-                  Icons.qr_code_scanner,
-                  color: AppColors.saffron,
-                ),
-                title: const Text(
-                  'Gate check-in',
-                  style: TextStyle(fontWeight: FontWeight.w700),
-                ),
-                subtitle: const Text(
-                  'Scan passes for events you are on the team for',
-                ),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        CheckInEventsScreen(session: widget.session),
-                  ),
-                ),
-              ),
-            ),
-          ],
           const SizedBox(height: 24),
           Text('Who can see my details', style: text.titleMedium),
           const SizedBox(height: 4),
