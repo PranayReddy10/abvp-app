@@ -8,6 +8,7 @@ import '../widgets/common.dart';
 import '../widgets/motion.dart';
 import '../widgets/password_sheet.dart';
 import 'duties_screen.dart';
+import 'events_screen.dart';
 import 'help_screen.dart';
 import 'scanner_screen.dart';
 
@@ -320,6 +321,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 await showPasswordSheet(context, widget.session);
                 if (mounted) setState(() {});
               },
+            ),
+          ),
+          const SizedBox(height: 16),
+          Card(
+            child: ListTile(
+              leading: const Icon(
+                Icons.event_outlined,
+                color: AppColors.saffron,
+              ),
+              title: Text(
+                tr('nav.events'),
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+              subtitle: const Text('Other programmes and your registrations'),
+              trailing: const Icon(Icons.chevron_right_rounded),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => AllEventsScreen(session: widget.session),
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 16),

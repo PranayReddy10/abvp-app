@@ -671,3 +671,15 @@ class _EventScreenState extends State<EventScreen> {
     ),
   );
 }
+
+/// Every published event (the conference itself is on Home).
+class AllEventsScreen extends StatelessWidget {
+  const AllEventsScreen({super.key, required this.session});
+  final Session session;
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(title: const Text('Events')),
+    body: EventsList(session: session),
+  );
+}

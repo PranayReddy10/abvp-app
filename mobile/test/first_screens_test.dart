@@ -72,9 +72,18 @@ Future<void> _openEveryTab(WidgetTester tester, {required bool member}) async {
   final api = ApiClient(
     client: MockClient((req) async {
       // Everything a new account loads is empty, except its pass.
-      final Object data = req.url.path.endsWith('/auth/me')
+      final path = req.url.path;
+      final Object? data = path.endsWith('/auth/me')
           ? _me(member: member)
-          : req.url.path.endsWith('/me/qr')
+          : path.endsWith('/conference')
+          ? _conference
+          : path.endsWith('/me/seva')
+          ? (member ? _seva : _emptySeva)
+          : path.endsWith('/events/9/teams')
+          ? _tree
+          : path.contains('/teams/') && path.endsWith('/messages')
+          ? _chat
+          : path.endsWith('/me/qr')
           ? {
               'token': 'T',
               'member_id': 'ABVP-IN-000001',
@@ -114,6 +123,134 @@ Future<void> _openEveryTab(WidgetTester tester, {required bool member}) async {
   }
 }
 
+final _conference = {
+  'id': 9,
+  'title': '72nd National Conference – Bhagyanagar',
+  'venue': 'Bhagyanagar',
+  'starts_at': '2026-12-24T03:30:00+00:00',
+  'ends_at': '2026-12-27T12:30:00+00:00',
+  'helpline': '9000000000',
+  'guide_enabled': false,
+  'delegate_registration_open': false,
+  'has_teams': true,
+};
+final _person = {
+  'id': 1,
+  'name': 'Gowtham',
+  'role': 'pramukh',
+  'role_label': 'Pramukh',
+  'mobile': '+919800000001',
+  'has_mobile': true,
+  'linked': true,
+  'note': null,
+  'photo_url': null,
+};
+final _tree = {
+  'event': _conference,
+  'signed_in': true,
+  'ghats': [
+    {
+      'id': 10,
+      'name': 'Karyalaya',
+      'name_local': null,
+      'color': '#E3620C',
+      'heads': [
+        {
+          'id': 2,
+          'name': 'Shri A Shyam Kiran',
+          'role': 'ghat_pramukh',
+          'role_label': 'Ghat Pramukh',
+          'mobile': null,
+          'has_mobile': false,
+          'linked': false,
+          'note': null,
+          'photo_url': null,
+        },
+      ],
+      'departments': [
+        {
+          'id': 11,
+          'name': 'Adhiveshan office',
+          'name_local': null,
+          'people': [_person],
+        },
+      ],
+      'counts': {'departments': 1, 'people': 2},
+    },
+  ],
+};
+final _seva = {
+  'event': _conference,
+  'is_admin': false,
+  'places': [
+    {
+      'member_id': 1,
+      'role': 'pramukh',
+      'role_label': 'Pramukh',
+      'team': {
+        'id': 11,
+        'name': 'Adhiveshan office',
+        'kind': 'department',
+        'color': '#E3620C',
+      },
+      'ghat': {'id': 10, 'name': 'Karyalaya'},
+      'can_manage': true,
+    },
+  ],
+  'chats': [
+    {
+      'team_id': 11,
+      'name': 'Adhiveshan office',
+      'kind': 'department',
+      'ghat': 'Karyalaya',
+      'color': '#E3620C',
+      'can_manage': true,
+      'last': null,
+    },
+  ],
+  'meetings': <dynamic>[],
+  'tasks': <dynamic>[],
+  'announcements': [
+    {
+      'id': 5,
+      'team': 'Karyalaya',
+      'body': 'Meeting at 6 pm',
+      'by': 'Shri A Shyam Kiran',
+      'at': '2026-12-20T12:30:00+00:00',
+    },
+  ],
+};
+final _emptySeva = {
+  'event': _conference,
+  'places': <dynamic>[],
+  'chats': <dynamic>[],
+  'meetings': <dynamic>[],
+  'tasks': <dynamic>[],
+  'announcements': <dynamic>[],
+};
+final _chat = {
+  'team': {
+    'id': 11,
+    'name': 'Adhiveshan office',
+    'kind': 'department',
+    'ghat': 'Karyalaya',
+    'color': '#E3620C',
+  },
+  'can_manage': true,
+  'people': 3,
+  'messages': [
+    {
+      'id': 1,
+      'body': 'Reached the office',
+      'announcement': false,
+      'by': 'Ravi',
+      'mine': false,
+      'photo_url': null,
+      'at': '2026-12-20T12:30:00+00:00',
+    },
+  ],
+};
+
 void main() {
   testWidgets(
     'a brand-new member opens every tab without errors',
@@ -122,5 +259,45 @@ void main() {
   testWidgets(
     'a new account (not a member yet) opens every tab without errors',
     (t) => _openEveryTab(t, member: false),
+  );
+
+  testWidgets('home shows my seva, the team, a ghat and its people', (
+    tester,
+  ) async {
+    await _openEveryTab(tester, member: true);
+    expect(find.text('72nd National Conference – Bhagyanagar'), findsOneWidget);
+    expect(
+      find.text('Pramukh · Adhiveshan office · Karyalaya'),
+      findsOneWidget,
+    );
+    expect(find.text('Meeting at 6 pm'), findsOneWidget);
+
+    await tester.scrollUntilVisible(
+      find.text('Karyalaya'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('Karyalaya'));
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(find.text('Shri A Shyam Kiran'), findsOneWidget);
+    expect(find.text('Adhiveshan office'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'someone with no seva sees the team and the invitation, not a chat',
+    (tester) async {
+      await _openEveryTab(tester, member: false);
+      expect(find.text('Seva team'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.textContaining('Want to do seva'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(find.textContaining('Want to do seva'), findsOneWidget);
+      expect(find.text('My seva'), findsNothing);
+    },
   );
 }

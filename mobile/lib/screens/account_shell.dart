@@ -7,10 +7,10 @@ import '../widgets/common.dart';
 import '../widgets/kit.dart';
 import '../widgets/motion.dart';
 import '../widgets/password_sheet.dart';
+import 'conference/conference.dart';
 import 'events_screen.dart';
 import 'feed_screen.dart';
 import 'guide/guide_hub.dart';
-import 'notifications_screen.dart';
 import 'pass_screen.dart';
 
 /// Everyone signed in who is not (yet) an approved member: conference delegates, guests,
@@ -38,7 +38,10 @@ class _AccountShellState extends State<AccountShell> {
   @override
   Widget build(BuildContext context) {
     final pages = [
-      _Home(session: widget.session, onMe: () => setState(() => _tab = 3)),
+      ConferenceHome(
+        session: widget.session,
+        onShowPass: () => setState(() => _tab = 2),
+      ),
       FeedScreen(session: widget.session),
       PassScreen(session: widget.session),
       AccountMeScreen(session: widget.session),
@@ -54,93 +57,6 @@ class _AccountShellState extends State<AccountShell> {
           (Icons.forum_rounded, tr('nav.community')),
           (Icons.qr_code_2_rounded, tr('nav.pass')),
           (Icons.person_rounded, tr('nav.me')),
-        ],
-      ),
-    );
-  }
-}
-
-class _Home extends StatelessWidget {
-  const _Home({required this.session, required this.onMe});
-  final Session session;
-  final VoidCallback onMe;
-
-  @override
-  Widget build(BuildContext context) {
-    final me = session.me!;
-    final name = me.profile?.fullName.isNotEmpty == true
-        ? me.profile!.fullName
-        : (me.name ?? '');
-    final text = Theme.of(context).textTheme;
-    return SafeArea(
-      bottom: false,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 12, 12, 4),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'Namaste${name.isEmpty ? '' : ', ${name.split(' ').first}'}',
-                    style: text.headlineSmall,
-                  ),
-                ),
-                CircleIconButton(
-                  icon: Icons.notifications_none,
-                  tooltip: 'Notifications',
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => NotificationsScreen(session: session),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-            child: GuideEntry(session: session),
-          ),
-          if (me.profile?.orgUnitId == null)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-              child: FadeSlideIn(
-                child: Panel(
-                  color: AppColors.saffronSoft,
-                  onTap: onMe,
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.place_outlined,
-                        color: AppColors.saffronInk,
-                      ),
-                      const SizedBox(width: 12),
-                      const Expanded(
-                        child: Text(
-                          'Add your district and photo in Me, so you see events and posts near you and can apply for membership.',
-                          style: TextStyle(
-                            color: AppColors.saffronInk,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      const Icon(
-                        Icons.chevron_right,
-                        color: AppColors.saffronInk,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 14, 20, 4),
-            child: Text(tr('nav.events'), style: text.titleLarge),
-          ),
-          Expanded(child: EventsList(session: session)),
         ],
       ),
     );
@@ -279,6 +195,19 @@ class AccountMeScreen extends StatelessWidget {
                           ),
                           subtitle: Text(tr('me.passwordHint')),
                           onTap: () => showPasswordSheet(context, session),
+                        ),
+                        ListTile(
+                          leading: const Icon(Icons.event_outlined),
+                          title: Text(tr('nav.events')),
+                          subtitle: const Text(
+                            'Other programmes and your registrations',
+                          ),
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => AllEventsScreen(session: session),
+                            ),
+                          ),
                         ),
                         ListTile(
                           leading: const Icon(Icons.translate),

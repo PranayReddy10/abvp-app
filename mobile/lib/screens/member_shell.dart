@@ -5,7 +5,7 @@ import '../widgets/kit.dart';
 import 'calendar_screen.dart';
 import 'feed_screen.dart';
 import 'guide/guide_hub.dart';
-import 'home_screen.dart';
+import 'conference/conference.dart';
 import 'pass_screen.dart';
 import 'profile_screen.dart';
 import '../l10n.dart';
@@ -33,11 +33,10 @@ class _MemberShellState extends State<MemberShell> {
   @override
   Widget build(BuildContext context) {
     final pages = [
-      HomeScreen(
+      // The national conference first: delegate side, my seva, the whole team.
+      ConferenceHome(
         session: widget.session,
         onShowPass: () => setState(() => _tab = 2),
-        onOpenCalendar: () => setState(() => _tab = 3),
-        onOpenFeed: () => setState(() => _tab = 1),
       ),
       FeedScreen(session: widget.session),
       PassScreen(session: widget.session),
