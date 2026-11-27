@@ -73,7 +73,7 @@ Future<void> _openEveryTab(WidgetTester tester, {required bool member}) async {
     client: MockClient((req) async {
       // Everything a new account loads is empty, except its pass.
       final path = req.url.path;
-      final Object? data = path.endsWith('/auth/me')
+      final Object data = path.endsWith('/auth/me')
           ? _me(member: member)
           : path.endsWith('/conference')
           ? _conference
