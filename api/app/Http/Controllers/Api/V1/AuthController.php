@@ -171,8 +171,9 @@ class AuthController extends Controller
             'mobile_verified_at' => $user->mobile_verified_at ?? ($verified ? now() : null),
             'last_login_at' => now(),
         ])->save();
-        app(\App\Services\AccountIds::class)->ensure($user);
-        \App\Models\EventTeamMember::linkUser($user); // conference roles entered by phone
+        // Extras that must never stop someone signing in: a problem here is logged, not shown.
+        rescue(fn () => app(\App\Services\AccountIds::class)->ensure($user), null, true);
+        rescue(fn () => \App\Models\EventTeamMember::linkUser($user), null, true); // conference roles entered by phone
         $token = $user->createToken($request->input('device_name', 'app'), ['*'], now()->addDays(60));
 
         return $this->ok([
