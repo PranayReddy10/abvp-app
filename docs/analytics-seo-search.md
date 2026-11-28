@@ -35,8 +35,8 @@ Google usually starts showing the site within a few days. Search for `site:abvpc
 App analytics in Google go through Firebase, which reports into the same Google Analytics.
 
 1. Open <https://console.firebase.google.com> → **Add project** → choose the existing Google Analytics account (and the `ABVP Connect` property from step 1 if offered).
-2. **Add app → Android**: package name `org.abvpconnect.app`. Download `google-services.json` (keep it private; you do not need to add it to the code).
-3. For iPhone: **Add app → iOS**: bundle ID `org.abvpconnect.app`.
+2. **Add app → Android**: package name `com.abvp.connect`. Download `google-services.json` (keep it private; you do not need to add it to the code).
+3. For iPhone: **Add app → iOS**: bundle ID `com.abvp.connect`.
 4. From `google-services.json` (or Project settings → Your apps) take these values:
 
 | Build value | Where to find it |
