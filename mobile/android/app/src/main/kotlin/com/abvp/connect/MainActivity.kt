@@ -1,4 +1,4 @@
-package org.abvpconnect.app
+package com.abvp.connect
 
 import io.flutter.embedding.android.FlutterActivity
 
