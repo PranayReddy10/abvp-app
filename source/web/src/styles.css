@@ -457,3 +457,6 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
   .me-who h1 { font-size: 28px }
 }
 .me-tile .ic { position: static; margin-bottom: auto }
+.page-in { animation: page-in .35s cubic-bezier(.2,.7,.2,1) both }
+@keyframes page-in { from { opacity: .001; transform: translateY(12px) } to { opacity: 1; transform: none } }
+@media (prefers-reduced-motion: reduce) { .page-in { animation: none } }

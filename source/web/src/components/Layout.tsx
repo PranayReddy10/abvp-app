@@ -1,4 +1,3 @@
-import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { api, ApiError } from '../api'
@@ -111,11 +110,11 @@ export default function Layout() {
   return (
     <>
       <Nav />
-      <AnimatePresence mode="wait">
-        <motion.main key={location.pathname} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: .35, ease: [.2, .7, .2, 1] }}>
-          <Outlet />
-        </motion.main>
-      </AnimatePresence>
+      {/* A CSS fade-in only: no exit animation to wait on, so a page can never be left blank
+          (an interrupted exit – a redirect, a quick second tap, a paused tab – used to leave nothing on screen). */}
+      <main key={location.pathname} className="page-in">
+        <Outlet />
+      </main>
       {!bare && <Footer />}
     </>
   )
