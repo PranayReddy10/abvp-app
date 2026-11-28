@@ -149,9 +149,9 @@ export default function Home() {
             </div>
           </div>
           <Reveal i={2}>
-            <div style={{ display: 'flex', gap: 18, justifyContent: 'center' }}>
-              <motion.div className="phone" style={{ width: 230 }} whileHover={{ y: -10, rotate: -2 }}><img src="/img/app-volunteer-ghats.jpg" alt="Volunteer: ghats and departments" /></motion.div>
-              <motion.div className="phone" style={{ width: 230, marginTop: 60 }} whileHover={{ y: -10, rotate: 2 }}><img src="/img/app-help.jpg" alt="Help and emergency" /></motion.div>
+            <div className="how-phones">
+              <motion.div className="phone" whileHover={{ y: -10, rotate: -2 }}><img src="/img/app-volunteer-ghats.jpg" alt="Volunteer: ghats and departments" /></motion.div>
+              <motion.div className="phone" style={{ marginTop: 60 }} whileHover={{ y: -10, rotate: 2 }}><img src="/img/app-help.jpg" alt="Help and emergency" /></motion.div>
             </div>
           </Reveal>
         </div>

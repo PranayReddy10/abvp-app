@@ -199,8 +199,11 @@ const km = (a: { lat: number; lng: number }, b: { lat: number; lng: number }) =>
 
 export function GuideSection() {
   const { id, kind = 'stay' } = useParams()
-  const { me } = useAuth()
-  const { data, error } = useFetch<GuideItem[]>(`/events/${id}/guide/${kind}`)
+  const { me, loading } = useAuth()
+  // Like the hub: signed-in delegates only.
+  const dele = useFetch<Delegate>(me ? `/events/${id}/delegate` : null)
+  const allowed = !!dele.data?.registration
+  const { data, error } = useFetch<GuideItem[]>(allowed ? `/events/${id}/guide/${kind}` : null)
   const [open, setOpen] = useState<GuideItem | null>(null)
   const [q, setQ] = useState('')
   const [prant, setPrant] = useState<string | null>(null)
@@ -216,6 +219,11 @@ export function GuideSection() {
     items.forEach((i) => i.region && m.set(i.region, (m.get(i.region) ?? 0) + 1))
     return [...m.entries()].sort((a, b) => (a[0] === me?.prant ? -1 : b[0] === me?.prant ? 1 : a[0].localeCompare(b[0])))
   }, [items, me])
+
+  if (!loading && !me) return <Navigate to={`/login?next=/guide/${id}/${kind}`} replace />
+  if (dele.error) return <div className="page wrap"><ErrorBox error={dele.error} /></div>
+  if (!dele.data) return <div className="page wrap"><Skeleton h={180} n={3} /></div>
+  if (!allowed) return <Navigate to={`/conference/${id}/register`} replace />
 
   let body
   if (error) body = <ErrorBox error={error} />

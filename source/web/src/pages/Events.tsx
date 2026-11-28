@@ -114,7 +114,9 @@ export function EventPage() {
   const e = ev.data
   const reg = e?.my_registration && !['cancelled', 'rejected'].includes(e.my_registration.status) ? e.my_registration : null
   const delegate = useFetch<Delegate>(me && reg?.kind === 'delegate' ? `/events/${id}/delegate` : null)
-  const hub = useFetch<Hub>(e?.guide_enabled ? `/events/${id}/guide` : null)
+  // The guide is for signed-in delegates only, as in the app.
+  const isDelegate = !!me && reg?.kind === 'delegate'
+  const hub = useFetch<Hub>(e?.guide_enabled && isDelegate ? `/events/${id}/guide` : null)
   const news = useFetch<{ id: number; title: string; body: string | null; at: string }[]>(me && (reg || e?.guide_enabled) ? `/events/${id}/announcements` : null)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<unknown>(null)
@@ -169,7 +171,7 @@ export function EventPage() {
             <p style={{ fontSize: 17, fontWeight: 700 }}>{e.venue}</p>
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
               {e.venue_map_url && <a className="btn sm" href={e.venue_map_url} target="_blank" rel="noreferrer"><Icon name="pin" size={16} /> Open in Google Maps</a>}
-              {e.guide_enabled && <Link className="btn sm" to={`/guide/${e.id}/arrival`}>How to reach – transport desks</Link>}
+              {e.guide_enabled && isDelegate && <Link className="btn sm" to={`/guide/${e.id}/arrival`}>How to reach – transport desks</Link>}
             </div>
           </Block>
 
@@ -254,7 +256,7 @@ export function EventPage() {
                 {e.eligible && e.registration_open && !e.delegate_registration_open && <button className="btn primary block" disabled={busy} onClick={() => act(`/events/${e.id}/register`)}>{busy ? 'Registering…' : 'Register'}</button>}
               </>
             )}
-            {e.guide_enabled && reg?.kind === 'delegate' && <Link to={`/guide/${e.id}`} className="btn block">Open the conference guide</Link>}
+            {e.guide_enabled && isDelegate && <Link to={`/guide/${e.id}`} className="btn block">Open the conference guide</Link>}
             {reg?.kind === 'delegate' && delegate.data?.open && <Link to={`/conference/${e.id}/register?edit=1`} className="btn ghost block">Edit my delegate form</Link>}
           </div>
         </aside>

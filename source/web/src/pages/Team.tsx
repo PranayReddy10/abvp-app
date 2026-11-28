@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { Navigate } from 'react-router-dom'
 import { api } from '../api'
 import { useAuth } from '../auth'
 import { Avatar, ErrorBox, Icon, Orbs, Skeleton, Tick, ago, fmtDate, telHref, waHref } from '../components/ui'
@@ -26,9 +26,9 @@ function PersonRow({ p }: { p: Person }) {
 
 /** The conference volunteer structure: ghats → departments → people. Phones only when signed in. */
 export default function Team() {
-  const { me } = useAuth()
-  const conf = useFetch<{ id: number } | null>('/conference')
-  const tree = useFetch<Tree>(conf.data ? `/events/${conf.data.id}/teams` : null)
+  const { me, loading } = useAuth()
+  const conf = useFetch<{ id: number } | null>(me ? '/conference' : null)
+  const tree = useFetch<Tree>(me && conf.data ? `/events/${conf.data.id}/teams` : null)
   const [open, setOpen] = useState<number | null>(null)
   const [q, setQ] = useState('')
   const term = q.trim().toLowerCase()
@@ -39,6 +39,8 @@ export default function Team() {
       || g.departments.some((d) => d.name.toLowerCase().includes(term) || d.people.some((p) => p.name.toLowerCase().includes(term) || (p.mobile ?? '').includes(term)))
   }), [tree.data, term])
   const selected = tree.data?.ghats.find((g) => g.id === open) ?? null
+  // Volunteer details are for signed-in people only.
+  if (!loading && !me) return <Navigate to="/login?next=/conference/team" replace />
 
   return (
     <div className="page wrap">
@@ -51,7 +53,6 @@ export default function Team() {
         </div>
       </div>
       <ErrorBox error={conf.error ?? tree.error} />
-      {!me && <div className="hint" style={{ marginBottom: 16 }}><Link to="/login?next=/conference/team" style={{ fontWeight: 700 }}>Sign in</Link> to see phone numbers and call or WhatsApp anyone in the team.</div>}
       <input className="input" style={{ maxWidth: 460, marginBottom: 18 }} placeholder="Find a person, department or ghat – e.g. parking" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search the team" />
       {!tree.data ? <Skeleton h={180} n={3} /> : (
         <div className="tm-grid">
