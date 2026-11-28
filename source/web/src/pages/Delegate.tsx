@@ -156,7 +156,6 @@ export default function Delegate() {
               {step === 1 && <>
                 <h2 style={{ fontSize: 26, fontWeight: 800 }}>How will you travel?</h2>
                 <div className="field"><label>Coming by *</label><div className="seg">{data.options.modes.map((o) => <button type="button" key={o.key} className={f.mode === o.key ? 'on' : ''} onClick={() => set({ mode: o.key })}>{o.label}</button>)}</div></div>
-                {f.mode !== 'own' && field('reference', f.mode === 'train' ? 'Train number and name' : f.mode === 'flight' ? 'Flight number' : 'Bus / details', { placeholder: f.mode === 'train' ? '12723 Telangana Express' : '' })}
                 <div className="field"><label htmlFor="ap">Arriving at *</label>
                   <select id="ap" className="input" value={otherPoint ? '__other' : f.arrival_point} onChange={(ev) => { const v = ev.target.value; if (v === '__other') { setOtherPoint(true); set({ arrival_point: '' }) } else { setOtherPoint(false); set({ arrival_point: v }) } }}>
                     <option value="">Choose your station, airport or bus stand</option>

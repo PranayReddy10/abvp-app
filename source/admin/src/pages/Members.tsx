@@ -336,7 +336,6 @@ function DelegateBox({ id, d, canEdit, onSaved }: { id: number; d: Delegate; can
             <div className="field"><label>Arrival place</label><input className="input" required list="arr-points" value={f.arrival_point} onChange={set('arrival_point')} /><datalist id="arr-points">{d.options.arrival_points.map((x) => <option key={x} value={x} />)}</datalist></div>
             <div className="field"><label>Departure</label><input type="datetime-local" className="input" required value={f.departing_at} onChange={set('departing_at')} /></div>
             <div className="field"><label>Coming by</label><select className="input" required value={f.mode} onChange={set('mode')}><option value="">Choose…</option>{d.options.modes.map((m) => <option key={m.key} value={m.key}>{m.label}</option>)}</select></div>
-            <div className="field"><label>Travel details</label><input className="input" value={f.reference} onChange={set('reference')} placeholder="Train / flight / bus" /></div>
           </div>
           <ErrorBox error={err} />
           <div><button className="btn primary small" disabled={busy}>{busy ? 'Saving…' : 'Save delegate form'}</button></div>
