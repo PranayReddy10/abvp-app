@@ -23,6 +23,9 @@ export default function Layout() {
   const navigate = useNavigate()
   const top = me?.roles[0]
   const [q, setQ] = useState('')
+  // Phones: the menu slides in from the left and closes on every page change.
+  const [menu, setMenu] = useState(false)
+  useEffect(() => { setMenu(false) }, [pathname, search])
   const [dark, setDark] = useState(() => document.documentElement.dataset.theme === 'dark'
     || (!document.documentElement.dataset.theme && window.matchMedia?.('(prefers-color-scheme: dark)').matches))
 
@@ -46,7 +49,8 @@ export default function Layout() {
   }, [reload])
 
   return (
-    <div className="shell">
+    <div className={`shell ${menu ? 'menu-open' : ''}`}>
+      {menu && <div className="side-backdrop" onClick={() => setMenu(false)} aria-hidden="true" />}
       <aside className="side" aria-label="Main">
         <div className="brand"><span className="brand-mark"><img src="/abvp-emblem.png" alt="" /></span><span>ABVP Connect<small>Admin panel</small></span></div>
         <h6>Main</h6>
@@ -77,6 +81,10 @@ export default function Layout() {
       </aside>
       <div className="main">
         <header className="topbar">
+          <button className="icon-btn menu-btn" onClick={() => setMenu(!menu)} aria-label={menu ? 'Close menu' : 'Open menu'} aria-expanded={menu}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
+          </button>
+          <span className="top-brand"><img src="/abvp-emblem.png" alt="" /> ABVP Connect</span>
           {top && (
             <div className="scope" title="Everything on screen is limited to this area">
               <span className="dot" /> {dash?.scope?.name ?? top.org_unit.name}

@@ -630,3 +630,71 @@ tr.click.on td { background: var(--surface-2) }
 .ct-arrows.col { flex-direction: column; margin-left: 0 }
 .ct-arrows.col .btn { padding: 0 6px; line-height: 1.1 }
 .ct-dept-head .ct-arrows + .btn { margin-left: 0 }
+
+/* ---------- Phones and small tablets ---------- */
+.menu-btn, .top-brand { display: none }
+@media (max-width: 900px) {
+  .shell { grid-template-columns: minmax(0, 1fr) }
+  .main { min-width: 0 }
+  /* One tidy row: menu, brand, bell, sign out; search below. */
+  .topbar .me-chip, .topbar .icon-btn[title="Light mode"], .topbar .icon-btn[title="Dark mode"] { display: none }
+  .topbar { flex-wrap: wrap }
+  .top-brand { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis }
+  .topbar .grow { display: none }
+  /* Page-entry animations use transforms, which would trap the full-screen sheets below. */
+  .page-enter, .content > * { animation: none !important; transform: none !important }
+  .toolbar > .chips { min-width: 0; max-width: 100%; flex: 1 1 100% }
+  .toolbar > form, .toolbar > .btn { flex: 1 1 auto }
+  /* Details panels open as a full screen sheet instead of far below the list. */
+  .grid2 > .account-card, .grid2 > .ct-panel {
+    position: fixed; inset: 0; z-index: 70; margin: 0; border-radius: 0; overflow-y: auto;
+    padding: 16px 14px 40px; animation: slideUp .28s var(--ease) both
+  }
+  .side {
+    position: fixed; z-index: 60; top: 0; left: 0; bottom: 0; width: min(290px, 84vw); height: 100%;
+    flex-direction: column; flex-wrap: nowrap; padding: 18px 14px; overflow-y: auto;
+    transform: translateX(-105%); transition: transform .28s var(--ease); box-shadow: 0 0 60px -10px rgba(0,0,0,.35)
+  }
+  .side h6 { display: block }
+  .side .grow { display: block }
+  .menu-open .side { transform: none }
+  .side-backdrop { position: fixed; inset: 0; z-index: 55; background: rgba(13,15,23,.45); animation: fadeIn .2s var(--ease) both }
+  .menu-btn { display: inline-grid }
+  .top-brand { display: inline-flex; align-items: center; gap: 8px; font-weight: 800; font-size: 16px; white-space: nowrap }
+  .top-brand img { width: 30px; height: 30px; border-radius: 50% }
+  .topbar { height: auto; min-height: 60px; padding: 10px 14px; gap: 8px; flex-wrap: wrap }
+  .top-search { order: 10; flex-basis: 100%; max-width: none }
+  .me-chip .me-text, .scope { display: none }
+  .content { padding: 16px 14px 40px; gap: 16px }
+  .page-head h1 { font-size: 24px }
+  .page-head { align-items: flex-start }
+  .page-head > * { max-width: 100% }
+  .page-head form, .page-head input.input, .toolbar input.input { width: 100% !important; max-width: 100% }
+  .toolbar { flex-wrap: wrap }
+  .grid2, .queue { grid-template-columns: minmax(0, 1fr) !important }
+  .content { grid-template-columns: minmax(0, 1fr) }
+  .kpis, .kpis.six, .kpis.seven { grid-template-columns: repeat(2, minmax(0, 1fr)) }
+  .card { padding: 16px }
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -4px }
+  .table-wrap table { min-width: 640px }
+  .chips { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch }
+  .chips .chip { flex: none }
+  .drawer { width: 100% }
+  .drawer-head, .drawer-body, .drawer-foot { padding-left: 16px; padding-right: 16px }
+  .drawer-foot { flex-wrap: wrap }
+  .row2, .row3, .chart-grid, .guide-settings { grid-template-columns: 1fr }
+  .ct-grid { grid-template-columns: 1fr }
+  .ct-form { grid-template-columns: 1fr 1fr }
+  .mod-actions { flex-wrap: wrap }
+  .mod-actions .input { flex-basis: 100% }
+  .pager { flex-wrap: wrap }
+  .login-tabs { min-width: 0 !important }
+}
+@media (max-width: 480px) {
+  .kpis, .kpis.six, .kpis.seven { grid-template-columns: 1fr 1fr }
+  .ct-form { grid-template-columns: 1fr }
+  .contact-row { grid-template-columns: 34px 1fr }
+  .page-head h1 { font-size: 22px }
+  .btn { white-space: normal }
+}
+@keyframes slideUp { from { transform: translateY(24px); opacity: 0 } to { transform: none; opacity: 1 } }
