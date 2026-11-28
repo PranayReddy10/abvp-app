@@ -111,6 +111,10 @@ ul.ticks li::before { content: ""; position: absolute; left: 0; top: 2.2mm; widt
 .tile { background: #FFF1E4 }
 code { font-family: ui-monospace, monospace; font-size: 9.6pt }
 .row .phone { width: 56mm }
+.cover .phones { right: 16mm; bottom: auto; top: 122mm; gap: 8mm; transform: none; align-items: flex-start }
+.cover .phones .phone { width: 54mm; padding: 2mm; border-radius: 8mm }
+.cover .phones .phone img { border-radius: 6.4mm }
+.cover .phones .phone:nth-child(2) { margin-top: 12mm }
 .desk.half { width: 140mm; margin-left: auto; margin-right: auto }
 .journey.tight { gap: 2.2mm }
 .journey.tight .step { padding: 2.4mm 4mm }
@@ -214,12 +218,12 @@ code { font-family: ui-monospace, monospace; font-size: 9.6pt }
   <p class="lead">The first tap on <b>Delegate</b> opens this form. Name, mobile, email, gender and prant come from the profile and can be changed.</p>
   <div class="trio">
     <div><div class="phone"><img src="img/delegate-form.jpg"></div><div class="cap">About you</div></div>
-    <div><div class="phone"><img src="img/delegate-form2.jpg"></div><div class="cap">Travel details</div></div>
+    <div><div class="phone"><img src="img/delegate-form2.jpg"></div><div class="cap">Arrival, departure, how you are coming</div></div>
     <div><div class="phone"><img src="img/home-delegate.jpg"></div><div class="cap">After sending: "Registered ✓ · open guide"</div></div>
   </div>
   <div class="cols" style="margin-top:6mm">
     <div class="points"><h3>Fields (all required except email)</h3>
-      <ul class="ticks"><li>Surname, first name, mobile, email</li><li>Gender, prant, responsibility</li><li>Arrival date and arrival place</li><li>Departure date</li><li>How you are coming – train, bus, flight, own vehicle</li></ul>
+      <ul class="ticks"><li>Surname, first name, mobile, email</li><li>Gender, prant, responsibility</li><li>Arrival date and arrival place</li><li>Departure date</li><li>How you are coming – train, bus, flight, own vehicle or other. Just tap one: <b>no train, bus or flight number is asked</b></li></ul>
     </div>
     <div>
       <div class="box red"><h4>Registration closed?</h4>If admins close delegate registration, the tile shows a clear dialog saying so instead of the form.</div>
@@ -434,15 +438,11 @@ code { font-family: ui-monospace, monospace; font-size: 9.6pt }
   </div>
   <div class="faq" style="margin-top:6mm">
     <h4>A person says the blue tick or a new screen is missing</h4>
-    <p>The server has not been updated yet, or the person has an old app. Update the server (below) and ask them to update the app.</p>
+    <p>They may have an old version of the app. Ask them to update it from the store.</p>
     <h4>A delegate wants to change their arrival date</h4>
     <p>Delegate tile → guide → <b>Edit my delegate form</b>. Admins can also edit it from Members.</p>
     <h4>Someone cannot sign in</h4>
     <p>Find them in Members: check the mobile number is right and the account shows <b>Active</b>.</p>
-  </div>
-  <div class="box green"><h4>Updating the server</h4>
-    <code>cd ~/domains/abvpconnect.org/public_html &amp;&amp; git pull origin main</code><br>
-    <code>cd api &amp;&amp; php artisan migrate --force &amp;&amp; php artisan optimize</code>
   </div>
   <div class="foot"><span>ABVP Connect · App guide</span><span>17</span></div>
 </section>
