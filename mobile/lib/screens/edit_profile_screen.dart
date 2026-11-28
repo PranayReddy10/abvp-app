@@ -10,6 +10,7 @@ import '../state/session.dart';
 import '../theme.dart';
 import '../widgets/area_picker.dart';
 import '../widgets/common.dart';
+import '../analytics.dart';
 import '../widgets/motion.dart';
 
 /// Everything about me in one place: photo, name, gender, date of birth, email, area, college,
@@ -22,7 +23,11 @@ class EditProfileScreen extends StatefulWidget {
   State<EditProfileScreen> createState() => _EditProfileScreenState();
 }
 
-class _EditProfileScreenState extends State<EditProfileScreen> {
+class _EditProfileScreenState extends State<EditProfileScreen>
+    with TrackScreen {
+  @override
+  String get screenName => 'Edit profile';
+
   final _form = GlobalKey<FormState>();
   late final TextEditingController _name;
   late final TextEditingController _email;

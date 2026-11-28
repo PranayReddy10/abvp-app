@@ -14,6 +14,7 @@ import '../widgets/format.dart';
 import '../widgets/kit.dart';
 import '../widgets/loader.dart';
 import '../widgets/motion.dart';
+import '../analytics.dart';
 import 'schedule_call_screen.dart';
 
 typedef Post = Map<String, dynamic>;
@@ -1427,6 +1428,7 @@ class _ComposeScreenState extends State<ComposeScreen> {
         'photos[]',
         _photos,
       ) as Post;
+      Analytics.event('post_create', {'photos': _photos.length});
       if (created['pending'] == true && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

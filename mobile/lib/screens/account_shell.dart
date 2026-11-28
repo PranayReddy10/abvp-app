@@ -11,6 +11,7 @@ import 'conference/conference.dart';
 import 'edit_profile_screen.dart';
 import 'events_screen.dart';
 import 'feed_screen.dart';
+import '../analytics.dart';
 import 'guide/guide_hub.dart';
 
 /// Everyone signed in who is not (yet) an approved member: conference delegates, guests,
@@ -50,7 +51,12 @@ class _AccountShellState extends State<AccountShell> {
       body: IndexedStack(index: _tab, children: pages),
       bottomNavigationBar: FloatingNavBar(
         index: _tab,
-        onTap: (i) => setState(() => _tab = i),
+        onTap: (i) {
+          setState(() => _tab = i);
+          Analytics.screen(
+            const ['Home', 'Community', 'Me', 'Me'][i.clamp(0, 3)],
+          );
+        },
         items: [
           (Icons.home_rounded, tr('nav.home')),
           (Icons.forum_rounded, tr('nav.community')),

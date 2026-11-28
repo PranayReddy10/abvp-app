@@ -11,6 +11,7 @@ import '../../widgets/format.dart';
 import '../../widgets/kit.dart';
 import '../../widgets/loader.dart';
 import '../../widgets/motion.dart';
+import '../../analytics.dart';
 import 'guide_widgets.dart';
 
 /// Support for one event: start a chat, raise a ticket, or open an earlier conversation.
@@ -64,7 +65,10 @@ class SupportScreen extends StatefulWidget {
   State<SupportScreen> createState() => _SupportScreenState();
 }
 
-class _SupportScreenState extends State<SupportScreen> {
+class _SupportScreenState extends State<SupportScreen> with TrackScreen {
+  @override
+  String get screenName => 'Help';
+
   Key _key = UniqueKey();
 
   Future<void> _go(Widget screen) async {
@@ -468,6 +472,7 @@ class _ChatScreenState extends State<ChatScreen> {
           'category': 'chat',
           'message': body,
         }) as Json;
+        Analytics.event('help_request', {'type': 'chat'});
         _id = h['id'] as int;
       } else {
         h = await api.post('/help/$_id/reply', {'body': body}) as Json;
@@ -813,6 +818,7 @@ class _TicketScreenState extends State<TicketScreen> {
           if (_where.text.trim().isNotEmpty) 'location': _where.text.trim(),
         },
       ) as Json;
+      Analytics.event('help_request', {'type': 'ticket', 'category': _cat});
       if (!mounted) return;
       Navigator.pushReplacement(
         context,

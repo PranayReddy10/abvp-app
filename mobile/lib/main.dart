@@ -12,6 +12,7 @@ import 'screens/member_shell.dart';
 import 'screens/sign_in_screen.dart';
 import 'screens/splash_screen.dart';
 import 'screens/status_screen.dart';
+import 'analytics.dart';
 import 'state/session.dart';
 import 'theme.dart';
 
@@ -32,6 +33,7 @@ Future<void> main() async {
   } catch (_) {}
   Intl.defaultLocale = appLang.value;
   appLang.addListener(() => Intl.defaultLocale = appLang.value);
+  await Analytics.init();
   final session = Session(api)..start();
   runApp(AbvpConnectApp(session: session));
 }

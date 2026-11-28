@@ -22,6 +22,8 @@ import '../feed_screen.dart' show MemberProfileScreen, openPhoto;
 import '../guide/guide_hub.dart';
 import 'delegate_form.dart';
 import '../meeting_screen.dart';
+import '../search_screen.dart';
+import '../../analytics.dart';
 import '../notifications_screen.dart';
 
 typedef Json = Map<String, dynamic>;
@@ -460,6 +462,24 @@ class _HomeHeaderState extends State<_HomeHeader>
                       ],
                     ),
                   ),
+                  Material(
+                    color: Colors.white.withValues(alpha: 0.18),
+                    shape: const CircleBorder(),
+                    child: IconButton(
+                      tooltip: t('Search'),
+                      icon: const Icon(
+                        Icons.search_rounded,
+                        color: Colors.white,
+                      ),
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => SearchScreen(session: session),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
                   Material(
                     color: Colors.white.withValues(alpha: 0.18),
                     shape: const CircleBorder(),
@@ -917,6 +937,7 @@ class _SideTiles extends StatelessWidget {
           Icons.volunteer_activism_rounded,
           const [Color(0xFFFFB35C), Color(0xFFD9730D)],
           () async {
+            Analytics.screen('Volunteer');
             await Navigator.push(
               context,
               MaterialPageRoute(

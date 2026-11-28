@@ -6,6 +6,7 @@ import '../state/session.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/format.dart';
+import '../analytics.dart';
 import '../widgets/loader.dart';
 
 Map<String, String> get helpCategories => {
@@ -55,6 +56,10 @@ class _AskHelpScreenState extends State<AskHelpScreen> {
           if (_where.text.trim().isNotEmpty) 'location': _where.text.trim(),
         },
       ) as Map<String, dynamic>;
+      Analytics.event('help_request', {
+        'type': 'ticket',
+        'category': _category,
+      });
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

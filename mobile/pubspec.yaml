@@ -44,6 +44,8 @@ dependencies:
   url_launcher: ^6.3.3
   geolocator: ^14.1.2
   google_sign_in: ^7.2.0
+  firebase_core: ^5.2.0
+  firebase_analytics: ^13.1.0
 
 dev_dependencies:
   flutter_test:

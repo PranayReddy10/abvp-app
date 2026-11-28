@@ -8,6 +8,7 @@ import '../../api/api_client.dart';
 import '../../state/session.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
+import '../../analytics.dart';
 import '../../widgets/motion.dart';
 
 typedef Json = Map<String, dynamic>;
@@ -31,7 +32,11 @@ class DelegateFormScreen extends StatefulWidget {
   State<DelegateFormScreen> createState() => _DelegateFormScreenState();
 }
 
-class _DelegateFormScreenState extends State<DelegateFormScreen> {
+class _DelegateFormScreenState extends State<DelegateFormScreen>
+    with TrackScreen {
+  @override
+  String get screenName => 'Delegate form';
+
   final _form = GlobalKey<FormState>();
   final _first = TextEditingController();
   final _surname = TextEditingController();
@@ -134,6 +139,9 @@ class _DelegateFormScreenState extends State<DelegateFormScreen> {
         'arrival_point': _arrivalPlace.text.trim(),
         'departing_at': _depart!.toUtc().toIso8601String(),
         'mode': _mode,
+      });
+      Analytics.event('delegate_register', {
+        'edit': widget.data['registration'] != null ? 1 : 0,
       });
       if (mounted) Navigator.pop(context, true);
     } on ApiException catch (e) {

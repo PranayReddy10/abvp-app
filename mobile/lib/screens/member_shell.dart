@@ -6,6 +6,7 @@ import 'feed_screen.dart';
 import 'guide/guide_hub.dart';
 import 'conference/conference.dart';
 import 'profile_screen.dart';
+import '../analytics.dart';
 import '../l10n.dart';
 
 /// Approved members: Home, Community, Me in a floating pill bar.
@@ -45,7 +46,12 @@ class _MemberShellState extends State<MemberShell> {
       body: IndexedStack(index: _tab, children: pages),
       bottomNavigationBar: FloatingNavBar(
         index: _tab,
-        onTap: (i) => setState(() => _tab = i),
+        onTap: (i) {
+          setState(() => _tab = i);
+          Analytics.screen(
+            const ['Home', 'Community', 'Me', 'Me'][i.clamp(0, 3)],
+          );
+        },
         items: [
           (Icons.home_rounded, tr('nav.home')),
           (Icons.forum_rounded, tr('nav.community')),

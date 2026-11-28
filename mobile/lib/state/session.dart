@@ -7,6 +7,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import '../api/api_client.dart';
 import '../config.dart';
 import '../models.dart';
+import '../analytics.dart';
 import 'location_sharer.dart';
 
 enum SessionStage {
@@ -71,6 +72,7 @@ class Session extends ChangeNotifier {
         'device_name': 'mobile',
       }) as Map<String, dynamic>,
     );
+    Analytics.login('password');
   }
 
   /// New account with a password, used when sign-in codes are switched off.
@@ -96,6 +98,7 @@ class Session extends ChangeNotifier {
         'google_link_token': ?googleLinkToken,
       }) as Map<String, dynamic>,
     );
+    Analytics.signUp(googleLinkToken == null ? 'mobile' : 'google');
   }
 
   /// Set a password, or change it (then [current] is required). Signs out other devices.
@@ -140,6 +143,7 @@ class Session extends ChangeNotifier {
     await api.saveToken(data['token'] as String);
     me = Me(data['user'] as Map<String, dynamic>);
     notifyListeners();
+    Analytics.login('sms_code');
   }
 
   bool _googleReady = false;
@@ -179,6 +183,7 @@ class Session extends ChangeNotifier {
       'device_name': 'mobile',
     });
     if (data['linked'] == true) {
+      Analytics.login('google');
       await api.saveToken(data['token'] as String);
       me = Me(data['user'] as Map<String, dynamic>);
       notifyListeners();

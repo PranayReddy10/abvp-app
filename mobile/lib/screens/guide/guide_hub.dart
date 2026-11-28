@@ -11,6 +11,7 @@ import '../../widgets/motion.dart';
 import 'guide_sections.dart';
 import '../conference/delegate_form.dart' show DelegateFormScreen;
 import 'support_screen.dart';
+import '../../analytics.dart';
 import 'guide_widgets.dart';
 
 /// "26 Dec · Starts in 45 days" or "Day 2 · Live now".
@@ -62,7 +63,10 @@ class GuideHub extends StatefulWidget {
   State<GuideHub> createState() => _GuideHubState();
 }
 
-class _GuideHubState extends State<GuideHub> {
+class _GuideHubState extends State<GuideHub> with TrackScreen {
+  @override
+  String get screenName => 'Guide';
+
   Json? _hub;
   String? _error;
 

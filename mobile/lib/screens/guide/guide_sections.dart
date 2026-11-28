@@ -12,6 +12,7 @@ import '../../widgets/common.dart';
 import '../../widgets/kit.dart';
 import '../../widgets/loader.dart';
 import '../../widgets/motion.dart';
+import '../../analytics.dart';
 import 'guide_widgets.dart';
 
 /// One guide section (stay, transport, food…): a coloured header, then the places in it.
@@ -38,7 +39,11 @@ class GuideSectionScreen extends StatefulWidget {
   State<GuideSectionScreen> createState() => _GuideSectionScreenState();
 }
 
-class _GuideSectionScreenState extends State<GuideSectionScreen> {
+class _GuideSectionScreenState extends State<GuideSectionScreen>
+    with TrackScreen {
+  @override
+  String get screenName => 'Guide: ${widget.kind}';
+
   List<Json>? _items;
   List<Json> _regions = [];
   String? _error;
