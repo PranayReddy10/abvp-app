@@ -20,8 +20,6 @@ import '../duties_screen.dart';
 import '../edit_profile_screen.dart';
 import '../feed_screen.dart' show MemberProfileScreen, openPhoto;
 import '../guide/guide_hub.dart';
-import '../guide/guide_sections.dart';
-import '../guide/support_screen.dart';
 import 'delegate_form.dart';
 import '../meeting_screen.dart';
 import '../notifications_screen.dart';
@@ -139,15 +137,6 @@ class ConferenceHome extends StatelessWidget {
                       )
                     else ...[
                       FadeSlideIn(child: _Countdown(conf: d.conference!)),
-                      const SizedBox(height: 18),
-                      FadeSlideIn(
-                        index: 1,
-                        child: _QuickButtons(
-                          session: session,
-                          data: d,
-                          onChanged: reload,
-                        ),
-                      ),
                       const SizedBox(height: 18),
                       FadeSlideIn(
                         index: 2,
@@ -616,47 +605,6 @@ Future<void> _openDelegate(
   }
 }
 
-/// The guide is for delegates: anyone else is asked to fill the delegate form first.
-Future<void> _openGuide(
-  BuildContext context,
-  Session session,
-  _HomeData data,
-  Future<void> Function() onChanged,
-) async {
-  if (data.isDelegate) {
-    return _openDelegate(context, session, data, onChanged);
-  }
-  final go = await showDialog<bool>(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      icon: const Icon(
-        Icons.explore_rounded,
-        size: 36,
-        color: AppColors.saffron,
-      ),
-      title: Text(t('Fill the delegate form first')),
-      content: Text(
-        t(
-          'The conference guide – your stay, transport, food and help desk – opens once you have filled the delegate form.',
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(ctx, false),
-          child: Text(t('Later')),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.pop(ctx, true),
-          child: Text(t('Fill the form')),
-        ),
-      ],
-    ),
-  );
-  if (go == true && context.mounted) {
-    await _openDelegate(context, session, data, onChanged);
-  }
-}
-
 /// Registration is switched off for the event: say so clearly (and tell admins where to switch it on).
 Future<void> _registrationClosed(BuildContext context, Session session) {
   final perms = ((session.me?.json['permissions'] as List?) ?? [])
@@ -685,110 +633,6 @@ Future<void> _registrationClosed(BuildContext context, Session session) {
       ],
     ),
   );
-}
-
-/// Round actions: guide (delegates), gallery, the team, helpline.
-class _QuickButtons extends StatelessWidget {
-  const _QuickButtons({
-    required this.session,
-    required this.data,
-    required this.onChanged,
-  });
-  final Session session;
-  final _HomeData data;
-  final Future<void> Function() onChanged;
-  Json get conf => data.conference!;
-
-  @override
-  Widget build(BuildContext context) {
-    final guide = conf['guide_enabled'] == true;
-    Widget b(IconData icon, String label, List<Color> colors, VoidCallback f) =>
-        Expanded(
-          child: Pressable(
-            onTap: f,
-            child: Column(
-              children: [
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    gradient: LinearGradient(
-                      colors: colors,
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: colors.last.withValues(alpha: 0.3),
-                        blurRadius: 12,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
-                  ),
-                  child: Icon(icon, color: Colors.white, size: 28),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-    return Row(
-      children: [
-        b(Icons.explore_rounded, t('Guide'), const [
-          Color(0xFFF59A4C),
-          AppColors.saffronDeep,
-        ], () => _openGuide(context, session, data, onChanged)),
-        b(
-          Icons.photo_library_rounded,
-          t('Gallery'),
-          const [Color(0xFFFFB35C), Color(0xFFD9730D)],
-          () => guide
-              ? Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => GuideSectionScreen(
-                      session: session,
-                      event: conf,
-                      kind: 'gallery',
-                      title: t('Gallery'),
-                      hindi: 'चित्र दीर्घा',
-                    ),
-                  ),
-                )
-              : ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      t('Photos appear here during the conference.'),
-                    ),
-                  ),
-                ),
-        ),
-        b(
-          Icons.diversity_3_rounded,
-          t('Team'),
-          const [Color(0xFFEF8354), Color(0xFFB8430A)],
-          () => Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => VolunteerScreen(session: session),
-            ),
-          ),
-        ),
-        b(Icons.emergency_rounded, t('Help'), const [
-          Color(0xFFFF7A45),
-          Color(0xFFC81E1E),
-        ], () => openHelp(context, session)),
-      ],
-    );
-  }
 }
 
 /// The conference with a live countdown: days, hours, minutes and seconds ticking.

@@ -114,7 +114,6 @@ Future<void> _openEveryTab(WidgetTester tester, {required bool member}) async {
   expect(tester.takeException(), isNull);
   final tabs = [
     Icons.forum_rounded,
-    if (member) Icons.calendar_month_rounded,
     Icons.person_rounded,
     Icons.home_rounded,
   ];
@@ -301,9 +300,9 @@ void main() {
     expect(find.text('Meeting at 6 pm'), findsOneWidget);
     // The team is no longer on Home: it lives behind the Volunteer tile.
     expect(find.text('Karyalaya'), findsNothing);
-    await tester.ensureVisible(find.text('Team'));
+    await tester.ensureVisible(find.text('Volunteer').first);
     await tester.pump();
-    await tester.tap(find.text('Team'));
+    await tester.tap(find.text('Volunteer').first);
     for (var i = 0; i < 15; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
@@ -374,20 +373,6 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('The guide opens only after the delegate form', (tester) async {
-    await _openEveryTab(tester, member: false);
-    await tester.tap(find.text('Guide'));
-    for (var i = 0; i < 10; i++) {
-      await tester.pump(const Duration(milliseconds: 100));
-    }
-    expect(find.text('Fill the delegate form first'), findsOneWidget);
-    await tester.tap(find.text('Fill the form'));
-    for (var i = 0; i < 15; i++) {
-      await tester.pump(const Duration(milliseconds: 100));
-    }
-    expect(find.text('Delegate registration'), findsOneWidget);
-  });
-
   testWidgets('Delegate explains clearly when registration is closed', (
     tester,
   ) async {
@@ -401,18 +386,6 @@ void main() {
     expect(find.text('Delegate registration is not open yet'), findsOneWidget);
   });
 
-  testWidgets('Help on Home opens the help page with an emergency call', (
-    tester,
-  ) async {
-    await _openEveryTab(tester, member: false);
-    await tester.tap(find.text('Help'));
-    for (var i = 0; i < 15; i++) {
-      await tester.pump(const Duration(milliseconds: 100));
-    }
-    expect(find.text('Emergency – call now'), findsOneWidget);
-    expect(tester.takeException(), isNull);
-  });
-
   testWidgets('Home speaks Hindi and Telugu', (tester) async {
     addTearDown(() => appLang.value = 'en');
     await _openEveryTab(tester, member: true);
@@ -421,16 +394,16 @@ void main() {
     for (var i = 0; i < 5; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
-    for (final w in ['मार्गदर्शिका', 'चित्र दीर्घा', 'सहायता', 'प्रतिनिधि', 'आज का विचार']) {
+    for (final w in ['प्रतिनिधि', 'स्वयंसेवक', 'आज का विचार', 'दिन']) {
       expect(find.text(w), findsWidgets, reason: w);
     }
-    expect(find.text('Guide'), findsNothing);
+    expect(find.text('Delegate'), findsNothing);
     appLang.value = 'te';
     rebuildAll(tester.element(find.byType(Scaffold).first));
     for (var i = 0; i < 5; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
-    for (final w in ['మార్గదర్శి', 'సహాయం', 'నేటి సూక్తి']) {
+    for (final w in ['ప్రతినిధి', 'నేటి సూక్తి', 'రోజులు']) {
       expect(find.text(w), findsWidgets, reason: w);
     }
     expect(tester.takeException(), isNull);
@@ -440,9 +413,12 @@ void main() {
     await _openEveryTab(tester, member: true);
     expect(find.text('Fresh Person'), findsWidgets);
     expect(find.textContaining('ABVP-IN-000001'), findsWidgets);
-    for (final b in ['Guide', 'Gallery', 'Team', 'Help', 'DAYS']) {
-      expect(find.text(b), findsOneWidget, reason: b);
+    expect(find.text('DAYS'), findsOneWidget);
+    // The round Guide / Gallery / Team / Help buttons and the Calendar tab are gone.
+    for (final b in ['Guide', 'Gallery', 'Team', 'Help']) {
+      expect(find.text(b), findsNothing, reason: b);
     }
+    expect(find.byIcon(Icons.calendar_month_rounded), findsNothing);
     expect(find.text('My pass'), findsNothing);
     expect(find.text('THOUGHT FOR TODAY'), findsOneWidget);
   });

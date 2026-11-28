@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 
 import '../state/session.dart';
 import '../widgets/kit.dart';
-import 'calendar_screen.dart';
 import 'feed_screen.dart';
 import 'guide/guide_hub.dart';
 import 'conference/conference.dart';
 import 'profile_screen.dart';
 import '../l10n.dart';
 
-/// Approved members: Home, Community, Pass, Calendar, Me in a floating pill bar.
+/// Approved members: Home, Community, Me in a floating pill bar.
 class MemberShell extends StatefulWidget {
   const MemberShell({super.key, required this.session});
   final Session session;
@@ -38,7 +37,6 @@ class _MemberShellState extends State<MemberShell> {
         onOpenCommunity: () => setState(() => _tab = 1),
       ),
       FeedScreen(session: widget.session),
-      CalendarScreen(session: widget.session),
       ProfileScreen(session: widget.session),
     ];
 
@@ -51,7 +49,6 @@ class _MemberShellState extends State<MemberShell> {
         items: [
           (Icons.home_rounded, tr('nav.home')),
           (Icons.forum_rounded, tr('nav.community')),
-          (Icons.calendar_month_rounded, tr('nav.calendar')),
           (Icons.person_rounded, tr('nav.me')),
         ],
       ),
