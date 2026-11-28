@@ -11,7 +11,6 @@ use App\Models\MemberProfile;
 use App\Models\OrgUnit;
 use App\Models\User;
 use App\Services\AccessControl;
-use App\Services\Audit;
 use App\Services\EventService;
 use App\Support\ApiException;
 use App\Support\Mobile;
@@ -82,7 +81,6 @@ class EventController extends Controller
 
             return $event;
         });
-        Audit::record('event.created', $event, null, ['title' => $event->title]);
 
         return $this->ok($this->detail($event->load('orgUnit', 'organiser.profile', 'rules.orgUnit', 'rules.vibhag')), 201);
     }
@@ -124,7 +122,6 @@ class EventController extends Controller
             AppNotification::sendMany($this->activeUserIds($event), 'event_changed', "Changed: {$event->title}",
                 $event->starts_at->timezone('Asia/Kolkata')->format('D j M, g:i A').' · '.$event->venue, ['event_id' => $event->id]);
         }
-        Audit::record('event.updated', $event, null, collect($data)->except('rules')->all());
 
         return $this->ok($this->detail($event->load('orgUnit', 'organiser.profile', 'rules.orgUnit', 'rules.vibhag')) + ['notified' => $changed]);
     }
@@ -136,7 +133,6 @@ class EventController extends Controller
             throw new ApiException('NOT_DRAFT', 'Only a draft can be published.');
         }
         $event->forceFill(['status' => 'published', 'published_at' => now()])->save();
-        Audit::record('event.published', $event);
 
         return $this->ok($this->detail($event->load('orgUnit', 'organiser.profile', 'rules.orgUnit', 'rules.vibhag')));
     }
@@ -148,7 +144,6 @@ class EventController extends Controller
 
         $event->forceFill(['status' => 'cancelled'])->save();
         AppNotification::sendMany($this->activeUserIds($event), 'event_cancelled', "Cancelled: {$event->title}", $request->input('reason'), ['event_id' => $event->id]);
-        Audit::record('event.cancelled', $event, null, ['reason' => $request->input('reason')]);
 
         return $this->ok($this->detail($event->load('orgUnit', 'organiser.profile', 'rules.orgUnit', 'rules.vibhag')));
     }
@@ -237,7 +232,6 @@ class EventController extends Controller
 
         AppNotification::sendMany([$user->id], 'event_guest_invite', "You're invited: {$event->title}",
             $event->starts_at->timezone('Asia/Kolkata')->format('D j M, g:i A').' · '.$event->venue, ['event_id' => $event->id]);
-        Audit::record('event.guest_invited', $reg, null, ['name' => $data['name']]);
 
         return $this->ok(['id' => $reg->id, 'sign_in_mobile' => Mobile::mask($mobile)], 201);
     }
@@ -444,7 +438,6 @@ class EventController extends Controller
             \Illuminate\Support\Facades\Storage::disk(config('abvp.media_disk'))->delete($event->cover_path);
         }
         $event->forceFill(['cover_path' => null])->save();
-        \App\Services\Audit::record('event.cover_removed', $event);
 
         return $this->ok(['cover_url' => null]);
     }

@@ -8,7 +8,6 @@ use App\Models\Circular;
 use App\Models\CircularRead;
 use App\Models\OrgUnit;
 use App\Services\AccessControl;
-use App\Services\Audit;
 use App\Support\ApiException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -68,7 +67,6 @@ class CircularController extends Controller
         $circular->audience_size = $circular->audienceQuery()->count();
         $circular->save();
 
-        Audit::record('circular.issued', $circular, null, ['title' => $circular->title, 'audience' => $circular->audience_size]);
 
         return $this->ok(['id' => $circular->id, 'audience_size' => $circular->audience_size], 201);
     }

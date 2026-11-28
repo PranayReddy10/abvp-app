@@ -70,7 +70,6 @@ export default function Layout() {
         {can('org.manage') && <Item to="/areas" icon="map" label="Areas" />}
         <Item to="/vibhags" icon="vibhags" label="Vibhags" />
         {can('roles.assign') && <Item to="/roles" icon="roles" label="Admins and roles" />}
-        {can('audit.view') && <Item to="/audit" icon="audit" label="Audit log" />}
         {can('settings.manage') && <Item to="/settings" icon="settings" label="Settings" />}
         <Item to="/account" icon="lock" label="My account" />
         <div className="grow" />

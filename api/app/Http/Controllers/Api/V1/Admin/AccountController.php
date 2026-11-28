@@ -14,7 +14,6 @@ use App\Models\PostComment;
 use App\Models\User;
 use App\Services\AccessControl;
 use App\Services\AccountIds;
-use App\Services\Audit;
 use App\Support\ApiException;
 use App\Support\Mobile;
 use Illuminate\Http\Request;
@@ -72,7 +71,6 @@ class AccountController extends Controller
             return $user;
         });
         rescue(fn () => EventTeamMember::linkUser($user), null, true);
-        Audit::record('account.created_by_admin', $user, null, ['name' => $data['name'], 'approved' => $data['approve'] ?? true]);
 
         return $this->ok(['user_id' => $user->id, 'name' => $data['name'], 'mobile' => $user->mobile, 'member_id' => $user->profile?->fresh()?->member_id], 201);
     }
@@ -168,7 +166,6 @@ class AccountController extends Controller
             'bio' => ['nullable', 'string', 'max:500'],
         ]);
         $profile = $user->profile ?? $ids->ensure($user) ?? throw new ApiException('PROFILE_REQUIRED', 'Add areas first (Setup → Areas).');
-        $before = $profile->only(['full_name', 'gender', 'org_unit_id', 'institution', 'course', 'bio']);
         foreach (['email', 'occupation'] as $f) {
             if (array_key_exists($f, $data)) {
                 $user->{$f} = $data[$f];
@@ -183,7 +180,6 @@ class AccountController extends Controller
         }
         $user->save();
         $profile->forceFill(collect($data)->only(['full_name', 'gender', 'date_of_birth', 'org_unit_id', 'institution', 'course', 'bio'])->all())->save();
-        Audit::record('account.edited_by_admin', $user, $before, $profile->only(array_keys($before)));
 
         return $this->show($request, $user->fresh());
     }
@@ -198,7 +194,6 @@ class AccountController extends Controller
             $disk->delete($profile->photo_path);
         }
         $profile->forceFill(['photo_path' => $request->file('photo')->storeAs('photos/'.$user->id, \Illuminate\Support\Str::uuid().'.'.$request->file('photo')->extension(), ['disk' => config('abvp.media_disk'), 'visibility' => 'private'])])->save();
-        Audit::record('account.photo_by_admin', $user);
 
         return $this->show($request, $user->fresh());
     }
@@ -210,7 +205,6 @@ class AccountController extends Controller
         if ($profile?->photo_path) {
             Storage::disk(config('abvp.media_disk'))->delete($profile->photo_path);
             $profile->forceFill(['photo_path' => null])->save();
-            Audit::record('account.photo_removed_by_admin', $user);
         }
 
         return $this->show($request, $user->fresh());
@@ -230,7 +224,6 @@ class AccountController extends Controller
         $profile->forceFill($data['verified']
             ? ['verified_at' => now(), 'verified_by' => $request->user()->id, 'verification_note' => $data['note'] ?? null]
             : ['verified_at' => null, 'verified_by' => null, 'verification_note' => $data['note'] ?? null])->save();
-        Audit::record($data['verified'] ? 'member.verified' : 'member.unverified', $profile, null, ['note' => $data['note'] ?? null]);
         if ($data['verified']) {
             AppNotification::sendMany([$user->id], 'profile_verified', 'Your profile is verified', 'A blue tick now shows next to your name.');
         }
@@ -249,7 +242,6 @@ class AccountController extends Controller
         $ctrl->save($request, $event);
         $admin = auth()->user();
         $request->setUserResolver(fn () => $admin);
-        Audit::record('delegate.edited_by_admin', $user, null, ['event' => $event->id]);
 
         return $this->show($request, $user->fresh());
     }
@@ -271,20 +263,18 @@ class AccountController extends Controller
         if ($data['blocked']) {
             $user->tokens()->delete();
         }
-        Audit::record($data['blocked'] ? 'account.blocked' : 'account.unblocked', $user, null, ['reason' => $data['reason'] ?? null]);
 
         return $this->ok(['status' => $user->status]);
     }
 
     /**
      * Delete an account. Personal details, photo, posts, comments, likes and follows go; the
-     * mobile number is freed so the person can register again. Event and audit history keep a
+     * mobile number is freed so the person can register again. Event history keeps a
      * placeholder ("Deleted account") so reports stay correct.
      */
     public function destroy(Request $request, User $user)
     {
         $this->guardManage($request, $user);
-        $label = ($user->profile?->full_name ?: $user->name).' · '.Mobile::mask($user->mobile);
 
         DB::transaction(function () use ($user) {
             if ($photo = $user->profile?->photo_path) {
@@ -317,7 +307,6 @@ class AccountController extends Controller
                 'status' => 'deleted',
             ])->save();
         });
-        Audit::record('account.deleted', $user, ['account' => $label]);
 
         return $this->ok(['deleted' => true]);
     }

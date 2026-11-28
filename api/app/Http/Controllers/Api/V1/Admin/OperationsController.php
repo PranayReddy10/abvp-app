@@ -12,7 +12,6 @@ use App\Models\EventStaff;
 use App\Models\EventTeam;
 use App\Models\HelpRequest;
 use App\Models\MemberProfile;
-use App\Services\Audit;
 use App\Services\DutyPresenter;
 use App\Services\EventService;
 use App\Support\ApiException;
@@ -133,7 +132,6 @@ class OperationsController extends Controller
 
         $when = $data['starts_at']->copy()->timezone('Asia/Kolkata')->format('D j M, g:i A');
         AppNotification::sendMany($people->pluck('user_id'), 'duty_assigned', "New duty: {$data['title']}", "$when · ".($data['location'] ?? $event->venue).' · please accept', ['event_id' => $event->id]);
-        Audit::record('duty.assigned', $event, null, ['title' => $data['title'], 'people' => $people->count()]);
 
         return $this->ok(['created' => $created->count(), 'clashes_ignored' => $clashes->count()], 201);
     }

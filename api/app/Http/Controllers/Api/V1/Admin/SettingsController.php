@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
-use App\Services\Audit;
 use App\Services\MediaStorage;
 use App\Support\ApiException;
 use Illuminate\Http\Request;
@@ -50,7 +49,6 @@ class SettingsController extends Controller
     {
         $this->authorizeIn('settings.manage');
         $request->validate(['driver' => ['required', 'in:local,spaces']]);
-        $before = ['driver' => config('abvp.media_disk') === 'spaces' ? 'spaces' : 'local', 'bucket' => Setting::value('storage.spaces_bucket')];
 
         if ($request->input('driver') === 'local') {
             Setting::putMany(['storage.driver' => 'local'], $request->user()->id);
@@ -69,7 +67,6 @@ class SettingsController extends Controller
             ], $request->user()->id);
         }
         MediaStorage::apply();
-        Audit::record('settings.storage', null, $before, ['driver' => $request->input('driver'), 'bucket' => Setting::value('storage.spaces_bucket')]);
 
         return $this->storage();
     }
@@ -103,7 +100,6 @@ class SettingsController extends Controller
         }
         $next = min($offset + 25, count($files));
         if ($next >= count($files)) {
-            Audit::record('settings.storage_copied', null, null, ['files' => count($files)]);
         }
 
         return $this->ok(['total' => count($files), 'done' => $next, 'copied' => $copied, 'skipped' => $skipped, 'failed' => $failed, 'finished' => $next >= count($files)]);

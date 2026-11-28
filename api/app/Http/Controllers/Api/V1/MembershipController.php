@@ -66,7 +66,6 @@ class MembershipController extends Controller
                 $profile->save();
                 $application->forceFill(['status' => Application::APPROVED, 'decided_at' => now(), 'decision_note' => null])->save();
                 $application->events()->create(['actor_id' => null, 'action' => 'approved', 'note' => 'Approved automatically (approval is switched off)']);
-                \App\Services\Audit::record('membership.approved', $application, null, ['member_id' => $profile->member_id, 'automatic' => true]);
             }
         });
 

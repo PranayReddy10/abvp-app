@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\AuditLog;
 use App\Models\Event;
 use App\Models\EventRegistration;
 use App\Models\MemberProfile;
@@ -111,7 +110,6 @@ class GuideTest extends TestCase
         $this->postJson("/api/v1/admin/events/{$event->id}/guide/items", [
             'kind' => 'food', 'title' => 'Telangana Ruchulu', 'location' => 'Hall B, Stall 7', 'landmark' => 'Green flag with a lotus', 'color' => '#2E8B57', 'tags' => ['Veg'],
         ])->assertCreated()->assertJsonPath('data.color', '#2E8B57');
-        $this->assertSame(4, AuditLog::where('action', 'guide.created')->count());
 
         // Delegate: hub, my prant's stay, sections with phones.
         Sanctum::actingAs($delegate);

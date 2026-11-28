@@ -133,7 +133,7 @@ export default function Moderation() {
               <span className="muted" style={{ fontSize: 12.5 }}>♥ {fmtNum(p.likes)} · 💬 {fmtNum(p.comments)}</span>
             </div>
             {p.notes.length > 0 && <ul className="mod-notes">{p.notes.map((n, i) => <li key={i}>“{n}”</li>)}</ul>}
-            {p.hidden && !p.pending && p.hidden_reason && <p className="muted" style={{ fontSize: 13 }}><Icon name="audit" size={14} /> {p.hidden_reason}</p>}
+            {p.hidden && !p.pending && p.hidden_reason && <p className="muted" style={{ fontSize: 13 }}><Icon name="clock" size={14} /> {p.hidden_reason}</p>}
             <footer className="mod-actions">
               {p.pending && (
                 <>

@@ -167,7 +167,6 @@ class MemberController extends Controller
             ? ['verified_at' => now(), 'verified_by' => $request->user()->id, 'verification_note' => $data['note'] ?? null]
             : ['verified_at' => null, 'verified_by' => null, 'verification_note' => $data['note'] ?? null])->save();
 
-        \App\Services\Audit::record($data['verified'] ? 'member.verified' : 'member.unverified', $profile, null, ['note' => $data['note'] ?? null]);
         if ($data['verified']) {
             \App\Models\AppNotification::sendMany([$profile->user_id], 'profile_verified', 'Your profile is verified', 'A blue tick now shows next to your name.');
         }

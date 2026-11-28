@@ -8,7 +8,6 @@ use App\Models\GuideContact;
 use App\Models\GuideItem;
 use App\Models\MemberProfile;
 use App\Services\AccessControl;
-use App\Services\Audit;
 use App\Services\GuidePresenter;
 use App\Support\ApiException;
 use Illuminate\Http\Request;
@@ -52,9 +51,7 @@ class GuideController extends Controller
             'delegate_registration_open' => ['nullable', 'boolean'],
         ]);
         $data['delegate_registration_open'] = (bool) ($data['delegate_registration_open'] ?? $event->delegate_registration_open);
-        $before = $event->only(array_keys($data));
         $event->fill($data)->save();
-        Audit::record('event.guide_settings', $event, $before, $data);
 
         return $this->index($request, $event);
     }
@@ -69,7 +66,6 @@ class GuideController extends Controller
 
             return $item;
         });
-        Audit::record('guide.created', $item, null, ['kind' => $item->kind, 'title' => $item->title]);
 
         return $this->ok(GuidePresenter::item($item->fresh('contacts.user.profile'), $event), 201);
     }
@@ -83,7 +79,6 @@ class GuideController extends Controller
             $item->fill($data['item'])->save();
             $this->saveContacts($item, $data['contacts']);
         });
-        Audit::record('guide.updated', $item, null, ['title' => $item->title]);
 
         return $this->ok(GuidePresenter::item($item->fresh('contacts.user.profile'), $event));
     }
@@ -100,7 +95,6 @@ class GuideController extends Controller
                 $disk->delete($v['path']);
             }
         }
-        Audit::record('guide.deleted', $item, ['kind' => $item->kind, 'title' => $item->title]);
         $item->delete();
 
         return $this->ok(['deleted' => true]);
@@ -154,7 +148,6 @@ class GuideController extends Controller
         }
         $videos[] = $row;
         $item->forceFill(['videos' => $videos])->save();
-        Audit::record('guide.video_added', $item, null, ['title' => $row['title'], 'link' => $row['url'] ?? null]);
 
         return $this->ok(GuidePresenter::item($item->fresh('contacts.user.profile'), $item->event));
     }

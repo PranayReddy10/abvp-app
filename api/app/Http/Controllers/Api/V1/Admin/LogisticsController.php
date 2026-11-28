@@ -15,7 +15,6 @@ use App\Models\MealSession;
 use App\Models\MemberProfile;
 use App\Models\RoomAllocation;
 use App\Models\User;
-use App\Services\Audit;
 use App\Services\EventService;
 use App\Services\LogisticsService;
 use App\Support\ApiException;
@@ -136,7 +135,6 @@ class LogisticsController extends Controller
         foreach ($new as $a) {
             AppNotification::sendMany([$a->user_id], 'stay_allocated', "Your stay: {$a->room->stay->name}, room {$a->room->name}", $event->title, ['event_id' => $event->id]);
         }
-        Audit::record('stay.auto_allocated', $event, null, ['allocated' => $result['allocated'], 'left' => count($result['left_without'])]);
 
         return $this->ok($result);
     }

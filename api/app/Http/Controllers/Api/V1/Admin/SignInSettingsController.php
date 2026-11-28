@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
-use App\Services\Audit;
 use App\Services\SignInSettings;
 use App\Services\Sms\Msg91SmsSender;
 use App\Support\ApiException;
@@ -75,9 +74,7 @@ class SignInSettingsController extends Controller
             $values['membership.needs_approval'] = $data['membership_needs_approval'] ? '1' : '0';
         }
 
-        $before = ['otp_enabled' => SignInSettings::otpEnabled(), 'sms_driver' => SignInSettings::smsDriver(), 'membership_needs_approval' => SignInSettings::membershipNeedsApproval()];
         Setting::putMany($values, $user->id);
-        Audit::record('settings.sign_in', null, $before, collect($values)->except('sms.msg91_key_secret')->all());
 
         return $this->show();
     }

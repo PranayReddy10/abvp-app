@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\AuditLog;
 use App\Models\MemberProfile;
 use App\Models\OrgUnit;
 use App\Models\RoleAssignment;
@@ -99,7 +98,6 @@ class StorageSettingsTest extends TestCase
         $this->assertSame('super-secret-value-123', Setting::value('storage.spaces_secret'));
         $this->assertSame('spaces', config('abvp.media_disk'));
         $this->assertSame('https://blr1.digitaloceanspaces.com', config('filesystems.disks.spaces.endpoint'));
-        $this->assertTrue(AuditLog::where('action', 'settings.storage')->exists());
 
         // Blank key and secret keep the saved ones when changing region or name.
         $this->putJson('/api/v1/admin/settings/storage', ['region' => 'sgp1', 'key' => '', 'secret' => ''] + $this->spaces)->assertOk();

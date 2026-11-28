@@ -101,7 +101,6 @@ interface Delegate {
 /** Everything about one account, with Block / Unblock and Delete. */
 function AccountCard({ id, onClose, onChanged }: { id: number; onClose: () => void; onChanged: () => void }) {
   const { data, error, reload } = useFetch<AccountDetail>(`/admin/accounts/${id}`)
-  const [reason, setReason] = useState('')
   const [confirmName, setConfirmName] = useState('')
   const [deleting, setDeleting] = useState(false)
   const [editing, setEditing] = useState(false)
@@ -130,7 +129,7 @@ function AccountCard({ id, onClose, onChanged }: { id: number; onClose: () => vo
 
   async function block(b: boolean) {
     setBusy(true); setErr(null)
-    try { await api.post(`/admin/accounts/${id}/block`, { blocked: b, reason: reason || null }); setReason(''); reload(); onChanged() } catch (x) { setErr(x) } finally { setBusy(false) }
+    try { await api.post(`/admin/accounts/${id}/block`, { blocked: b }); reload(); onChanged() } catch (x) { setErr(x) } finally { setBusy(false) }
   }
   async function remove() {
     setBusy(true); setErr(null)
@@ -192,7 +191,6 @@ function AccountCard({ id, onClose, onChanged }: { id: number; onClose: () => vo
             <>
               <span className="muted">Blocking signs them out everywhere and stops them signing in. You can unblock any time.</span>
               <div className="toolbar">
-                <input className="input" style={{ flex: 1, minWidth: 160 }} placeholder="Reason (kept in the audit log)" value={reason} onChange={(e) => setReason(e.target.value)} aria-label="Reason for blocking" />
                 <button className="btn small danger" disabled={busy} onClick={() => block(true)}>Block account</button>
               </div>
             </>

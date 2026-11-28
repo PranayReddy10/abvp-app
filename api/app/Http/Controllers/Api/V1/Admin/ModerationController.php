@@ -8,7 +8,6 @@ use App\Models\AppNotification;
 use App\Models\MemberProfile;
 use App\Models\Post;
 use App\Services\AccessControl;
-use App\Services\Audit;
 use App\Support\ApiException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -75,7 +74,6 @@ class ModerationController extends Controller
         if ($wasPending && in_array($data['action'], ['approve', 'restore'], true)) {
             AppNotification::sendMany([$post->user_id], 'post_approved', 'Your post is live', \Illuminate\Support\Str::limit((string) $post->body, 80), ['post_id' => $post->id]);
         }
-        Audit::record('post.'.$data['action'], $post, null, ['reason' => $data['reason'] ?? null]);
 
         return $this->ok(['hidden' => $post->hidden_at !== null]);
     }
@@ -103,7 +101,6 @@ class ModerationController extends Controller
             throw new ApiException('SETUP_NEEDED', 'The server needs its database update first. On the server run: cd api && php artisan migrate --force && php artisan optimize', 503);
         }
         \App\Models\Setting::putMany(['community.approval_required' => $data['approval_required'] ? '1' : '0'], $request->user()->id);
-        Audit::record('community.settings', null, null, $data);
 
         return $this->settings($request);
     }

@@ -22,11 +22,11 @@ The design vision is in [`docs/design/design-vision.html`](docs/design/design-vi
 
 - **Sign in with OTP.** Mobile number plus a 6-digit SMS code. No passwords. Limited to 3 codes per number every 10 minutes and 5 wrong tries per code.
 - **Apply for membership.** Name, date of birth, state › district › unit, college, Vibhags, photo.
-- **Review by the right office.** An application goes to the admins whose area contains the chosen unit. A district admin sees only their district; a state admin sees the whole state. Approve, return for correction (with a note), or reject (with a note). Every decision is in the history and the audit log.
+- **Review by the right office.** An application goes to the admins whose area contains the chosen unit. A district admin sees only their district; a state admin sees the whole state. Approve, return for correction (with a note), or reject (with a note). Every decision is in the application's history.
 - **Member ID** on approval, numbered per district: `ABVP-TS-HYD-000001`.
 - **Member pass.** A QR code that changes daily and holds no personal data. Saved on the phone so it works without signal.
 - **Profile.** Bio, skills, languages, links, Vibhags, dayitva (posts held) and privacy settings for phone, email, college and birthday.
-- **Admin panel.** Dashboard, approval queue, member search, Vibhag list (the ~70 Vibhags are data, not code), admin roles, audit log.
+- **Admin panel.** Dashboard, approval queue, member search, Vibhag list (the ~70 Vibhags are data, not code), admin roles.
 - **Roles with areas.** Every admin role is tied to an area. You can only give roles below your own, inside your own area.
 
 ## What works now (Phase 2: organisation work)
@@ -83,7 +83,7 @@ It adds about 115 example members across Telangana with six months of history. I
 
 ## Verified profiles and working contacts
 
-- **Blue tick.** State and district admins (and above) can mark a member's identity as verified from Members, with a note on how it was checked. It is recorded in the audit log and the member is notified. The tick shows next to their name in the app (profile, member card, directory, duties, teams) and in the admin panel. Only approved members can be verified, and the tick can be removed.
+- **Blue tick.** State and district admins (and above) can mark a member's identity as verified from Members, with a note on how it was checked. The member is notified. The tick shows next to their name in the app (profile, member card, directory, duties, teams) and in the admin panel. Only approved members can be verified, and the tick can be removed.
 - **People who work together can reach each other.** A phone number normally follows the member's own privacy choice. During a current event it is also visible to: teammates on the same duty team, the team lead, the person they report to, the event's coordinators, and admins of their area. The duty screen lists "Your team" with phone numbers and call buttons; coordinators see phone numbers in the Duties and Registrations tabs. The exception ends a day after the event.
 
 ## What works now (Phase 6: community feed)
@@ -92,7 +92,7 @@ It adds about 115 example members across Telangana with six months of history. I
 - **Like, reply, repost, quote.** Replies notify the author. A repost shares a post as it is; a quote adds your own words on top.
 - **Follow.** Member profiles show posts, followers and following, with Follow, Schedule a call and (when allowed) Call buttons. The Following tab shows only people you follow. New followers are notified.
 - **Safe by default.** Members report posts with a reason (abusive, false information, spam, private details, other). Five reports hide a post until someone reviews it. Members can post or reply at most 10 times every 10 minutes.
-- **Moderation in the admin panel.** "Community" lists reported and hidden posts from members in the admin's area, with reasons and notes. Hide (the author is told why), restore, or dismiss reports; every action is in the audit log. The sidebar shows how many are waiting.
+- **Moderation in the admin panel.** "Community" lists reported and hidden posts from members in the admin's area, with reasons and notes. Hide (the author is told why), restore, or dismiss reports. The sidebar shows how many are waiting.
 - **Photo storage setting.** Super admins choose in Settings whether photos are kept on the Hostinger server or in DigitalOcean Spaces, with a connection test before switching, an encrypted secret, and a batch "Copy to Spaces" for earlier photos.
 - **Event cover photos.** Upload a cover in the event's Details tab; it appears on the event cards and event page in the app.
 
@@ -224,14 +224,14 @@ All routes start with `/api/v1`. Responses look like `{ "success": true, "data":
 | Admin events | `admin/events` (list, create, edit, `publish`, `cancel`, `cover`, `registrations`, `decide`, `guests`, `staff`, `live`) |
 | Admin settings | `GET/PUT admin/settings/storage`, `POST admin/settings/storage/test`, `POST admin/settings/storage/copy` (super admin) |
 | Admin moderation | `GET admin/moderation?status=reported\|hidden`, `POST admin/moderation/posts/{id}` (`hide` with reason, `restore`, `dismiss`) |
-| Admin | `GET admin/analytics?months=&unit_id=`, `admin/circulars` (+ `/remind`), `GET admin/meetings`, `GET admin/activity-reports`, `GET admin/dashboard`, `GET admin/applications`, `POST admin/applications/{id}/approve\|return\|reject`, `GET admin/members`, `admin/vibhags`, `admin/org-units`, `admin/role-assignments`, `admin/responsibilities`, `GET admin/audit-logs` |
+| Admin | `GET admin/analytics?months=&unit_id=`, `admin/circulars` (+ `/remind`), `GET admin/meetings`, `GET admin/activity-reports`, `GET admin/dashboard`, `GET admin/applications`, `POST admin/applications/{id}/approve\|return\|reject`, `GET admin/members`, `admin/vibhags`, `admin/org-units`, `admin/role-assignments`, `admin/responsibilities` |
 
 ## Roles
 
 | Role | Rank | Can |
 |---|---|---|
 | Super Admin | 100 | Everything |
-| National Admin | 90 | Everything except platform settings; manages the Vibhag list and reads the audit log |
+| National Admin | 90 | Everything except platform settings; manages the Vibhag list |
 | State Admin | 70 | Review, members, add districts and units, assign roles in their state |
 | District Admin | 50 | Review, members, assign roles in their district |
 | Vibhag Admin | 40 | See members in their area |

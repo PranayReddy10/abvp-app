@@ -216,7 +216,6 @@ Route::prefix('v1')->group(function () {
             Route::post('responsibilities', [Admin\ResponsibilityController::class, 'store']);
             Route::patch('responsibilities/{responsibility}', [Admin\ResponsibilityController::class, 'update']);
 
-            Route::get('audit-logs', [Admin\AuditLogController::class, 'index']);
 
             Route::get('analytics', Admin\AnalyticsController::class);
             Route::get('circulars', [Admin\CircularController::class, 'index']);

@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api\V1\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\OrgUnitResource;
 use App\Models\OrgUnit;
-use App\Services\Audit;
 use App\Support\ApiException;
 use Illuminate\Http\Request;
 
@@ -60,7 +59,6 @@ class OrgUnitController extends Controller
             }
         }
         if ($added) {
-            Audit::record('org_unit.prants_added', $national, null, ['added' => $added]);
         }
 
         return $this->ok(['added' => $added]);
@@ -85,7 +83,6 @@ class OrgUnitController extends Controller
         }
 
         $unit = OrgUnit::create($data + ['type' => $type]);
-        Audit::record('org_unit.created', $unit, null, $data);
 
         return $this->ok(new OrgUnitResource($unit->fresh()), 201);
     }
@@ -100,9 +97,7 @@ class OrgUnitController extends Controller
             'is_active' => ['sometimes', 'boolean'],
         ]);
 
-        $before = $orgUnit->only(array_keys($data));
         $orgUnit->update($data);
-        Audit::record('org_unit.updated', $orgUnit, $before, $data);
 
         return $this->ok(new OrgUnitResource($orgUnit));
     }

@@ -13,7 +13,6 @@ use App\Models\Meeting;
 use App\Models\MeetingInvitee;
 use App\Models\MemberProfile;
 use App\Models\User;
-use App\Services\Audit;
 use App\Services\ConferenceTeams;
 use App\Services\DutyPresenter;
 use App\Support\ApiException;
@@ -193,7 +192,6 @@ class ConferenceTeamController extends Controller
         if ($member->user_id) {
             AppNotification::sendMany([$member->user_id], 'team_added', "You are now in {$team->name}", (EventTeamMember::ROLES[$member->role] ?? $member->role).' · '.$team->event->title, ['team_id' => $team->id, 'event_id' => $team->event_id]);
         }
-        Audit::record('team.member_added', $team, null, ['name' => $member->name, 'role' => $member->role]);
 
         return $this->ok(self::person($member, true), 201);
     }
@@ -229,7 +227,6 @@ class ConferenceTeamController extends Controller
     public function removeMember(Request $request, EventTeamMember $member)
     {
         $this->guardManage($request->user(), $member->team);
-        Audit::record('team.member_removed', $member->team, ['name' => $member->name, 'role' => $member->role]);
         $member->delete();
 
         return $this->ok(['deleted' => true]);

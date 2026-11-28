@@ -7,7 +7,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\EventTeam;
 use App\Models\EventTeamMember;
-use App\Services\Audit;
 use App\Services\ConferenceTeams;
 use App\Support\ApiException;
 use App\Support\Mobile;
@@ -45,7 +44,6 @@ class ConferenceTeamAdminController extends Controller
         $this->authorizeIn('events.manage', $event->orgUnit);
         ConferenceTeams::ensureReady();
         Artisan::call('abvp:load-conference-teams', ['--event' => $event->id, '--keep-details' => ! $request->boolean('set_details')]);
-        Audit::record('conference_team.load_sheet', $event);
 
         return $this->index($request, $event->fresh());
     }
@@ -101,7 +99,6 @@ class ConferenceTeamAdminController extends Controller
             'kind' => $parent ? 'department' : 'ghat',
             'sort' => (int) EventTeam::where('event_id', $event->id)->where('parent_id', $parent?->id)->max('sort') + 1,
         ]);
-        Audit::record('team.created', $team, null, ['name' => $team->name, 'kind' => $team->kind]);
 
         return $this->ok(['id' => $team->id], 201);
     }
@@ -123,7 +120,6 @@ class ConferenceTeamAdminController extends Controller
     public function destroy(Request $request, EventTeam $team)
     {
         $this->authorizeIn('events.manage', $team->event->orgUnit);
-        Audit::record('team.deleted', $team, ['name' => $team->name, 'kind' => $team->kind]);
         $team->delete();
 
         return $this->ok(['deleted' => true]);
@@ -173,7 +169,6 @@ class ConferenceTeamAdminController extends Controller
                 $stats['people'] += (int) $isNew;
             }
         });
-        Audit::record('team.imported', $event, null, collect($stats)->except('skipped')->all());
 
         return $this->ok($stats);
     }

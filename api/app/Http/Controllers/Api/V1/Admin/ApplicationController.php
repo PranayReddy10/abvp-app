@@ -7,7 +7,6 @@ use App\Http\Resources\ApplicationResource;
 use App\Models\MemberProfile;
 use App\Models\MembershipApplication as Application;
 use App\Services\AccessControl;
-use App\Services\Audit;
 use App\Services\MemberIdGenerator;
 use App\Support\ApiException;
 use Illuminate\Http\Request;
@@ -63,7 +62,6 @@ class ApplicationController extends Controller
             $profile->save();
 
             $this->decide($request, $application, Application::APPROVED, 'approved');
-            Audit::record('membership.approved', $application, null, ['member_id' => $profile->member_id]);
         });
 
         return $this->ok($this->detail($application));
@@ -77,7 +75,6 @@ class ApplicationController extends Controller
         DB::transaction(function () use ($request, $application) {
             $application->user->profile->forceFill(['membership_status' => MemberProfile::STATUS_MORE_INFO])->save();
             $this->decide($request, $application, Application::MORE_INFO, 'returned');
-            Audit::record('membership.returned', $application, null, ['note' => $request->input('note')]);
         });
 
         return $this->ok($this->detail($application));
@@ -91,7 +88,6 @@ class ApplicationController extends Controller
         DB::transaction(function () use ($request, $application) {
             $application->user->profile->forceFill(['membership_status' => MemberProfile::STATUS_REJECTED])->save();
             $this->decide($request, $application, Application::REJECTED, 'rejected');
-            Audit::record('membership.rejected', $application, null, ['note' => $request->input('note')]);
         });
 
         return $this->ok($this->detail($application));

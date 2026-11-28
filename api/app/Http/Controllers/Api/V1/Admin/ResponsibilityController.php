@@ -7,7 +7,6 @@ use App\Http\Resources\ResponsibilityResource;
 use App\Models\MemberProfile;
 use App\Models\OrgUnit;
 use App\Models\Responsibility;
-use App\Services\Audit;
 use Illuminate\Http\Request;
 
 /** Dayitva: organisational posts shown on a member's profile. */
@@ -31,7 +30,6 @@ class ResponsibilityController extends Controller
             'user_id' => $profile->user_id,
             'added_by' => $request->user()->id,
         ]);
-        Audit::record('responsibility.added', $row, null, $data);
 
         return $this->ok(new ResponsibilityResource($row->load('orgUnit', 'vibhag')), 201);
     }
@@ -44,9 +42,7 @@ class ResponsibilityController extends Controller
             'ends_on' => ['nullable', 'date', 'after_or_equal:'.$responsibility->starts_on->toDateString()],
         ]);
 
-        $before = $responsibility->only(array_keys($data));
         $responsibility->update($data);
-        Audit::record('responsibility.updated', $responsibility, $before, $data);
 
         return $this->ok(new ResponsibilityResource($responsibility->load('orgUnit', 'vibhag')));
     }

@@ -9,7 +9,6 @@ use App\Services\GoogleIdToken;
 use App\Services\OtpService;
 use App\Services\SignInSettings;
 use App\Support\ApiException;
-use App\Services\Audit;
 use App\Support\Mobile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
@@ -150,7 +149,6 @@ class AuthController extends Controller
 
         $response = $this->issue($request, $user, $isNew, ['google_linked' => (bool) $google], verified: $otpOn);
         if ($isNew) {
-            Audit::record('auth.signed_up', $user, after: ['name' => $user->name, 'prant' => $user->prant, 'with' => $otpOn ? 'sms code' : 'password']);
         }
 
         return $response;
@@ -237,7 +235,6 @@ class AuthController extends Controller
         if ($user->status !== 'active') {
             throw new ApiException('ACCOUNT_SUSPENDED', 'This account is suspended. Contact your district office.', 403);
         }
-        Audit::record('auth.password_login', $user);
 
         return $this->issue($request, $user, false, verified: false);
     }
@@ -256,7 +253,6 @@ class AuthController extends Controller
         $user->forceFill(['password' => $request->string('password')->toString(), 'password_set_at' => now()])->save();
         $current = $user->currentAccessToken();
         $user->tokens()->when($current?->id, fn ($q, $id) => $q->whereKeyNot($id))->delete();
-        Audit::record('auth.password_set', $user);
 
         return $this->ok(['has_password' => true]);
     }

@@ -153,7 +153,6 @@ class FeedTest extends TestCase
         Sanctum::actingAs($hyd);
         $this->getJson('/api/v1/admin/moderation')->assertJsonPath('data.0.reports_count', 5)->assertJsonPath('data.0.reasons.0.count', 5);
         $this->postJson("/api/v1/admin/moderation/posts/$id", ['action' => 'hide', 'reason' => 'Abusive language'])->assertJsonPath('data.hidden', true);
-        $this->assertDatabaseHas('audit_logs', ['action' => 'post.hide']);
         $this->assertSame(1, AppNotification::where('user_id', $author->id)->where('type', 'post_hidden')->count());
     }
 

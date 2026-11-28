@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api\V1\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\VibhagResource;
 use App\Models\Vibhag;
-use App\Services\Audit;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -29,7 +28,6 @@ class VibhagController extends Controller
         ]);
 
         $vibhag = Vibhag::create($data);
-        Audit::record('vibhag.created', $vibhag, null, $data);
 
         return $this->ok(new VibhagResource($vibhag), 201);
     }
@@ -45,9 +43,7 @@ class VibhagController extends Controller
             'is_active' => ['sometimes', 'boolean'],
         ]);
 
-        $before = $vibhag->only(array_keys($data));
         $vibhag->update($data);
-        Audit::record('vibhag.updated', $vibhag, $before, $data);
 
         return $this->ok(new VibhagResource($vibhag));
     }

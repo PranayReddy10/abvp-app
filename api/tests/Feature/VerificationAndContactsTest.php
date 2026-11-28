@@ -64,7 +64,6 @@ class VerificationAndContactsTest extends TestCase
         $this->postJson("/api/v1/admin/members/{$anusha->profile->id}/verify", ['verified' => true, 'note' => 'College ID checked in person'])
             ->assertOk()->assertJsonPath('data.verified', true);
         $this->getJson("/api/v1/admin/members/{$anusha->profile->id}")->assertJsonPath('data.profile.verified', true)->assertJsonPath('data.verification_note', 'College ID checked in person');
-        $this->assertDatabaseHas('audit_logs', ['action' => 'member.verified']);
         $this->assertSame(1, AppNotification::where('user_id', $anusha->id)->where('type', 'profile_verified')->count());
 
         Sanctum::actingAs($anusha);

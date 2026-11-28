@@ -105,7 +105,6 @@ class MembershipFlowTest extends TestCase
             ->assertJsonPath('data.status', 'approved')
             ->assertJsonPath('data.profile.member_id', 'ABVP-TS-HYD-000001');
 
-        $this->assertDatabaseHas('audit_logs', ['action' => 'membership.approved']);
 
         Sanctum::actingAs($applicant->fresh());
         $qr = $this->getJson('/api/v1/me/qr')->assertOk()->json('data.token');

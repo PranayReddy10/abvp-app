@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
-use App\Services\Audit;
 use Illuminate\Http\Request;
 
 /** Settings → Website: Google Analytics ID and search-engine verification codes. Super admins only. */
@@ -36,9 +35,7 @@ class SiteSettingsController extends Controller
         foreach (self::KEYS as $field => $key) {
             $values[$key] = $field === 'ga_id' ? ($data[$field] ?? null ?: null) : $clean($data[$field] ?? null);
         }
-        $before = collect(self::KEYS)->map(fn ($k) => Setting::value($k))->all();
         Setting::putMany($values, $request->user()->id);
-        Audit::record('settings.website', null, $before, $values);
 
         return $this->show();
     }

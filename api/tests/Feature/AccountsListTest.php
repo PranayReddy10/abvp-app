@@ -34,7 +34,7 @@ class AccountsListTest extends TestCase
         return $u;
     }
 
-    public function test_new_sign_ups_show_in_accounts_and_audit_log_by_name(): void
+    public function test_new_sign_ups_show_in_accounts_by_name(): void
     {
         $this->postJson('/api/v1/auth/send-otp', ['mobile' => '9876511111'])->assertOk();
         $this->postJson('/api/v1/auth/register', ['mobile' => '9876511111', 'code' => '123456', 'name' => 'Sita Rao', 'prant' => 'Telangana'])->assertOk();
@@ -47,9 +47,6 @@ class AccountsListTest extends TestCase
         $this->getJson('/api/v1/admin/accounts?status=verified')->assertOk()->assertJsonMissing(['name' => 'Sita Rao']);
         $this->getJson('/api/v1/admin/accounts?status=unverified')->assertOk()->assertJsonFragment(['name' => 'Sita Rao']);
         $this->getJson('/api/v1/admin/accounts?q=Sita')->assertOk()->assertJsonCount(1, 'data');
-
-        $log = collect($this->getJson('/api/v1/admin/audit-logs')->assertOk()->json('data'))->firstWhere('action', 'auth.signed_up');
-        $this->assertStringStartsWith('Sita Rao', $log['subject']);
 
         // A Telangana state admin sees Telangana sign-ups, not Goa's.
         Sanctum::actingAs($this->admin('state_admin', 'Telangana'));

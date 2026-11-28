@@ -54,7 +54,6 @@ return [
         'vibhags.manage' => ['super_admin', 'national_admin'],
         'roles.assign' => ['super_admin', 'national_admin', 'state_admin', 'district_admin'],
         'responsibilities.manage' => ['super_admin', 'national_admin', 'state_admin', 'district_admin'],
-        'audit.view' => ['super_admin', 'national_admin'],
         'settings.manage' => ['super_admin'],
         // Phase 2. A role tied to one Vibhag only works for that Vibhag.
         'meetings.schedule' => ['super_admin', 'national_admin', 'state_admin', 'district_admin', 'vibhag_admin'],

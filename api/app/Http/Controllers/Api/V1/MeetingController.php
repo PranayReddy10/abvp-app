@@ -11,7 +11,6 @@ use App\Models\MeetingInvitee;
 use App\Models\OrgUnit;
 use App\Models\User;
 use App\Services\AccessControl;
-use App\Services\Audit;
 use App\Support\ApiException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -102,7 +101,6 @@ class MeetingController extends Controller
             return $meeting;
         });
 
-        Audit::record('meeting.scheduled', $meeting, null, ['invitees' => $meeting->invitees()->count()]);
 
         return $this->ok($this->detail($meeting, $user), 201);
     }
@@ -158,7 +156,6 @@ class MeetingController extends Controller
 
         AppNotification::sendMany($meeting->invitees()->pluck('user_id'), 'meeting_cancelled', "Cancelled: {$meeting->title}",
             $meeting->starts_at->timezone('Asia/Kolkata')->format('D j M, g:i A'), ['meeting_id' => $meeting->id]);
-        Audit::record('meeting.cancelled', $meeting);
 
         return $this->ok($this->detail($meeting, $request->user()));
     }

@@ -7,7 +7,6 @@ use App\Models\MemberProfile;
 use App\Models\OrgUnit;
 use App\Models\RoleAssignment;
 use App\Services\AccessControl;
-use App\Services\Audit;
 use App\Support\ApiException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -61,7 +60,6 @@ class RoleAssignmentController extends Controller
             'starts_on' => now()->toDateString(),
             'ends_on' => $data['ends_on'] ?? null,
         ]);
-        Audit::record('role.assigned', $assignment, null, $data);
 
         return $this->ok(['id' => $assignment->id], 201);
     }
@@ -71,7 +69,6 @@ class RoleAssignmentController extends Controller
         $this->guard($request, $roleAssignment->role, $roleAssignment->orgUnit);
 
         $roleAssignment->update(['ends_on' => now()->subDay()->toDateString()]);
-        Audit::record('role.ended', $roleAssignment, ['role' => $roleAssignment->role], null);
 
         return $this->ok(['ended' => true]);
     }

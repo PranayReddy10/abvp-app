@@ -121,7 +121,7 @@ export default function SignInSettings() {
       {msg && <div className="notice" role="status">{msg}</div>}
       <ErrorBox error={err instanceof ApiError || err instanceof Error ? err : null} />
       <div><button className="btn primary" disabled={!!busy || !changed || lockRisk}>{busy === 'save' ? 'Saving…' : 'Save'}</button></div>
-      <p className="muted" style={{ fontSize: 12.5, margin: 0 }}>Password sign-in is always on for anyone who has set a password. Google sign-in is {data.google_enabled ? 'on' : 'off (set GOOGLE_CLIENT_IDS on the server)'}. Changes are recorded in the audit log.</p>
+      <p className="muted" style={{ fontSize: 12.5, margin: 0 }}>Password sign-in is always on for anyone who has set a password. Google sign-in is {data.google_enabled ? 'on' : 'off (set GOOGLE_CLIENT_IDS on the server)'}.</p>
     </form>
   )
 }

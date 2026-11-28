@@ -52,7 +52,7 @@ export default function Dashboard() {
             <Stat tone={4} icon="reports" label="Returned for correction" value={d.returned_for_correction} to="/approvals">
               Waiting on applicants
             </Stat>
-            <Stat tone={2} icon="audit" label="Decided today" value={d.decided_today} to="/approvals">
+            <Stat tone={2} icon="clock" label="Decided today" value={d.decided_today} to="/approvals">
               Approved, returned or rejected
             </Stat>
           </div>

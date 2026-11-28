@@ -87,7 +87,7 @@ export default function Settings() {
       <div className="page-head">
         <div>
           <h1>Settings</h1>
-          <p className="muted" style={{ margin: '4px 0 0' }}>Only super admins see this page. Changes are recorded in the audit log.</p>
+          <p className="muted" style={{ margin: '4px 0 0' }}>Only super admins see this page.</p>
         </div>
       </div>
       <div className="grid2">

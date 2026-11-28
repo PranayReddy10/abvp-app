@@ -11,7 +11,6 @@ import Events from './pages/Events'
 import Meetings from './pages/Meetings'
 import Reports from './pages/Reports'
 import VibhagUpdates from './pages/VibhagUpdates'
-import AuditLog from './pages/AuditLog'
 import Dashboard from './pages/Dashboard'
 import Login from './pages/Login'
 import Members from './pages/Members'
@@ -37,7 +36,6 @@ function App() {
         <Route path="members" element={<Members />} />
         <Route path="vibhags" element={<Vibhags />} />
         <Route path="roles" element={<Roles />} />
-        <Route path="audit" element={<AuditLog />} />
         <Route path="analytics" element={<Analytics />} />
         <Route path="meetings" element={<Meetings />} />
         <Route path="events" element={<Events />} />

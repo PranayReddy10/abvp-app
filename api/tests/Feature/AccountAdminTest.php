@@ -73,7 +73,6 @@ class AccountAdminTest extends TestCase
         $this->assertNull($u->profile);
         $this->assertSame(0, Post::where('user_id', $u->id)->count());
         $this->getJson('/api/v1/admin/accounts')->assertJsonMissing(['name' => 'Deleted account']);
-        $this->assertTrue(collect($this->getJson('/api/v1/admin/audit-logs')->json('data'))->contains('action', 'account.deleted'));
 
         $this->app['auth']->forgetGuards();
         $this->postJson('/api/v1/auth/send-otp', ['mobile' => '9876555111'])->assertOk();
