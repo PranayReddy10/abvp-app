@@ -1,0 +1,11 @@
+# abvpconnect.org
+User-agent: *
+Allow: /
+# Personal pages: nothing for search engines there.
+Disallow: /me
+Disallow: /conference/*/register
+Disallow: /login
+Disallow: /signup
+Disallow: /search
+
+Sitemap: https://abvpconnect.org/sitemap.xml

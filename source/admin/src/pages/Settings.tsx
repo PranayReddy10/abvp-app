@@ -5,6 +5,7 @@ import { fmtNum } from '../format'
 import { useFetch } from '../useFetch'
 import SignInSettings from '../components/SignInSettings'
 import MembershipSetting from '../components/MembershipSetting'
+import WebsiteSettings from '../components/WebsiteSettings'
 
 interface StorageSettings {
   driver: 'local' | 'spaces'
@@ -190,6 +191,9 @@ export default function Settings() {
       <div className="grid2" style={{ marginTop: 18 }}>
         <SignInSettings />
         <MembershipSetting />
+      </div>
+      <div className="grid2" style={{ marginTop: 18 }}>
+        <WebsiteSettings />
       </div>
     </main>
   )

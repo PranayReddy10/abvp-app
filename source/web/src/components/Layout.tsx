@@ -5,6 +5,7 @@ import { nameOf, useAuth } from '../auth'
 import type { GuideSummary, Me } from '../types'
 import { useFetch } from '../useFetch'
 import { Avatar, Icon } from './ui'
+import { pageView, track } from '../analytics'
 
 /** The next conference with a guide (public). */
 // eslint-disable-next-line react-refresh/only-export-components
@@ -43,7 +44,7 @@ function Nav() {
       <div className="wrap">
         <Brand />
         <nav className={`nav-links ${open ? 'open' : ''}`} aria-label="Main">
-          {conf && <NavLink to={`/guide/${conf.event.id}`}>Conference guide</NavLink>}
+          {conf && <NavLink to={`/guide/${conf.event.id}`}>Guide</NavLink>}
           {conf && <NavLink to={`/conference/${conf.event.id}/register`}>Delegate</NavLink>}
           <NavLink to="/conference/team">Volunteer</NavLink>
           <NavLink to="/events">Events</NavLink>
@@ -53,6 +54,7 @@ function Nav() {
           {!me && <NavLink to="/login" className="only-sm">Sign in</NavLink>}
         </nav>
         <div className="grow" />
+        <Link to="/search" className="icon-btn" aria-label="Search" title="Search" style={dark && !solid && !form ? { background: 'rgba(255,255,255,.16)', color: '#fff' } : undefined}><Icon name="search" size={18} /></Link>
         {me ? (
           <>
             <Link to="/me" className="btn sm hide-sm" style={dark && !solid ? { background: 'rgba(255,255,255,.16)', color: '#fff', boxShadow: 'none' } : undefined}>
@@ -106,6 +108,7 @@ function Footer() {
 export default function Layout() {
   const location = useLocation()
   useEffect(() => { window.scrollTo(0, 0) }, [location.pathname])
+  useEffect(() => { pageView() }, [location.pathname, location.search])
   const bare = location.pathname === '/login' || location.pathname === '/signup'
   return (
     <>
@@ -135,7 +138,7 @@ export function GoogleButton({ onNew }: { onNew: (d: { link_token: string; email
       setErr(null)
       try {
         const r = await api.post<{ linked: boolean; token?: string; user?: Me; link_token?: string; email?: string; name?: string | null }>('/auth/google', { id_token: credential, device_name: 'web' })
-        if (r.data.linked && r.data.token && r.data.user) { signIn(r.data.token, r.data.user); navigate('/me') }
+        if (r.data.linked && r.data.token && r.data.user) { signIn(r.data.token, r.data.user); track('login', { method: 'google' }); navigate('/me') }
         else if (r.data.link_token) onNew({ link_token: r.data.link_token, email: r.data.email ?? '', name: r.data.name ?? null })
       } catch (e) { setErr(e instanceof ApiError ? e.message : 'Google sign-in did not finish.') }
     }

@@ -13,7 +13,11 @@ import Profile from './pages/Profile'
 import { EventPage, Events } from './pages/Events'
 import Team from './pages/Team'
 import Support from './pages/Support'
+import Search from './pages/Search'
+import { initSite } from './analytics'
 import './styles.css'
+
+initSite()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -32,6 +36,7 @@ createRoot(document.getElementById('root')!).render(
             <Route path="events/:id" element={<EventPage />} />
             <Route path="me" element={<Me />} />
             <Route path="me/edit" element={<Profile />} />
+            <Route path="search" element={<Search />} />
             <Route path="login" element={<Login />} />
             <Route path="signup" element={<Signup />} />
             <Route path="*" element={<Home />} />

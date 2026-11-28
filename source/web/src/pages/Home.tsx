@@ -3,6 +3,7 @@ import { useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth'
 import { useConference } from '../components/Layout'
+import { useSeo } from '../seo'
 import { Icon, KIND, Orbs, Reveal, Tilt, fmtDate, grad, useCountdown } from '../components/ui'
 
 const words = (s: string, delay = 0) => s.split(' ').map((w, i) => (
@@ -35,6 +36,13 @@ export default function Home() {
   const textY = useTransform(scrollYProgress, [0, 1], [0, 60])
   const fade = useTransform(scrollYProgress, [0, .8], [1, 0])
   const e = conf?.event
+  useSeo({ title: 'ABVP Connect – Rashtriya Adhiveshan app, delegate registration and help desk', path: '/', jsonLd: e ? {
+    '@type': 'Event', name: e.title, startDate: e.starts_at, endDate: e.ends_at,
+    eventStatus: 'https://schema.org/EventScheduled', eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+    location: { '@type': 'Place', name: e.venue, address: { '@type': 'PostalAddress', streetAddress: e.venue, addressCountry: 'IN' } },
+    organizer: { '@type': 'Organization', name: 'Akhil Bharatiya Vidyarthi Parishad', url: 'https://abvpconnect.org/' },
+    image: 'https://abvpconnect.org/og-image.jpg', url: `https://abvpconnect.org/events/${e.id}`,
+  } : null })
   const regLink = e ? (me ? `/conference/${e.id}/register` : `/signup?next=/conference/${e.id}/register`) : '/signup'
 
   return (

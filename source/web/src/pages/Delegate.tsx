@@ -6,6 +6,8 @@ import { useAuth } from '../auth'
 import { ErrorBox, Icon, Orbs, Skeleton, fmtDate } from '../components/ui'
 import type { Delegate as D } from '../types'
 import { useFetch } from '../useFetch'
+import { useSeo } from '../seo'
+import { track } from '../analytics'
 import { Celebrate } from './Auth'
 
 const toLocal = (iso: string | null | undefined) => (iso ? new Date(new Date(iso).getTime() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 16) : '')
@@ -15,6 +17,7 @@ const toLocal = (iso: string | null | undefined) => (iso ? new Date(new Date(iso
  * Once sent, the Delegate tile opens the guide directly; the form is reached again with ?edit=1.
  */
 export default function Delegate() {
+  useSeo({ title: 'Delegate form', description: 'Register as a delegate for the ABVP Rashtriya Adhiveshan.', noindex: true })
   const { id } = useParams()
   const [params] = useSearchParams()
   const nav = useNavigate()
@@ -94,6 +97,7 @@ export default function Delegate() {
         responsibility: f.responsibility.trim(), arrival_point: f.arrival_point.trim(),
         arriving_at: new Date(f.arriving_at).toISOString(), departing_at: new Date(f.departing_at).toISOString(),
       })
+      track('delegate_register', { edit: !!reg })
       setDone(true)
       setTimeout(() => nav(`/guide/${id}`), 1500)
     } catch (x) { setErr(x) } finally { setBusy(false) }

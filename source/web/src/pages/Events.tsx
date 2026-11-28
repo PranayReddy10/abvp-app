@@ -5,6 +5,7 @@ import { api } from '../api'
 import { useAuth } from '../auth'
 import { ErrorBox, Icon, KIND, Orbs, Reveal, Skeleton, Tilt, fmtDate, fmtDateTime, fmtDay, fmtTime, grad } from '../components/ui'
 import type { Delegate, Hub } from '../types'
+import { useSeo } from '../seo'
 import { useFetch } from '../useFetch'
 
 interface EventCard {
@@ -37,6 +38,7 @@ function Cover({ e, h = 170 }: { e: EventCard; h?: number }) {
 
 /** Upcoming events: public list for everyone; signed-in people also see whether they can register. */
 export function Events() {
+  useSeo({ title: 'Events', description: 'Upcoming ABVP events, conferences and programmes – dates, venues and registration.' })
   const { me } = useAuth()
   const pub = useFetch<EventCard[]>(me ? null : '/public/events')
   const mine = useFetch<EventCard[]>(me ? '/events' : null)
@@ -112,6 +114,13 @@ export function EventPage() {
   const { me } = useAuth()
   const ev = useFetch<EventDetail>(me ? `/events/${id}` : `/public/events/${id}`)
   const e = ev.data
+  useSeo(e ? { title: e.title, description: `${e.title} – ${e.venue}. Dates, venue, registration and the conference guide on ABVP Connect.`, path: `/events/${e.id}`, jsonLd: {
+    '@type': 'Event', name: e.title, startDate: e.starts_at, endDate: e.ends_at,
+    eventStatus: 'https://schema.org/EventScheduled', eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+    location: { '@type': 'Place', name: e.venue, address: { '@type': 'PostalAddress', streetAddress: e.venue, addressCountry: 'IN' } },
+    organizer: { '@type': 'Organization', name: 'Akhil Bharatiya Vidyarthi Parishad', url: 'https://abvpconnect.org/' },
+    image: 'https://abvpconnect.org/og-image.jpg', url: `https://abvpconnect.org/events/${e.id}`,
+  } } : { title: 'Event' })
   const reg = e?.my_registration && !['cancelled', 'rejected'].includes(e.my_registration.status) ? e.my_registration : null
   const delegate = useFetch<Delegate>(me && reg?.kind === 'delegate' ? `/events/${id}/delegate` : null)
   // The guide is for signed-in delegates only, as in the app.

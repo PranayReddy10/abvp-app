@@ -5,6 +5,8 @@ import { Link } from 'react-router-dom'
 import { api } from '../api'
 import { nameOf, useAuth } from '../auth'
 import { Avatar, ErrorBox, Icon, Orbs, Reveal, Skeleton, ago, Tick } from '../components/ui'
+import { useSeo } from '../seo'
+import { track } from '../analytics'
 import { useFetch } from '../useFetch'
 
 interface Author { name: string; member_id: string | null; verified: boolean; place: string | null; photo_url: string | null }
@@ -99,6 +101,7 @@ function Composer({ onPosted }: { onPosted: (p: Post) => void }) {
       files.forEach((f) => fd.append('photos[]', f))
       const r = await api.post<Post>('/posts', fd)
       onPosted(r.data); setText(''); setFiles([])
+      track('post_create', { photos: files.length })
     } catch (x) { setErr(x) } finally { setBusy(false) }
   }
   return (
@@ -207,6 +210,7 @@ function ReportBox({ post, onClose, onDone }: { post: Post; onClose: () => void;
 
 /** One community for everyone who signs in: posts with photos, replies, likes, reposts, hashtags and reports. */
 export default function Community() {
+  useSeo({ title: 'Community', description: 'Posts, photos and updates from ABVP members across Bharat – share the work of your unit.' })
   const { me } = useAuth()
   const [posts, setPosts] = useState<Post[] | null>(null)
   const [next, setNext] = useState<number | null>(null)

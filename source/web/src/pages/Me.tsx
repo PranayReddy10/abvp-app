@@ -6,6 +6,7 @@ import { useConference } from '../components/Layout'
 import { MySeva } from './Team'
 import { Avatar, Icon, Orbs, Skeleton, Tick, fmtDate, useCountdown } from '../components/ui'
 import type { Delegate } from '../types'
+import { useSeo } from '../seo'
 import { useFetch } from '../useFetch'
 
 const THOUGHTS: [string, string][] = [
@@ -29,6 +30,7 @@ function Count({ iso }: { iso: string }) {
 
 /** My space: the same as Home in the app – who I am, the countdown, and Delegate and Volunteer. */
 export default function Me() {
+  useSeo({ title: 'My space', noindex: true })
   const { me, loading, signOut } = useAuth()
   const { conf } = useConference()
   const nav = useNavigate()

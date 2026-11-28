@@ -5,6 +5,7 @@ import { api, ApiError } from '../api'
 import { nameOf, useAuth } from '../auth'
 import { Avatar, ErrorBox, Icon, Orbs, Skeleton, Tick } from '../components/ui'
 import type { OrgUnit, Vibhag } from '../types'
+import { useSeo } from '../seo'
 import { useFetch } from '../useFetch'
 
 const OCCUPATIONS = ['Student', 'Teacher', 'Professional', 'Other']
@@ -21,6 +22,7 @@ function Section({ title, sub, children, id }: { title: string; sub?: string; ch
 
 /** Edit your details, area (state → district), Vibhags, photo and password. */
 export default function Profile() {
+  useSeo({ title: 'Edit profile', noindex: true })
   const { me, loading, refresh } = useAuth()
   const states = useFetch<OrgUnit[]>('/org/units')
   const vibhags = useFetch<Vibhag[]>('/vibhags')

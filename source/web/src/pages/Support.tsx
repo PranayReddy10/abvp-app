@@ -5,6 +5,8 @@ import { api } from '../api'
 import { useAuth } from '../auth'
 import { ErrorBox, Icon, Orbs, ago, fmtTime, grad } from '../components/ui'
 import type { Help, Hub } from '../types'
+import { useSeo } from '../seo'
+import { track } from '../analytics'
 import { useFetch } from '../useFetch'
 
 const CATS: [string, string][] = [['stay', 'Stay'], ['food', 'Food'], ['transport', 'Transport'], ['venue', 'Venue or directions'], ['registration', 'Registration'], ['lost', 'Lost and found'], ['medical', 'Medical'], ['other', 'Something else']]
@@ -31,6 +33,7 @@ function Chat({ eventId, helpId, onBack }: { eventId: string; helpId: number | n
     setBusy(true); setErr(null)
     try {
       const r = id ? await api.post<Help>(`/help/${id}/reply`, { body: text.trim() }) : await api.post<Help>(`/events/${eventId}/help`, { category: 'chat', message: text.trim() })
+      if (!id) track('help_request', { type: 'chat' })
       setH(r.data); setId(r.data.id); setText('')
     } catch (x) { setErr(x) } finally { setBusy(false) }
   }
@@ -81,7 +84,7 @@ function Ticket({ eventId, onDone, onBack }: { eventId: string; onDone: (id: num
     <motion.form className="card" style={{ display: 'grid', gap: 16, maxWidth: 680 }} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
       onSubmit={async (e) => {
         e.preventDefault(); setBusy(true); setErr(null)
-        try { onDone((await api.post<Help>(`/events/${eventId}/help`, { category: cat, message: msg, location: where || null })).data.id) } catch (x) { setErr(x) } finally { setBusy(false) }
+        try { const r = await api.post<Help>(`/events/${eventId}/help`, { category: cat, message: msg, location: where || null }); track('help_request', { type: 'ticket', category: cat }); onDone(r.data.id) } catch (x) { setErr(x) } finally { setBusy(false) }
       }}>
       <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}><button type="button" className="icon-btn" onClick={onBack} aria-label="Back"><Icon name="back" /></button><h2 style={{ fontSize: 24, fontWeight: 800 }}>Raise a ticket</h2></div>
       <ErrorBox error={err} />
@@ -95,6 +98,7 @@ function Ticket({ eventId, onDone, onBack }: { eventId: string; onDone: (id: num
 }
 
 export default function Support() {
+  useSeo({ title: 'Help and emergency', description: 'Emergency numbers (108, 112, 181), the conference helpline, chat with the help desk or raise a ticket.' })
   const { id = '' } = useParams()
   const { me } = useAuth()
   const hub = useFetch<Hub>(`/events/${id}/guide`)

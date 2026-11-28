@@ -4,6 +4,7 @@ import { Navigate } from 'react-router-dom'
 import { api } from '../api'
 import { useAuth } from '../auth'
 import { Avatar, ErrorBox, Icon, Orbs, Skeleton, Tick, ago, fmtDate, telHref, waHref } from '../components/ui'
+import { useSeo } from '../seo'
 import { useFetch } from '../useFetch'
 
 export interface Person { id: number; name: string; role: string; role_label: string; mobile: string | null; has_mobile: boolean; linked: boolean; photo_url: string | null; verified?: boolean; member_id?: string | null }
@@ -26,6 +27,7 @@ function PersonRow({ p }: { p: Person }) {
 
 /** The conference volunteer structure: ghats → departments → people. Phones only when signed in. */
 export default function Team() {
+  useSeo({ title: 'Volunteer – conference team', description: 'Every ghat, department and volunteer of the ABVP Rashtriya Adhiveshan.', noindex: true })
   const { me, loading } = useAuth()
   const conf = useFetch<{ id: number } | null>(me ? '/conference' : null)
   const tree = useFetch<Tree>(me && conf.data ? `/events/${conf.data.id}/teams` : null)

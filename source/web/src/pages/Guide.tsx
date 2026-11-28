@@ -4,6 +4,7 @@ import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../auth'
 import { Avatar, ErrorBox, Icon, KIND, Orbs, Reveal, Skeleton, fmtDate, grad, telHref, useCountdown, waHref } from '../components/ui'
 import type { Contact, Delegate, GuideItem, Hub } from '../types'
+import { useSeo } from '../seo'
 import { useFetch } from '../useFetch'
 
 function When({ starts, ends }: { starts: string; ends: string }) {
@@ -13,6 +14,7 @@ function When({ starts, ends }: { starts: string; ends: string }) {
 }
 
 export function GuideHub() {
+  useSeo({ title: 'Conference guide', description: 'Stay, transport, food, sessions, gallery and help for delegates of the ABVP Rashtriya Adhiveshan.', noindex: true })
   const { id } = useParams()
   const { me, loading } = useAuth()
   const { data: hub, error } = useFetch<Hub>(`/events/${id}/guide`)
@@ -198,6 +200,7 @@ const km = (a: { lat: number; lng: number }, b: { lat: number; lng: number }) =>
 }
 
 export function GuideSection() {
+  useSeo({ title: 'Conference guide', noindex: true })
   const { id, kind = 'stay' } = useParams()
   const { me, loading } = useAuth()
   // Like the hub: signed-in delegates only.

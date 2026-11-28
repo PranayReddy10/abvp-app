@@ -2,17 +2,90 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/favicon.png" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ABVP Connect – Rashtriya Adhiveshan app, delegate registration and help desk</title>
+    <meta name="description" content="ABVP Connect is the official app and website of Akhil Bharatiya Vidyarthi Parishad for the Rashtriya Adhiveshan: delegate registration, the conference guide (stay, transport, food, sessions), volunteers, help desk and the ABVP members community." />
+    <meta name="keywords" content="ABVP, ABVP Connect, Akhil Bharatiya Vidyarthi Parishad, Rashtriya Adhiveshan, ABVP national conference, Bhagyanagar, Hyderabad, delegate registration, karyakarta, student organisation" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="author" content="Akhil Bharatiya Vidyarthi Parishad" />
+    <meta name="application-name" content="ABVP Connect" />
     <meta name="theme-color" content="#E3620C" />
-    <meta name="description" content="ABVP Connect – the conference guide, delegate registration, passes and help desk for the Rashtriya Adhiveshan, and the home of ABVP members online." />
-    <title>ABVP Connect</title>
+    <link rel="canonical" href="https://abvpconnect.org/" />
+    <link rel="alternate" hreflang="en-IN" href="https://abvpconnect.org/" />
+    <link rel="alternate" hreflang="x-default" href="https://abvpconnect.org/" />
+
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <!-- Sharing on WhatsApp, Facebook, X, Telegram, LinkedIn -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="ABVP Connect" />
+    <meta property="og:locale" content="en_IN" />
+    <meta property="og:url" content="https://abvpconnect.org/" />
+    <meta property="og:title" content="ABVP Connect – one app for every karyakarta" />
+    <meta property="og:description" content="Delegate registration, the conference guide, volunteers and help desk for the ABVP Rashtriya Adhiveshan – with a real person to call for each." />
+    <meta property="og:image" content="https://abvpconnect.org/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="ABVP Connect app on two phones" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="ABVP Connect – one app for every karyakarta" />
+    <meta name="twitter:description" content="Delegate registration, the conference guide, volunteers and help desk for the ABVP Rashtriya Adhiveshan." />
+    <meta name="twitter:image" content="https://abvpconnect.org/og-image.jpg" />
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://abvpconnect.org/#org",
+          "name": "Akhil Bharatiya Vidyarthi Parishad",
+          "alternateName": ["ABVP", "ABVP Connect"],
+          "url": "https://abvpconnect.org/",
+          "logo": "https://abvpconnect.org/img/abvp-logo.png"
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://abvpconnect.org/#website",
+          "name": "ABVP Connect",
+          "url": "https://abvpconnect.org/",
+          "inLanguage": "en-IN",
+          "publisher": { "@id": "https://abvpconnect.org/#org" },
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": { "@type": "EntryPoint", "urlTemplate": "https://abvpconnect.org/search?q={search_term_string}" },
+            "query-input": "required name=search_term_string"
+          }
+        },
+        {
+          "@type": "MobileApplication",
+          "name": "ABVP Connect",
+          "operatingSystem": "Android, iOS",
+          "applicationCategory": "SocialNetworkingApplication",
+          "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
+          "publisher": { "@id": "https://abvpconnect.org/#org" }
+        }
+      ]
+    }
+    </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://api.abvpconnect.org" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" />
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- What search engines and people without JavaScript see until the app starts. -->
+      <noscript>
+        <h1>ABVP Connect – Akhil Bharatiya Vidyarthi Parishad</h1>
+        <p>The official app and website for the ABVP Rashtriya Adhiveshan: delegate registration, the conference guide with stay, transport, food and sessions, the volunteer team, help and emergency contacts, events and the members community.</p>
+        <p><a href="/events">Events</a> · <a href="/community">Community</a> · <a href="/signup">Sign up</a> · <a href="/login">Sign in</a></p>
+      </noscript>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

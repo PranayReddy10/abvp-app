@@ -1,0 +1,13 @@
+{
+  "name": "ABVP Connect",
+  "short_name": "ABVP Connect",
+  "description": "Delegate registration, conference guide, volunteers and help desk for the ABVP Rashtriya Adhiveshan.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFF6EE",
+  "theme_color": "#E3620C",
+  "icons": [
+    { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "/abvp-emblem.png", "sizes": "256x256", "type": "image/png" }
+  ]
+}

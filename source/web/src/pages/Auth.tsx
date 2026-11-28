@@ -6,6 +6,8 @@ import { useAuth } from '../auth'
 import { Brand, GoogleButton } from '../components/Layout'
 import { ErrorBox, Icon, Orbs } from '../components/ui'
 import type { Me, OrgUnit } from '../types'
+import { useSeo } from '../seo'
+import { track } from '../analytics'
 import { useFetch } from '../useFetch'
 
 function Shell({ side, children }: { side: ReactNode; children: ReactNode }) {
@@ -115,6 +117,7 @@ function OtpStep({ mobile, setMobile, onVerified, onPassword, newPassword = fals
 }
 
 export function Login() {
+  useSeo({ title: 'Sign in', description: 'Sign in to ABVP Connect with your mobile number.', noindex: true })
   const { signIn } = useAuth()
   const navigate = useNavigate()
   const [params] = useSearchParams()
@@ -136,6 +139,7 @@ export function Login() {
           try {
             const r = await api.post<{ token: string; user: Me }>('/auth/verify-otp', { mobile, code, device_name: 'web' })
             signIn(r.data.token, r.data.user)
+            track('login', { method: 'sms_code' })
             navigate(r.data.user.name || r.data.user.profile ? next : `/signup?complete=1&next=${encodeURIComponent(next)}`)
           } finally { setBusy(false) }
         }} onPassword={async (password) => {
@@ -143,6 +147,7 @@ export function Login() {
           try {
             const r = await api.post<{ token: string; user: Me }>('/auth/password', { login: mobile, password, device_name: 'web' })
             signIn(r.data.token, r.data.user)
+            track('login', { method: 'password' })
             navigate(r.data.user.name || r.data.user.profile ? next : `/signup?complete=1&next=${encodeURIComponent(next)}`)
           } finally { setBusy(false) }
         }} />
@@ -156,6 +161,7 @@ export function Login() {
 const OCCUPATIONS = ['Student', 'Teacher', 'Professional', 'Other']
 
 export function Signup() {
+  useSeo({ title: 'Create your account', description: 'Join ABVP Connect: everyone who signs up is a member with a member ID. Then fill the delegate form for the national conference.', noindex: true })
   const { signIn } = useAuth()
   const navigate = useNavigate()
   const [params] = useSearchParams()
@@ -182,6 +188,7 @@ export function Signup() {
     try {
       const r = await api.post<{ token: string; user: Me }>('/auth/register', { ...details(), ...extra })
       signIn(r.data.token, r.data.user)
+      track('sign_up', { method: link ? 'google' : 'mobile' })
       setStep(2)
       setTimeout(() => navigate(next), 1400)
     } finally { setBusy(false) }

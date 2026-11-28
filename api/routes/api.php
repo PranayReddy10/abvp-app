@@ -63,6 +63,9 @@ Route::prefix('v1')->group(function () {
         Route::get('guide/prants', [GuideController::class, 'prants']);
         Route::get('events/{event}/guide', [GuideController::class, 'hub']);
         Route::get('events/{event}/guide/{kind}', [GuideController::class, 'section']);
+        // One search box (signed-in users get more) and the website's public settings.
+        Route::get('search', [\App\Http\Controllers\Api\V1\SearchController::class, 'search']);
+        Route::get('site', [\App\Http\Controllers\Api\V1\SearchController::class, 'site']);
     });
 
     Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
@@ -275,6 +278,8 @@ Route::prefix('v1')->group(function () {
             Route::get('settings/sign-in', [Admin\SignInSettingsController::class, 'show']);
             Route::put('settings/sign-in', [Admin\SignInSettingsController::class, 'update']);
             Route::post('settings/sign-in/test-sms', [Admin\SignInSettingsController::class, 'testSms'])->middleware('throttle:5,10');
+            Route::get('settings/website', [Admin\SiteSettingsController::class, 'show']);
+            Route::put('settings/website', [Admin\SiteSettingsController::class, 'update']);
             Route::get('settings/storage', [Admin\SettingsController::class, 'storage']);
             Route::put('settings/storage', [Admin\SettingsController::class, 'update']);
             Route::post('settings/storage/test', [Admin\SettingsController::class, 'test']);
