@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ABVP Connect – App guide</title>
+<style>
+@font-face { font-family: Mukta; src: url("fonts/Mukta-Regular.ttf"); font-weight: 400; }
+@font-face { font-family: Mukta; src: url("fonts/Mukta-Medium.ttf"); font-weight: 500; }
+@font-face { font-family: Mukta; src: url("fonts/Mukta-SemiBold.ttf"); font-weight: 600; }
+@font-face { font-family: Mukta; src: url("fonts/Mukta-Bold.ttf"); font-weight: 700; }
+@font-face { font-family: Mukta; src: url("fonts/Mukta-ExtraBold.ttf"); font-weight: 800; }
+@font-face { font-family: AnekTelugu; src: url("fonts/AnekTelugu.ttf"); font-weight: 100 900; }
+@font-face { font-family: Anek; src: url("fonts/AnekDevanagari.ttf"); font-weight: 100 900; }
+
+@page { size: A4; margin: 0 }
+:root { --saffron: #E3620C; --deep: #B84C04; --soft: #FFEFE2; --ink: #14161F; --muted: #5F6476; --line: #E6E7EE; --bg: #F4F5F8; --ok: #1C7F55; --okSoft: #E3F4EC; --red: #C81E1E; --redSoft: #FFF1F1 }
+* { box-sizing: border-box }
+html, body { margin: 0; padding: 0 }
+body { font-family: Mukta, AnekTelugu, sans-serif; color: var(--ink); font-size: 11.6pt; line-height: 1.5; -webkit-print-color-adjust: exact; print-color-adjust: exact }
+h1, h2, h3 { font-family: Anek, Mukta, AnekTelugu, sans-serif; margin: 0; letter-spacing: -0.01em; line-height: 1.1 }
+p { margin: 0 0 8px }
+.page { width: 210mm; height: 297mm; position: relative; overflow: hidden; page-break-after: always; padding: 16mm 16mm 18mm; background: #fff }
+.page:last-child { page-break-after: auto }
+.foot { position: absolute; left: 16mm; right: 16mm; bottom: 8mm; display: flex; justify-content: space-between; font-size: 8.8pt; color: #9A9EAE; border-top: 1px solid var(--line); padding-top: 3mm }
+
+/* Section heading */
+.kicker { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; font-size: 10pt; letter-spacing: .08em; text-transform: uppercase; color: var(--deep) }
+.kicker i { display: inline-block; width: 22px; height: 3px; background: var(--saffron); border-radius: 3px }
+.title { font-size: 30pt; font-weight: 800; margin: 3mm 0 1mm }
+.hindi { font-family: Anek, sans-serif; font-size: 16pt; color: var(--muted); font-weight: 600 }
+.lead { font-size: 13pt; color: #3B3F4E; margin: 4mm 0 5mm; max-width: 165mm }
+
+/* Phones */
+.row { display: flex; gap: 8mm; align-items: flex-start }
+.phone { width: 62mm; flex: none; border-radius: 9mm; padding: 2.2mm; background: #15161c; box-shadow: 0 6mm 12mm -6mm rgba(20,22,31,.45) }
+.phone img { width: 100%; display: block; border-radius: 7mm }
+.phone.sm { width: 52mm }
+.cap { text-align: center; font-size: 9.5pt; color: var(--muted); margin-top: 2.5mm; font-weight: 600 }
+.desk { border-radius: 4mm; overflow: hidden; border: 1px solid var(--line); box-shadow: 0 5mm 12mm -7mm rgba(20,22,31,.4) }
+.desk img { width: 100%; display: block }
+
+/* Phones on top, text in two columns below */
+.duo { display: flex; justify-content: center; gap: 12mm; margin-bottom: 5mm }
+.duo .phone { width: 56mm }
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 8mm; align-items: start }
+.cols .box { margin-top: 0 }
+.trio { display: flex; justify-content: space-between; gap: 6mm }
+.trio .phone { width: 54mm }
+
+/* Text blocks */
+.points { flex: 1; min-width: 0 }
+.points h3 { font-size: 13.5pt; margin: 0 0 2mm; font-weight: 800 }
+ul.ticks { list-style: none; padding: 0; margin: 0 0 4mm }
+ul.ticks li { position: relative; padding-left: 7mm; margin-bottom: 2.2mm }
+ul.ticks li::before { content: ""; position: absolute; left: 0; top: 2.2mm; width: 3.4mm; height: 3.4mm; border-radius: 50%; background: var(--soft); box-shadow: inset 0 0 0 1.2mm var(--saffron) }
+.box { border-radius: 5mm; padding: 4mm 5mm; margin-top: 3mm }
+.box h4 { margin: 0 0 1.5mm; font-size: 11.5pt; font-family: Anek, Mukta, sans-serif }
+.box.lead-box { background: var(--soft); border-left: 1.4mm solid var(--saffron) }
+.box.tip { background: #EEF3FD; border-left: 1.4mm solid #2E55C9 }
+.box.red { background: var(--redSoft); border-left: 1.4mm solid var(--red) }
+.box.green { background: var(--okSoft); border-left: 1.4mm solid var(--ok) }
+.box ul { margin: 0; padding-left: 5mm }
+.box li { margin-bottom: 1mm }
+
+/* Cover */
+.cover { padding: 0; color: #fff; background: linear-gradient(140deg, #F08A3C 0%, #E3620C 32%, #9A3A06 62%, #14161F 100%) }
+.cover .orb { position: absolute; border-radius: 50%; background: rgba(255,255,255,.08) }
+.cover .ring { position: absolute; border-radius: 50%; border: 9mm solid rgba(255,255,255,.10) }
+.cover .inner { position: absolute; left: 18mm; right: 18mm; top: 22mm; bottom: 18mm; display: flex; flex-direction: column }
+.cover .logo { width: 18mm; height: 18mm; border-radius: 6mm; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.3); display: grid; place-items: center; font-size: 26pt }
+.cover h1 { font-size: 44pt; font-weight: 800; margin-top: 12mm }
+.cover .sub { font-size: 16pt; opacity: .92; margin-top: 3mm; max-width: 140mm }
+.cover .hi { font-family: Anek; font-size: 15pt; opacity: .85; margin-top: 2mm }
+.cover .phones { position: absolute; right: -6mm; bottom: 30mm; display: flex; gap: 5mm; transform: rotate(-6deg) }
+.cover .phones .phone { width: 52mm; background: #0d0e12; box-shadow: 0 10mm 20mm -6mm rgba(0,0,0,.6) }
+.cover .phones .phone:nth-child(2) { margin-top: 14mm }
+.cover .bottom { margin-top: auto; font-size: 11pt; opacity: .9 }
+.cover .pill { display: inline-block; padding: 1.5mm 4mm; border-radius: 99px; background: rgba(255,255,255,.16); font-weight: 700; margin-right: 2mm; font-size: 10.5pt }
+
+/* Journey */
+.journey { display: grid; grid-template-columns: 1fr; gap: 3.2mm; margin-top: 2mm }
+.step { display: flex; gap: 4mm; align-items: flex-start; background: var(--bg); border-radius: 5mm; padding: 3.5mm 4.5mm }
+.step .n { flex: none; width: 10mm; height: 10mm; border-radius: 50%; background: var(--saffron); color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 13pt }
+.step b { font-size: 12pt }
+.step p { margin: .5mm 0 0; color: #3B3F4E; font-size: 10.8pt }
+
+/* Tiles grid */
+.tiles { display: grid; grid-template-columns: repeat(2, 1fr); gap: 3mm }
+.tile { display: flex; gap: 3mm; align-items: flex-start; padding: 3mm 3.5mm; border-radius: 4mm; background: var(--bg) }
+.tile .ic { flex: none; width: 10mm; height: 10mm; border-radius: 3.5mm; display: grid; place-items: center; color: #fff; font-size: 13pt }
+.tile b { display: block; font-size: 11pt }
+.tile span { font-size: 9.8pt; color: var(--muted); line-height: 1.35; display: block }
+
+/* Checklist */
+.check { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm 6mm }
+.check div { display: flex; gap: 3mm; align-items: flex-start; font-size: 10.8pt }
+.check .bx { flex: none; width: 5mm; height: 5mm; border: 1.5px solid var(--saffron); border-radius: 1.4mm; margin-top: 1mm }
+.check b { display: block }
+
+/* FAQ */
+.faq h4 { margin: 4mm 0 1mm; font-size: 12pt; font-family: Anek, Mukta, sans-serif }
+.faq p { color: #3B3F4E }
+.toc { columns: 2; column-gap: 10mm; margin-top: 3mm }
+.toc div { break-inside: avoid; display: flex; justify-content: space-between; border-bottom: 1px dashed var(--line); padding: 1.4mm 0; font-size: 11pt }
+.toc div span:last-child { color: var(--muted) }
+.note { font-size: 9.5pt; color: var(--muted) }
+
+.page { background: #FFFAF5 }
+.cover { background: linear-gradient(140deg, #F6A04D 0%, #E3620C 35%, #B84C04 70%, #5A2204 100%) }
+.step { background: #FFF1E4 }
+.tile { background: #FFF1E4 }
+code { font-family: ui-monospace, monospace; font-size: 9.6pt }
+.row .phone { width: 56mm }
+.desk.half { width: 140mm; margin-left: auto; margin-right: auto }
+.journey.tight { gap: 2.2mm }
+.journey.tight .step { padding: 2.4mm 4mm }
+.journey.tight .step p { font-size: 10.2pt }
+</style>
+</head>
+<body>
+<!-- 1. Cover -->
+<section class="page cover">
+  <div class="orb" style="width:120mm;height:120mm;right:-40mm;top:-40mm"></div>
+  <div class="ring" style="width:90mm;height:90mm;left:-30mm;bottom:40mm"></div>
+  <div class="orb" style="width:60mm;height:60mm;left:70mm;top:120mm"></div>
+  <div class="inner">
+    <div class="logo">🔥</div>
+    <h1>ABVP Connect</h1>
+    <div class="sub">The app guide – the new design, every screen and the full flow, for delegates, volunteers and admins</div>
+    <div class="hi">एक सदस्य · एक पहचान · हर कार्यक्रम</div>
+    <div style="margin-top:8mm">
+      <span class="pill">Delegates</span><span class="pill">Volunteers</span><span class="pill">Admin panel</span>
+    </div>
+    <div class="bottom">
+      Rashtriya Adhiveshan 2026 · Bhagyanagar · Edition of 28 Nov 2026<br>
+      <span class="note" style="color:rgba(255,255,255,.75)">Screenshots use sample data. Names, phone numbers, venue and photos are examples only.</span>
+    </div>
+  </div>
+  <div class="phones">
+    <div class="phone"><img src="img/home.jpg"></div>
+    <div class="phone"><img src="img/guide.jpg"></div>
+  </div>
+</section>
+
+<!-- 2. Flow -->
+<section class="page">
+  <span class="kicker"><i></i>The flow</span>
+  <h2 class="title">From sign-up to the conference, in eight steps</h2>
+  <p class="lead">The app is now orange and warm, has three tabs at the bottom – <b>Home</b>, <b>Community</b> and <b>Me</b> – and works in English, Hindi and Telugu. There are no passes and no scanning: a person's name, member ID and blue tick are their identity.</p>
+  <div class="journey tight">
+    <div class="step"><div class="n">1</div><div><b>Create an account</b><p>Name, mobile, password (typed twice), gender, email and area. Everyone who signs up is a member straight away.</p></div></div>
+    <div class="step"><div class="n">2</div><div><b>Home</b><p>A greeting, the conference card with a live countdown, two big tiles – <i>Delegate</i> and <i>Volunteer</i> – a thought for the day and the team chat.</p></div></div>
+    <div class="step"><div class="n">3</div><div><b>Delegate form</b><p>Tapping <i>Delegate</i> the first time opens the form. Details from the profile are filled in; the rest are required (email is optional).</p></div></div>
+    <div class="step"><div class="n">4</div><div><b>Conference guide</b><p>Once the form is in, the tile opens the guide directly – stay, transport, food, sessions, exhibition, gallery and more. <i>Edit my delegate form</i> sits at the top.</p></div></div>
+    <div class="step"><div class="n">5</div><div><b>Help and emergency</b><p>Every "help" or "emergency" button opens the same Help page: call now, chat with the help desk or raise a ticket.</p></div></div>
+    <div class="step"><div class="n">6</div><div><b>Volunteer</b><p>Ghats, departments and every person in the conference team, with call, WhatsApp, follow and full profile.</p></div></div>
+    <div class="step"><div class="n">7</div><div><b>Community</b><p>Posts, photos, comments and follows. Admins can switch on approval so posts wait to be checked.</p></div></div>
+    <div class="step"><div class="n">8</div><div><b>Me</b><p>Profile, full edit profile with photo, language, password and my help requests. Verified members carry the blue tick.</p></div></div>
+  </div>
+  <div class="foot"><span>ABVP Connect · App guide</span><span>2</span></div>
+</section>
+
+<!-- 3. Sign in -->
+<section class="page">
+  <span class="kicker"><i></i>Step 1</span>
+  <h2 class="title">Sign in and create an account</h2>
+  <div class="hindi">प्रवेश · खाता बनाएँ</div>
+  <p class="lead">A clean first screen – no guide card, just signing in. New people create an account in one form.</p>
+  <div class="trio">
+    <div><div class="phone"><img src="img/signin.jpg"></div><div class="cap">Sign in with mobile and password</div></div>
+    <div><div class="phone"><img src="img/signup.jpg"></div><div class="cap">Create account</div></div>
+    <div><div class="phone"><img src="img/language.jpg"></div><div class="cap">Language button, top right</div></div>
+  </div>
+  <div class="cols" style="margin-top:6mm">
+    <div class="points"><h3>Create account asks for</h3>
+      <ul class="ticks"><li>Full name and 10-digit mobile</li><li>Password, and <b>confirm password</b> – both must match</li><li>Gender and email (email is optional)</li><li><b>Area</b>: state, then district – the list comes from <i>Areas</i> in the admin panel</li></ul>
+    </div>
+    <div class="box lead-box"><h4>Everyone is a member</h4>Signing up makes a person a member at once with a member ID like <b>ABVP-TG-000123</b>. Admins later give a <b>blue tick</b> to verified members – there is no waiting for approval.</div>
+  </div>
+  <div class="foot"><span>ABVP Connect · App guide</span><span>3</span></div>
+</section>
+
+<!-- 4. Home -->
+<section class="page">
+  <span class="kicker"><i></i>Step 2</span>
+  <h2 class="title">Home</h2>
+  <div class="hindi">मुख्य पृष्ठ</div>
+  <p class="lead">A lively first screen on a warm background: who I am, how long until the conference, and the two things a person comes to do.</p>
+  <div class="row">
+    <div><div class="phone"><img src="img/home.jpg"></div><div class="cap">Top of Home</div></div>
+    <div><div class="phone"><img src="img/home2.jpg"></div><div class="cap">Scrolled down</div></div>
+    <div class="points">
+      <h3>What is on it</h3>
+      <ul class="ticks">
+        <li><b>Header</b> – photo or initials, name, member ID, and chips for delegate, team role and member</li>
+        <li><b>Conference card</b> with a live countdown in days, hours, minutes and seconds</li>
+        <li><b>Delegate</b> tile – opens the form, then the guide</li>
+        <li><b>Volunteer</b> tile – ghats, departments and people</li>
+        <li><b>Thought for the day</b></li>
+        <li><b>Volunteer</b> section with my team and the <b>team chat</b></li>
+        <li>Community highlights</li>
+      </ul>
+      <div class="box tip"><h4>Removed</h4>The round Guide / Gallery / Team / Help buttons, the Calendar tab and the Pass tab are gone. Everything is reached from the two tiles.</div>
+    </div>
+  </div>
+  <div class="foot"><span>ABVP Connect · App guide</span><span>4</span></div>
+</section>
+
+<!-- 5. Delegate form -->
+<section class="page">
+  <span class="kicker"><i></i>Step 3</span>
+  <h2 class="title">Delegate form</h2>
+  <div class="hindi">प्रतिनिधि पंजीकरण</div>
+  <p class="lead">The first tap on <b>Delegate</b> opens this form. Name, mobile, email, gender and prant come from the profile and can be changed.</p>
+  <div class="trio">
+    <div><div class="phone"><img src="img/delegate-form.jpg"></div><div class="cap">About you</div></div>
+    <div><div class="phone"><img src="img/delegate-form2.jpg"></div><div class="cap">Travel details</div></div>
+    <div><div class="phone"><img src="img/home-delegate.jpg"></div><div class="cap">After sending: "Registered ✓ · open guide"</div></div>
+  </div>
+  <div class="cols" style="margin-top:6mm">
+    <div class="points"><h3>Fields (all required except email)</h3>
+      <ul class="ticks"><li>Surname, first name, mobile, email</li><li>Gender, prant, responsibility</li><li>Arrival date and arrival place</li><li>Departure date</li><li>How you are coming – train, bus, flight, own vehicle</li></ul>
+    </div>
+    <div>
+      <div class="box red"><h4>Registration closed?</h4>If admins close delegate registration, the tile shows a clear dialog saying so instead of the form.</div>
+      <div class="box green"><h4>After the form</h4>The tile opens the guide directly. To change details, use <b>Edit my delegate form</b> inside the guide.</div>
+    </div>
+  </div>
+  <div class="foot"><span>ABVP Connect · App guide</span><span>5</span></div>
+</section>
+
+<!-- 6. Guide -->
+<section class="page">
+  <span class="kicker"><i></i>Step 4</span>
+  <h2 class="title">Conference guide and gallery</h2>
+  <div class="hindi">मार्गदर्शिका · चित्र दीर्घा</div>
+  <p class="lead">Only delegates who have filled the form get the guide. Every section has real people to call.</p>
+  <div class="trio">
+    <div><div class="phone"><img src="img/guide.jpg"></div><div class="cap">Guide with "Edit my delegate form"</div></div>
+    <div><div class="phone"><img src="img/guide2.jpg"></div><div class="cap">All sections, incl. Gallery</div></div>
+    <div><div class="phone"><img src="img/gallery.jpg"></div><div class="cap">Gallery: albums of photos and videos</div></div>
+  </div>
+  <div class="tiles" style="margin-top:6mm">
+    <div class="tile"><div class="ic" style="background:#7C4DFF">🛏</div><div><b>Stay, transport, food</b><span>Where I sleep, how I get there, meal times and halls.</span></div></div>
+    <div class="tile"><div class="ic" style="background:#2E7D32">🎤</div><div><b>Sessions and offices</b><span>Programme, halls and the office for each need.</span></div></div>
+    <div class="tile"><div class="ic" style="background:#C2185B">🖼</div><div><b>Exhibition</b><span>Each stall with photos, place and a lead to contact.</span></div></div>
+    <div class="tile"><div class="ic" style="background:#E3620C">📷</div><div><b>Gallery</b><span>Albums by day. Photos, uploaded videos (up to 100 MB) and YouTube links.</span></div></div>
+  </div>
+  <div class="foot"><span>ABVP Connect · App guide</span><span>6</span></div>
+</section>
+
+<!-- 7. Help -->
+<section class="page">
+  <span class="kicker"><i></i>Step 5</span>
+  <h2 class="title">Help and emergency</h2>
+  <div class="hindi">सहायता · आपातकाल</div>
+  <p class="lead">One Help page, everywhere. The emergency button on Home, the help links in the guide and "My help requests" in Me all lead here.</p>
+  <div class="duo">
+    <div><div class="phone"><img src="img/help.jpg"></div><div class="cap">Help page</div></div>
+    <div><div class="phone"><img src="img/emergency.jpg"></div><div class="cap">Emergency numbers and leads by hall</div></div>
+  </div>
+  <div class="cols">
+    <div class="points"><h3>Three ways to get help</h3>
+      <ul class="ticks"><li><b>Emergency – call now</b>: 108, 112, 181 and the help desk</li><li><b>Chat with the help desk</b> – replies come back in the app</li><li><b>Raise a ticket</b> – pick a category and describe it</li></ul>
+    </div>
+    <div class="box red"><h4>Emergency leads by hall</h4>Each hall has a named lead who knows where the doctor and ambulance are. Tap to see them and call.</div>
+  </div>
+  <div class="foot"><span>ABVP Connect · App guide</span><span>7</span></div>
+</section>
+
+<!-- 8. Volunteer -->
+<section class="page">
+  <span class="kicker"><i></i>Step 6</span>
+  <h2 class="title">Volunteer</h2>
+  <div class="hindi">स्वयंसेवक</div>
+  <p class="lead">The <b>Volunteer</b> tile opens the conference team: my own place in it first, then every ghat as a colourful card.</p>
+  <div class="trio">
+    <div><div class="phone"><img src="img/volunteer.jpg"></div><div class="cap">My team at the top</div></div>
+    <div><div class="phone"><img src="img/volunteer-ghats.jpg"></div><div class="cap">All ghats</div></div>
+    <div><div class="phone"><img src="img/ghat.jpg"></div><div class="cap">A ghat: heads, then departments</div></div>
+  </div>
+  <div class="cols" style="margin-top:6mm">
+    <div class="points"><h3>Inside a ghat</h3>
+      <ul class="ticks"><li>Ghat Pramukh, Saha Pramukh and Palak with their <b>full names</b>, scrolling sideways</li><li>Departments as pastel cards with an icon, the Pramukh and the people</li></ul>
+    </div>
+    <div class="box lead-box"><h4>Order set by admins</h4>Ghats, departments and people appear in the order admins arrange in the panel.</div>
+  </div>
+  <div class="foot"><span>ABVP Connect · App guide</span><span>8</span></div>
+</section>
+
+<!-- 9. Departments & people -->
+<section class="page">
+  <span class="kicker"><i></i>Step 6 continued</span>
+  <h2 class="title">Departments and people</h2>
+  <div class="hindi">विभाग · कार्यकर्ता</div>
+  <p class="lead">Tap a department to see its people. Tap a person for a pop-up with everything you need to reach them.</p>
+  <div class="trio">
+    <div><div class="phone"><img src="img/departments.jpg"></div><div class="cap">Department cards</div></div>
+    <div><div class="phone"><img src="img/department.jpg"></div><div class="cap">A department's people</div></div>
+    <div><div class="phone"><img src="img/person.jpg"></div><div class="cap">Person pop-up</div></div>
+  </div>
+  <div class="cols" style="margin-top:6mm">
+    <div class="points"><h3>The person pop-up</h3>
+      <ul class="ticks"><li>Name with the <b>blue tick</b> if verified</li><li>Role, department and ghat</li><li><b>View profile</b> and <b>Follow</b></li><li><b>Call</b> and <b>WhatsApp</b></li></ul>
+    </div>
+    <div class="box tip"><h4>Heads can manage</h4>Ghat and department heads can add people by member ID or mobile – the name and phone fill in automatically.</div>
+  </div>
+  <div class="foot"><span>ABVP Connect · App guide</span><span>9</span></div>
+</section>
+
+<!-- 10. Profile, chat, community -->
+<section class="page">
+  <span class="kicker"><i></i>Step 7</span>
+  <h2 class="title">Profiles, team chat and community</h2>
+  <div class="hindi">प्रोफ़ाइल · चर्चा · समुदाय</div>
+  <p class="lead">Every signed-in person can open profiles. Team members' mobiles are shown so they can be reached. Tap a profile photo to see it full screen.</p>
+  <div class="trio">
+    <div><div class="phone"><img src="img/member-profile.jpg"></div><div class="cap">A verified member's profile</div></div>
+    <div><div class="phone"><img src="img/team-chat.jpg"></div><div class="cap">Team chat</div></div>
+    <div><div class="phone"><img src="img/community.jpg"></div><div class="cap">Community</div></div>
+  </div>
+  <div class="cols" style="margin-top:6mm">
+    <div class="points"><h3>Community</h3>
+      <ul class="ticks"><li>Posts with photos, likes, comments and reposts</li><li>Follow people; report posts that break the rules</li><li>Several reports hide a post until someone reviews it</li></ul>
+    </div>
+    <div class="box lead-box"><h4>Post approval</h4>When admins switch on <b>Posts need approval</b>, a new post shows "Waiting for approval" until an admin approves it.</div>
+  </div>
+  <div class="foot"><span>ABVP Connect · App guide</span><span>10</span></div>
+</section>
+
+<!-- 11. Me -->
+<section class="page">
+  <span class="kicker"><i></i>Step 8</span>
+  <h2 class="title">Me and edit profile</h2>
+  <div class="hindi">मेरा खाता</div>
+  <p class="lead">Everything about me in one place – no QR pass any more.</p>
+  <div class="trio">
+    <div><div class="phone"><img src="img/me.jpg"></div><div class="cap">Me</div></div>
+    <div><div class="phone"><img src="img/me2.jpg"></div><div class="cap">Settings and help requests</div></div>
+    <div><div class="phone"><img src="img/edit-profile.jpg"></div><div class="cap">Edit profile</div></div>
+  </div>
+  <div class="cols" style="margin-top:6mm">
+    <div class="points"><h3>Edit profile</h3>
+      <ul class="ticks"><li>Photo – take one or choose from the gallery</li><li>Full name, gender, date of birth, email</li><li>Area: state and district</li><li>College, course, occupation and a short bio</li></ul>
+    </div>
+    <div class="points"><h3>Also in Me</h3>
+      <ul class="ticks"><li>Language</li><li>Set or change password</li><li>My help requests</li><li>Sign out</li></ul>
+    </div>
+  </div>
+  <div class="foot"><span>ABVP Connect · App guide</span><span>11</span></div>
+</section>
+
+<!-- 12. Languages -->
+<section class="page">
+  <span class="kicker"><i></i>Languages</span>
+  <h2 class="title">English, हिन्दी, తెలుగు</h2>
+  <p class="lead">Every screen in the app – buttons, forms, messages, dates – is available in three languages. Choose on the sign-in page or in Me → Language.</p>
+  <div class="duo">
+    <div><div class="phone"><img src="img/home.jpg"></div><div class="cap">Home in English</div></div>
+    <div><div class="phone"><img src="img/home-te.jpg"></div><div class="cap">Home in Telugu</div></div>
+  </div>
+  <div class="box tip"><h4>What stays as typed</h4>Names, conference titles, places and posts are shown exactly as people and admins typed them. Everything the app itself says is translated.</div>
+  <div class="foot"><span>ABVP Connect · App guide</span><span>12</span></div>
+</section>
+
+<!-- 13. Admin members -->
+<section class="page">
+  <span class="kicker"><i></i>Admin panel</span>
+  <h2 class="title">Members and the blue tick</h2>
+  <div class="hindi">सदस्य · सत्यापन</div>
+  <p class="lead">admin.abvpconnect.org → <b>Members</b> lists everyone who signed up. Filters: Everyone, Verified ✓, Not verified, Delegates.</p>
+  <div class="desk half" style="margin-bottom:5mm"><img src="img/adm-members.jpg"></div>
+  <div class="desk half"><img src="img/adm-member.jpg"></div>
+  <div class="foot"><span>ABVP Connect · App guide</span><span>13</span></div>
+</section>
+
+<section class="page">
+  <span class="kicker"><i></i>Admin panel</span>
+  <h2 class="title">What admins do with a member</h2>
+  <p class="lead">Click a person to open their card on the right (full screen on a phone).</p>
+  <div class="tiles">
+    <div class="tile"><div class="ic" style="background:#2E55C9">✓</div><div><b>Give the blue tick</b><span>Verify a real member. The tick shows next to their name everywhere in the app.</span></div></div>
+    <div class="tile"><div class="ic" style="background:#E3620C">✎</div><div><b>Edit details</b><span>Fix name, gender, email, area, college and more.</span></div></div>
+    <div class="tile"><div class="ic" style="background:#7C4DFF">📷</div><div><b>Photo</b><span>Add, change or remove their profile photo.</span></div></div>
+    <div class="tile"><div class="ic" style="background:#1C7F55">📝</div><div><b>Delegate form</b><span>View, edit or fill the delegate form for them.</span></div></div>
+    <div class="tile"><div class="ic" style="background:#14161F">＋</div><div><b>Add member</b><span>Create an account with name, mobile, area and an optional password.</span></div></div>
+    <div class="tile"><div class="ic" style="background:#C81E1E">⌕</div><div><b>Search</b><span>By name, mobile or email.</span></div></div>
+  </div>
+  <div class="box lead-box" style="margin-top:6mm"><h4>Verify carefully</h4>The blue tick tells everyone this is a known, real karyakarta. Give it only after checking the person.</div>
+  <div class="foot"><span>ABVP Connect · App guide</span><span>14</span></div>
+</section>
+
+<!-- 15. Admin team + community -->
+<section class="page">
+  <span class="kicker"><i></i>Admin panel</span>
+  <h2 class="title">Conference team and community</h2>
+  <p class="lead"><b>Conference team</b>: load ghats and departments from the sheet, add people by member ID, and <b>Arrange order</b>. <b>Community</b>: switch approval on or off, post as admin, approve waiting posts.</p>
+  <div class="desk half" style="margin-bottom:5mm"><img src="img/adm-team.jpg"></div>
+  <div class="desk half"><img src="img/adm-community.jpg"></div>
+  <div class="foot"><span>ABVP Connect · App guide</span><span>15</span></div>
+</section>
+
+<!-- 16. Admin guide + phone -->
+<section class="page">
+  <span class="kicker"><i></i>Admin panel</span>
+  <h2 class="title">Guide editor and the panel on a phone</h2>
+  <p class="lead">Events → the conference → <b>Guide</b>. Each section has its own fields. For exhibition and gallery, choose photos (and videos) before pressing Add.</p>
+  <div class="row">
+    <div style="flex:1;min-width:0">
+      <div class="desk"><img src="img/adm-guide2.jpg"></div>
+      <div class="box tip"><h4>Also on the event page</h4><ul><li>Guide on/off and delegate registration open/closed</li><li>Helpline and venue location</li><li>Upload or <b>delete</b> the event cover image</li></ul></div>
+    </div>
+    <div><div class="phone sm"><img src="img/adm-phone.jpg"></div><div class="cap">Admin panel on a phone: ☰ menu</div></div>
+  </div>
+  <div class="foot"><span>ABVP Connect · App guide</span><span>16</span></div>
+</section>
+
+<!-- 17. Checklist -->
+<section class="page">
+  <span class="kicker"><i></i>Before the conference</span>
+  <h2 class="title">Checklist</h2>
+  <p class="lead">For the admin team, in order.</p>
+  <div class="check">
+    <div><span class="bx"></span><span><b>Areas set up</b>States and districts, so sign-up can pick them.</span></div>
+    <div><span class="bx"></span><span><b>Conference published</b>Event created, cover uploaded, dates and venue right.</span></div>
+    <div><span class="bx"></span><span><b>Delegate registration open</b>Switch on in the Guide tab.</span></div>
+    <div><span class="bx"></span><span><b>Guide filled</b>Every section, with a lead to call for each.</span></div>
+    <div><span class="bx"></span><span><b>Emergency leads by hall</b>A name and phone for every hall.</span></div>
+    <div><span class="bx"></span><span><b>Conference team loaded</b>Ghats, departments and people; order arranged.</span></div>
+    <div><span class="bx"></span><span><b>Heads verified</b>Blue tick for every Pramukh and lead.</span></div>
+    <div><span class="bx"></span><span><b>Community rule decided</b>Posts need approval: on or off.</span></div>
+    <div><span class="bx"></span><span><b>Help desk staffed</b>Someone answering chats and tickets.</span></div>
+    <div><span class="bx"></span><span><b>Gallery albums ready</b>One per day, photos and videos added as it happens.</span></div>
+  </div>
+  <div class="faq" style="margin-top:6mm">
+    <h4>A person says the blue tick or a new screen is missing</h4>
+    <p>The server has not been updated yet, or the person has an old app. Update the server (below) and ask them to update the app.</p>
+    <h4>A delegate wants to change their arrival date</h4>
+    <p>Delegate tile → guide → <b>Edit my delegate form</b>. Admins can also edit it from Members.</p>
+    <h4>Someone cannot sign in</h4>
+    <p>Find them in Members: check the mobile number is right and the account shows <b>Active</b>.</p>
+  </div>
+  <div class="box green"><h4>Updating the server</h4>
+    <code>cd ~/domains/abvpconnect.org/public_html &amp;&amp; git pull origin main</code><br>
+    <code>cd api &amp;&amp; php artisan migrate --force &amp;&amp; php artisan optimize</code>
+  </div>
+  <div class="foot"><span>ABVP Connect · App guide</span><span>17</span></div>
+</section>
+
+</body>
+</html>
