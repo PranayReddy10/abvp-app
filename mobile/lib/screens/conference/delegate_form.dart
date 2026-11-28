@@ -39,7 +39,6 @@ class _DelegateFormScreenState extends State<DelegateFormScreen> {
   final _email = TextEditingController();
   final _responsibility = TextEditingController();
   final _arrivalPlace = TextEditingController();
-  final _reference = TextEditingController();
   String? _gender;
   String? _prant;
   String? _mode;
@@ -71,7 +70,6 @@ class _DelegateFormScreenState extends State<DelegateFormScreen> {
     final prant = pick('prant');
     _prant = prant != null && _prants.contains(prant) ? prant : null;
     _mode = t['mode'] as String?;
-    _reference.text = t['reference'] as String? ?? '';
     _arrivalPlace.text = t['arrival_point'] as String? ?? '';
     _arrive = _parse(t['arriving_at'] as String?);
     _depart = _parse(t['departing_at'] as String?);
@@ -136,9 +134,6 @@ class _DelegateFormScreenState extends State<DelegateFormScreen> {
         'arrival_point': _arrivalPlace.text.trim(),
         'departing_at': _depart!.toUtc().toIso8601String(),
         'mode': _mode,
-        'reference': _reference.text.trim().isEmpty
-            ? null
-            : _reference.text.trim(),
       });
       if (mounted) Navigator.pop(context, true);
     } on ApiException catch (e) {
@@ -367,21 +362,6 @@ class _DelegateFormScreenState extends State<DelegateFormScreen> {
                   style: TextStyle(color: AppColors.muted, fontSize: 12),
                 ),
               ),
-            const SizedBox(height: 14),
-            TextFormField(
-              controller: _reference,
-              decoration: InputDecoration(
-                labelText: switch (_mode) {
-                  'train' => t('Train name and number'),
-                  'flight' => t('Flight number'),
-                  'bus' => t('Bus / operator'),
-                  'own' => t('Vehicle number'),
-                  _ => t('Travel details'),
-                },
-                prefixIcon: const Icon(Icons.confirmation_number_outlined),
-              ),
-              validator: _required,
-            ),
             const SizedBox(height: 22),
             FilledButton(
               onPressed: _busy || _mode == null ? null : _submit,

@@ -96,7 +96,7 @@ class _LogisticsCardState extends State<LogisticsCard> {
                 Icons.train_outlined,
                 travel == null
                     ? t('Tell us how you are coming')
-                    : '${t('Travel')}: ${_mode(travel['mode'] as String)}${travel['reference'] != null ? ' · ${travel['reference']}' : ''}',
+                    : '${t('Travel')}: ${_mode(travel['mode'] as String)}',
                 travel == null
                     ? t('So the team can arrange pickup and a room')
                     : [
@@ -260,9 +260,6 @@ class TravelForm extends StatefulWidget {
 
 class _TravelFormState extends State<TravelForm> {
   late String _mode = widget.existing?['mode'] as String? ?? 'train';
-  late final _ref = TextEditingController(
-    text: widget.existing?['reference'] as String?,
-  );
   late final _point = TextEditingController(
     text: widget.existing?['arrival_point'] as String?,
   );
@@ -304,7 +301,6 @@ class _TravelFormState extends State<TravelForm> {
     try {
       await widget.session.api.put('/events/${widget.eventId}/travel', {
         'mode': _mode,
-        'reference': _ref.text.trim().isEmpty ? null : _ref.text.trim(),
         'arriving_at': _arriving?.toUtc().toIso8601String(),
         'arrival_point': _point.text.trim().isEmpty ? null : _point.text.trim(),
         'needs_pickup': _pickup,
@@ -346,18 +342,6 @@ class _TravelFormState extends State<TravelForm> {
             ],
           ),
           const SizedBox(height: 14),
-          if (_mode != 'own')
-            TextField(
-              controller: _ref,
-              decoration: InputDecoration(
-                labelText: _mode == 'train'
-                    ? t('Train number and name')
-                    : _mode == 'flight'
-                    ? t('Flight number')
-                    : t('Bus or service'),
-                hintText: _mode == 'train' ? '12723 Telangana Express' : null,
-              ),
-            ),
           const SizedBox(height: 12),
           OutlinedButton.icon(
             onPressed: _pickTime,
