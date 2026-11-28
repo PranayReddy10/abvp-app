@@ -4,13 +4,13 @@ import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import { api } from '../api'
 import { nameOf, useAuth } from '../auth'
-import { Avatar, ErrorBox, Icon, Orbs, Reveal, Skeleton, ago } from '../components/ui'
+import { Avatar, ErrorBox, Icon, Orbs, Reveal, Skeleton, ago, Tick } from '../components/ui'
 import { useFetch } from '../useFetch'
 
 interface Author { name: string; member_id: string | null; verified: boolean; place: string | null; photo_url: string | null }
 interface Post {
   id: number; author: Author; body: string | null; audience: string; audience_label: string; photo_urls: string[]
-  likes: number; comments: number; reposts: number; liked: boolean; reposted: boolean; is_mine: boolean; hidden: boolean; at: string
+  likes: number; comments: number; reposts: number; liked: boolean; reposted: boolean; is_mine: boolean; hidden: boolean; pending?: boolean; at: string
   repost_of: Post | null
 }
 interface Reply { id: number; body: string; author: Author; is_mine: boolean; at: string }
@@ -51,11 +51,11 @@ function PostCard({ p, i, onLike, onRepost, onOpen, onTag, onPhoto, onDelete, on
   return (
     <motion.article className="post clickable" layout initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: .97 }} transition={{ delay: Math.min(i, 6) * .04 }} onClick={onOpen}>
       {s !== p && <span className="muted" style={{ fontSize: 13, fontWeight: 700, display: 'flex', gap: 6 }}><Icon name="repeat" size={14} /> {p.is_mine ? 'You' : p.author.name} reposted</span>}
-      {p.hidden && <span className="status-pill bad" style={{ justifySelf: 'start' }}>Hidden – waiting for review</span>}
+      {p.hidden && <span className="status-pill bad" style={{ justifySelf: 'start' }}>{p.pending ? 'Waiting for approval – only you can see it' : 'Hidden – waiting for review'}</span>}
       <div className="who">
         <Avatar name={s.author.name} src={s.author.photo_url} size={44} />
         <div style={{ minWidth: 0 }}>
-          <b>{s.author.name}{s.author.verified && <span title="Verified" style={{ color: '#1D7BE0', marginLeft: 4 }}>✔</span>}</b>
+          <b>{s.author.name}{s.author.verified && <Tick size={16} />}</b>
           <div className="muted" style={{ fontSize: 13.5 }}>{[s.author.place, ago(s.at), s.audience !== 'members' ? s.audience_label : null].filter(Boolean).join(' · ')}</div>
         </div>
         <Menu p={p} onDelete={onDelete} onReport={onReport} />
@@ -161,7 +161,7 @@ function Thread({ id, onClose, onChanged, onTag, onPhoto }: { id: number; onClos
     <Drawer onClose={onClose}>
       {!d.data ? <><ErrorBox error={d.error} />{!d.error && <Skeleton h={120} n={2} />}</> : (
         <div style={{ display: 'grid', gap: 14 }}>
-          <div className="who"><Avatar name={d.data.author.name} src={d.data.author.photo_url} size={48} /><div><b>{d.data.author.name}</b><div className="muted" style={{ fontSize: 13.5 }}>{[d.data.author.place, ago(d.data.at)].filter(Boolean).join(' · ')}</div></div></div>
+          <div className="who"><Avatar name={d.data.author.name} src={d.data.author.photo_url} size={48} /><div><b>{d.data.author.name}{d.data.author.verified && <Tick size={16} />}</b><div className="muted" style={{ fontSize: 13.5 }}>{[d.data.author.place, ago(d.data.at)].filter(Boolean).join(' · ')}</div></div></div>
           {d.data.body && <Body text={d.data.body} onTag={(t) => { onClose(); onTag(t) }} />}
           <Photos urls={d.data.photo_urls} onOpen={onPhoto} />
           <h3 style={{ fontSize: 17, fontWeight: 800, marginTop: 6 }}>Replies</h3>

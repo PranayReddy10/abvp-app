@@ -7,7 +7,7 @@ import { ErrorBox, Icon, Orbs, ago, fmtTime, grad } from '../components/ui'
 import type { Help, Hub } from '../types'
 import { useFetch } from '../useFetch'
 
-const CATS: [string, string][] = [['stay', 'Stay'], ['food', 'Food'], ['transport', 'Transport'], ['venue', 'Venue or directions'], ['registration', 'Registration or pass'], ['lost', 'Lost and found'], ['medical', 'Medical'], ['other', 'Something else']]
+const CATS: [string, string][] = [['stay', 'Stay'], ['food', 'Food'], ['transport', 'Transport'], ['venue', 'Venue or directions'], ['registration', 'Registration'], ['lost', 'Lost and found'], ['medical', 'Medical'], ['other', 'Something else']]
 const STATUS: Record<string, [string, string]> = { open: ['New', 'var(--deep)'], in_progress: ['Being handled', 'var(--info)'], resolved: ['Resolved', 'var(--ok)'], closed: ['Closed', 'var(--ok)'] }
 
 function Chat({ eventId, helpId, onBack }: { eventId: string; helpId: number | null; onBack: () => void }) {
@@ -105,13 +105,22 @@ export default function Support() {
 
   return (
     <div className="page wrap" style={{ maxWidth: 900 }}>
-      <div className="banner" style={{ background: grad('support') }}>
+      <div className="banner" style={{ background: 'linear-gradient(135deg, #F6A04D, #E3620C 50%, #B84C04)' }}>
         <Orbs />
         <div style={{ position: 'relative', zIndex: 2 }}>
-          <Link to={`/guide/${id}`} className="btn glass sm" style={{ marginBottom: 14 }}><Icon name="back" size={16} /> Guide</Link>
-          <div className="hi" style={{ fontSize: 20, opacity: .85 }}>सहायता</div>
-          <h1>Support</h1>
+          <button onClick={() => history.length > 1 ? history.back() : undefined} className="btn glass sm" style={{ marginBottom: 14 }}><Icon name="back" size={16} /> Back</button>
+          <div className="hi" style={{ fontSize: 20, opacity: .85 }}>सहायता · आपातकाल</div>
+          <h1>Help and emergency</h1>
           <p style={{ opacity: .9 }}>{hub.data?.event.title}</p>
+        </div>
+      </div>
+      <div className="sos-card">
+        <span className="ic"><Icon name="emergency" size={28} /></span>
+        <div style={{ flex: 1, minWidth: 200 }}><b>Emergency – call now</b><span>Ambulance 108 · Police 112 · Women helpline 181{helpline ? ` · Helpline ${helpline}` : ''}</span></div>
+        <div className="sos-btns">
+          <a className="btn" href="tel:108"><Icon name="phone" size={16} /> 108</a>
+          {helpline && <a className="btn" href={`tel:${helpline}`}><Icon name="phone" size={16} /> Helpline</a>}
+          {me && <Link className="btn ghost" to={`/guide/${id}/emergency`}>Leads by hall</Link>}
         </div>
       </div>
       {!me ? (

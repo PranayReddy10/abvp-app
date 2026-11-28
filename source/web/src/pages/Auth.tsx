@@ -5,7 +5,7 @@ import { api } from '../api'
 import { useAuth } from '../auth'
 import { Brand, GoogleButton } from '../components/Layout'
 import { ErrorBox, Icon, Orbs } from '../components/ui'
-import type { Me } from '../types'
+import type { Me, OrgUnit } from '../types'
 import { useFetch } from '../useFetch'
 
 function Shell({ side, children }: { side: ReactNode; children: ReactNode }) {
@@ -125,7 +125,7 @@ export function Login() {
   return (
     <Shell side={<>
       <span className="eyebrow" style={{ color: '#FFD9BF' }}>Welcome back</span>
-      <h2>Your pass, your stay and your help desk – in one place.</h2>
+      <h2>Your conference, your team and your help desk – in one place.</h2>
       <p className="hi" style={{ fontSize: 18, opacity: .85 }}>एक सदस्य · एक पहचान · हर कार्यक्रम</p>
     </>}>
       <motion.div className="form-card" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
@@ -162,15 +162,19 @@ export function Signup() {
   const next = params.get('next') ?? '/me'
   const google = (useLocation().state ?? null) as { link_token: string; email: string; name: string | null } | null
   const [link, setLink] = useState(google)
-  const { data: prants } = useFetch<string[]>('/guide/prants')
+  const { data: states } = useFetch<OrgUnit[]>('/org/units')
+  const [stateId, setStateId] = useState<number | null>(null)
+  const { data: districts } = useFetch<OrgUnit[]>(stateId ? `/org/units?parent_id=${stateId}` : null)
+  const [districtId, setDistrictId] = useState<number | null>(null)
   const [step, setStep] = useState(0)
   const [busy, setBusy] = useState(false)
   const [mobile, setMobile] = useState('')
-  const [f, setF] = useState({ name: google?.name ?? '', email: google?.email ?? '', gender: '', prant: '', institution: '', occupation: 'Student' })
+  const [f, setF] = useState({ name: google?.name ?? '', email: google?.email ?? '', gender: '', institution: '', occupation: 'Student' })
   const set = (p: Partial<typeof f>) => setF({ ...f, ...p })
   const otpOff = useFetch<{ otp: boolean }>('/auth/options').data?.otp === false
   const details = () => ({
-    mobile, name: f.name, email: f.email || null, gender: f.gender || null, prant: f.prant,
+    mobile, name: f.name, email: f.email || null, gender: f.gender || null,
+    prant: states?.find((x) => x.id === stateId)?.name ?? null, org_unit_id: districtId ?? stateId,
     institution: f.institution || null, occupation: f.occupation, device_name: 'web', google_link_token: link?.link_token,
   })
   async function create(extra: Record<string, string>) {
@@ -187,7 +191,7 @@ export function Signup() {
     <Shell side={<>
       <span className="eyebrow" style={{ color: '#FFD9BF' }}>Join ABVP Connect</span>
       <h2>Create your account in a minute.</h2>
-      <p style={{ opacity: .9, fontSize: 17 }}>Register for the national conference, get your pass, and reach the help desk. Becoming a member is a separate step with your district office.</p>
+      <p style={{ opacity: .9, fontSize: 17 }}>Everyone who signs up is a member straight away, with a member ID. Fill the delegate form for the national conference and the guide opens for you.</p>
       <div style={{ display: 'grid', gap: 10, marginTop: 10 }}>
         {['Your details', otpOff ? 'Mobile and password' : 'Verify your mobile', 'You are in'].map((t, i) => (
           <motion.div key={t} animate={{ opacity: step >= i ? 1 : .55, x: step === i ? 8 : 0 }} style={{ display: 'flex', gap: 12, alignItems: 'center', fontWeight: 700 }}>
@@ -207,19 +211,29 @@ export function Signup() {
                 <><GoogleButton onNew={(d) => { setLink(d); set({ name: f.name || d.name || '', email: f.email || d.email }) }} /><div className="or">or fill in the form</div></>
               )}
               <div className="field"><label htmlFor="name">Full name *</label><input id="name" className="input" required minLength={2} autoComplete="name" value={f.name} onChange={(e) => set({ name: e.target.value })} /></div>
-              <div className="field"><label htmlFor="email">Email</label><input id="email" className="input" type="email" autoComplete="email" value={f.email} onChange={(e) => set({ email: e.target.value })} /></div>
-              <div className="field"><label>Gender</label>
+              <div className="field"><label htmlFor="email">Email (optional)</label><input id="email" className="input" type="email" autoComplete="email" value={f.email} onChange={(e) => set({ email: e.target.value })} /></div>
+              <div className="field"><label>Gender *</label>
                 <div className="seg" role="radiogroup">{[['male', 'Male'], ['female', 'Female'], ['other', 'Other']].map(([k, l]) => <button key={k} type="button" role="radio" aria-checked={f.gender === k} className={f.gender === k ? 'on' : ''} onClick={() => set({ gender: k })}>{l}</button>)}</div>
               </div>
-              <div className="field"><label htmlFor="prant">Prant (state) *</label>
-                <input id="prant" className="input" list="prants" required placeholder="Start typing: Delhi, Konkan, Telangana…" value={f.prant} onChange={(e) => set({ prant: e.target.value })} />
-                <datalist id="prants">{prants?.map((p) => <option key={p} value={p} />)}</datalist>
+              <div className="row2">
+                <div className="field"><label htmlFor="state">State / Prant *</label>
+                  <select id="state" className="input" required value={stateId ?? ''} onChange={(e) => { setStateId(e.target.value ? Number(e.target.value) : null); setDistrictId(null) }}>
+                    <option value="">{states ? 'Choose your state' : 'Loading…'}</option>
+                    {states?.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
+                  </select>
+                </div>
+                <div className="field"><label htmlFor="district">District {districts?.length ? '*' : ''}</label>
+                  <select id="district" className="input" required={!!districts?.length} disabled={!districts?.length} value={districtId ?? ''} onChange={(e) => setDistrictId(e.target.value ? Number(e.target.value) : null)}>
+                    <option value="">{stateId ? (districts ? (districts.length ? 'Choose your district' : 'No districts') : 'Loading…') : 'Choose a state first'}</option>
+                    {districts?.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
+                  </select>
+                </div>
               </div>
               <div className="field"><label>You are a</label>
                 <div className="seg">{OCCUPATIONS.map((o) => <button key={o} type="button" className={f.occupation === o ? 'on' : ''} onClick={() => set({ occupation: o })}>{o}</button>)}</div>
               </div>
               <div className="field"><label htmlFor="inst">{f.occupation === 'Student' || f.occupation === 'Teacher' ? 'College / university' : 'Organisation'}</label><input id="inst" className="input" value={f.institution} onChange={(e) => set({ institution: e.target.value })} /></div>
-              <button className="btn primary block">Continue <Icon name="arrow" size={18} /></button>
+              <button className="btn primary block" disabled={!f.gender}>Continue <Icon name="arrow" size={18} /></button>
             </motion.form>
           ) : (
             <motion.div key="v" {...slide} style={{ display: 'grid', gap: 14 }}>

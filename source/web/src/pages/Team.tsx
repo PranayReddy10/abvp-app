@@ -3,10 +3,10 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../api'
 import { useAuth } from '../auth'
-import { Avatar, ErrorBox, Icon, Orbs, Skeleton, ago, fmtDate, telHref, waHref } from '../components/ui'
+import { Avatar, ErrorBox, Icon, Orbs, Skeleton, Tick, ago, fmtDate, telHref, waHref } from '../components/ui'
 import { useFetch } from '../useFetch'
 
-export interface Person { id: number; name: string; role: string; role_label: string; mobile: string | null; has_mobile: boolean; linked: boolean; photo_url: string | null }
+export interface Person { id: number; name: string; role: string; role_label: string; mobile: string | null; has_mobile: boolean; linked: boolean; photo_url: string | null; verified?: boolean; member_id?: string | null }
 interface Dept { id: number; name: string; people: Person[] }
 interface Ghat { id: number; name: string; color: string | null; heads: Person[]; departments: Dept[]; counts: { departments: number; people: number } }
 interface Tree { event: { id: number; title: string; starts_at: string; ends_at: string; venue: string }; ghats: Ghat[]; signed_in: boolean }
@@ -15,7 +15,7 @@ function PersonRow({ p }: { p: Person }) {
   return (
     <div className="tm-person">
       <Avatar name={p.name} src={p.photo_url} size={38} />
-      <div style={{ flex: 1, minWidth: 0 }}><b>{p.name}</b><div className="muted" style={{ fontSize: 13 }}>{p.role_label}</div></div>
+      <div style={{ flex: 1, minWidth: 0 }}><b>{p.name}{p.verified && <Tick size={16} />}</b><div className="muted" style={{ fontSize: 13 }}>{p.role_label}</div></div>
       {p.mobile && <>
         <a className="tm-act call" href={telHref(p.mobile)} aria-label={`Call ${p.name}`}><Icon name="phone" size={16} /></a>
         <a className="tm-act wa" href={waHref(p.mobile)} target="_blank" rel="noreferrer" aria-label={`WhatsApp ${p.name}`}>WA</a>
@@ -45,8 +45,8 @@ export default function Team() {
       <div className="banner" style={{ background: 'linear-gradient(135deg, #F08A3C, #E3620C 45%, #13235B)' }}>
         <Orbs />
         <div style={{ position: 'relative', zIndex: 2 }}>
-          <span style={{ opacity: .85, fontWeight: 700 }}>Conference team</span>
-          <h1>Who does what</h1>
+          <span style={{ opacity: .85, fontWeight: 700 }}>Volunteer · <span className="hi">स्वयंसेवक</span></span>
+          <h1>Conference team</h1>
           <p style={{ opacity: .9, maxWidth: 620 }}>{tree.data ? `${tree.data.event.title} · ${fmtDate(tree.data.event.starts_at)} – ${fmtDate(tree.data.event.ends_at)}. ` : ''}Every ghat, its heads and departments – find the right person in seconds.</p>
         </div>
       </div>

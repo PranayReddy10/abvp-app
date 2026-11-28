@@ -51,7 +51,7 @@ export default function Home() {
               <span className="hl">{words('every karyakarta.', .35)}</span>
             </h1>
             <motion.p className="lead" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .8, duration: .6 }}>
-              Your stay, transport, food, help desks and emergency contacts for the national conference – with a real person to call for each. Register as a delegate and get your pass in minutes.
+              Your stay, transport, food, help desks and emergency contacts for the national conference – with a real person to call for each. Fill the delegate form once and the whole guide opens for you.
             </motion.p>
             <motion.p className="hi" style={{ fontSize: 18, opacity: .85, marginTop: 10 }} initial={{ opacity: 0 }} animate={{ opacity: .85 }} transition={{ delay: 1 }}>
               एक सदस्य · एक पहचान · हर कार्यक्रम
@@ -66,12 +66,12 @@ export default function Home() {
             <motion.div className="phone" style={{ left: '4%', top: 40, rotate: -8, zIndex: 2 }}
               initial={{ opacity: 0, y: 80, rotate: -16 }} animate={{ opacity: 1, y: [0, -12, 0], rotate: -8 }}
               transition={{ opacity: { delay: .4, duration: .8 }, rotate: { delay: .4, duration: .9 }, y: { delay: 1.3, duration: 6, repeat: Infinity, ease: 'easeInOut' } }}>
-              <img src="/img/hub.jpg" alt="The conference guide in the app" />
+              <img src="/img/app-home.jpg" alt="Home in the ABVP Connect app" />
             </motion.div>
             <motion.div className="phone" style={{ right: '2%', top: 110, rotate: 7, zIndex: 1 }}
               initial={{ opacity: 0, y: 100, rotate: 16 }} animate={{ opacity: 1, y: [0, 14, 0], rotate: 7 }}
               transition={{ opacity: { delay: .6, duration: .8 }, rotate: { delay: .6, duration: .9 }, y: { delay: 1.5, duration: 7, repeat: Infinity, ease: 'easeInOut' } }}>
-              <img src="/img/emergency-halls.jpg" alt="Emergency leads by hall" />
+              <img src="/img/app-guide.jpg" alt="The conference guide in the app" />
             </motion.div>
           </motion.div>
         </div>
@@ -113,7 +113,7 @@ export default function Home() {
           <Reveal i={1}><h2 className="h2">Everything you need, and who to call.</h2></Reveal>
           <Reveal i={2}><p className="sub">Every place in the guide has a lead and a team with Call and WhatsApp buttons. No searching, no calling around.</p></Reveal>
           <div className="grid-3" style={{ marginTop: 36 }}>
-            {(['stay', 'arrival', 'food', 'emergency', 'exhibit', 'support'] as const).map((k, i) => (
+            {(['stay', 'arrival', 'food', 'emergency', 'gallery', 'support'] as const).map((k, i) => (
               <Reveal key={k} i={i}>
                 <Tilt className="card feature" style={{ height: '100%' }}>
                   <span className="ic" style={{ background: grad(k) }}><Icon name={KIND[k].icon} size={26} /></span>
@@ -123,7 +123,7 @@ export default function Home() {
                     arrival: 'A help desk at the airport, every station and bus stand, with the desk lead and step-by-step route to the venue.',
                     food: 'Every hall and state stall by name, where it is and how to spot it.',
                     emergency: 'One tap for 108, and the emergency lead of every hall.',
-                    exhibit: 'A digital exhibition: our history, Bhagyanagar, and those we remember.',
+                    gallery: 'Albums of photos and videos from every day of the conference.',
                     support: 'Chat with the help desk or raise a ticket – replies arrive in seconds.',
                   }[k]}</p>
                 </Tilt>
@@ -140,9 +140,9 @@ export default function Home() {
             <Reveal i={1}><h2 className="h2">Three steps to the conference.</h2></Reveal>
             <div className="steps" style={{ gridTemplateColumns: '1fr', marginTop: 30 }}>
               {[
-                ['Create your account', 'Name, prant and college, then a 6-digit code on your mobile. Or continue with Google.'],
-                ['Register as a delegate', 'Tell us how you arrive and whether you need a bed. Pickup and stay are planned from this.'],
-                ['Show your pass', 'A QR pass appears in My space. Show it at the gate – and the guide shows you everything else.'],
+                ['Create your account', 'Name, mobile, password, gender and your area. Everyone who signs up is a member, with a member ID.'],
+                ['Fill the delegate form', 'Your details, when you arrive and leave, and how you are coming – train, bus, flight or own vehicle.'],
+                ['Open the guide', 'Stay, transport, food, sessions, gallery and help – with a real person to call for each.'],
               ].map(([t, d], i) => (
                 <Reveal key={t} i={i}><div className="card"><span className="num">{i + 1}</span><h3 style={{ fontSize: 20, fontWeight: 800 }}>{t}</h3><p className="muted" style={{ marginTop: 6 }}>{d}</p></div></Reveal>
               ))}
@@ -150,8 +150,8 @@ export default function Home() {
           </div>
           <Reveal i={2}>
             <div style={{ display: 'flex', gap: 18, justifyContent: 'center' }}>
-              <motion.div className="phone" style={{ width: 230 }} whileHover={{ y: -10, rotate: -2 }}><img src="/img/transport.jpg" alt="Transport desks" /></motion.div>
-              <motion.div className="phone" style={{ width: 230, marginTop: 60 }} whileHover={{ y: -10, rotate: 2 }}><img src="/img/support-chat.jpg" alt="Help desk chat" /></motion.div>
+              <motion.div className="phone" style={{ width: 230 }} whileHover={{ y: -10, rotate: -2 }}><img src="/img/app-volunteer-ghats.jpg" alt="Volunteer: ghats and departments" /></motion.div>
+              <motion.div className="phone" style={{ width: 230, marginTop: 60 }} whileHover={{ y: -10, rotate: 2 }}><img src="/img/app-help.jpg" alt="Help and emergency" /></motion.div>
             </div>
           </Reveal>
         </div>
@@ -163,9 +163,10 @@ export default function Home() {
             <div className="card" style={{ display: 'flex', gap: 24, alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', padding: 34 }}>
               <div>
                 <h2 style={{ fontSize: 30, fontWeight: 800 }}>For members, all year.</h2>
-                <p className="muted" style={{ marginTop: 6, maxWidth: 560 }}>Share work from your unit in the Community, see events and passes, and stay connected with your Vibhag. Membership is approved by your district office.</p>
+                <p className="muted" style={{ marginTop: 6, maxWidth: 560 }}>Share work from your unit in the Community, see events, and find every volunteer in the conference team. Verified members carry the blue tick.</p>
               </div>
-              <div style={{ display: 'flex', gap: 10 }}>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                <Link to="/conference/team" className="btn">Volunteer</Link>
                 <Link to="/community" className="btn dark">Visit the community</Link>
                 {!me && <Link to="/signup" className="btn primary">Sign up</Link>}
               </div>

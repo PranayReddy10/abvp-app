@@ -1,103 +1,140 @@
 import { motion } from 'framer-motion'
-import { Link, Navigate } from 'react-router-dom'
+import { useState } from 'react'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { nameOf, useAuth } from '../auth'
 import { useConference } from '../components/Layout'
-import PassCard from '../components/PassCard'
 import { MySeva } from './Team'
-import { Icon, KIND, Orbs, Reveal, Skeleton, grad } from '../components/ui'
-import type { Pass } from '../types'
+import { Avatar, Icon, Orbs, Skeleton, Tick, fmtDate, useCountdown } from '../components/ui'
+import type { Delegate } from '../types'
 import { useFetch } from '../useFetch'
 
+const THOUGHTS: [string, string][] = [
+  ['Take up one idea. Make that one idea your life.', 'Swami Vivekananda'],
+  ['Arise, awake, and stop not till the goal is reached.', 'Swami Vivekananda'],
+  ['Knowledge, character, unity.', 'ABVP – Gyan, Sheel, Ekta'],
+  ['The nation is built one student at a time.', 'ABVP'],
+]
+
+function Count({ iso }: { iso: string }) {
+  const c = useCountdown(iso)
+  if (c.done) return <div className="me-count"><div style={{ gridColumn: '1 / -1' }}><b>Live</b><span>Happening now</span></div></div>
+  return (
+    <div className="me-count">
+      {[[c.d, 'Days'], [c.h, 'Hours'], [c.m, 'Minutes'], [c.s, 'Seconds']].map(([v, l]) => (
+        <div key={l}><motion.b key={String(v)} initial={{ y: -6, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>{String(v).padStart(2, '0')}</motion.b><span>{l}</span></div>
+      ))}
+    </div>
+  )
+}
+
+/** My space: the same as Home in the app – who I am, the countdown, and Delegate and Volunteer. */
 export default function Me() {
   const { me, loading, signOut } = useAuth()
   const { conf } = useConference()
-  const passes = useFetch<Pass[]>(me ? '/me/passes' : null)
+  const nav = useNavigate()
+  const e = conf?.event
+  const dele = useFetch<Delegate>(me && e ? `/events/${e.id}/delegate` : null)
+  const seva = useFetch<{ places: unknown[] }>(me ? '/me/seva' : null)
+  const [closed, setClosed] = useState(false)
+  const [thought] = useState(() => THOUGHTS[new Date().getDate() % THOUGHTS.length])
   if (!loading && !me) return <Navigate to="/login?next=/me" replace />
   if (!me) return <div className="page wrap"><Skeleton /></div>
   const hour = new Date().getHours()
-  const first = nameOf(me).split(' ')[0]
-  const e = conf?.event
-  const registered = passes.data?.some((p) => p.event.id === e?.id)
+  const name = nameOf(me)
+  const verified = !!me.profile?.verified
+  const registered = !!dele.data?.registration
+  const team = (seva.data?.places.length ?? 0) > 0
 
-  const actions = [
-    e && { to: `/guide/${e.id}`, kind: 'stay', icon: 'sparkle' as const, t: 'Conference guide', s: 'Stay, transport, food, emergency' },
-    e?.delegate_registration_open && { to: `/conference/${e.id}/register`, kind: 'arrival', icon: 'ticket' as const, t: registered ? 'My registration' : 'Register as delegate', s: registered ? 'See or edit your details' : 'Get your pass in minutes' },
-    e && { to: `/support/${e.id}`, kind: 'support', icon: 'support' as const, t: 'Help desk', s: 'Chat or raise a ticket' },
-    { to: '/conference/team', kind: 'office', icon: 'calendar' as const, t: 'Conference team', s: 'Ghats, departments, who to call' },
-    { to: '/community', kind: 'exhibit', icon: 'chat' as const, t: 'Community', s: 'Posts, photos and updates' },
-  ].filter(Boolean) as { to: string; kind: string; icon: 'sparkle'; t: string; s: string }[]
+  function openDelegate() {
+    if (!e) return
+    if (registered) nav(`/guide/${e.id}`)
+    else if (dele.data && !dele.data.open) setClosed(true)
+    else nav(`/conference/${e.id}/register`)
+  }
 
   return (
     <div className="page wrap">
-      <div className="banner" style={{ background: 'linear-gradient(135deg, #F08A3C, #E3620C 40%, #14161F)' }}>
+      <div className="banner me-head">
         <Orbs />
-        <div style={{ position: 'relative', zIndex: 2, display: 'flex', justifyContent: 'space-between', gap: 20, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-          <div>
-            <p style={{ opacity: .85, fontSize: 18 }}>{hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'},</p>
-            <h1>{first || 'Welcome'} 👋</h1>
-            <p style={{ opacity: .85 }}>{[me.profile?.org_unit?.label ?? me.prant, me.institution].filter(Boolean).join(' · ') || me.mobile}</p>
+        <div className="me-who">
+          <Avatar name={name || '?'} src={me.profile?.photo_url} size={76} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ opacity: .9 }}>{hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'} 🙏</p>
+            <h1 style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>{name || 'Welcome'}{verified && <Tick size={26} />}</h1>
+            <p style={{ opacity: .85 }} className="mono">{me.profile?.member_id ?? me.mobile}</p>
+            <div className="me-chips">
+              {registered && <span><Icon name="ticket" size={14} /> Delegate</span>}
+              {team && <span><Icon name="heart" size={14} /> Volunteer</span>}
+              <span><Icon name="check" size={14} /> {verified ? 'Verified member' : 'Member'}</span>
+            </div>
           </div>
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-            <span className="chip" style={{ background: 'rgba(255,255,255,.18)', color: '#fff' }}>{me.is_member ? `Member · ${me.profile?.member_id ?? ''}` : me.profile?.member_id ? `ID · ${me.profile.member_id}` : 'Account'}</span>
-            <Link to="/me/edit" className="btn glass sm"><Icon name="edit" size={16} /> Edit profile</Link>
-          </div>
+          <Link to="/me/edit" className="btn glass sm"><Icon name="edit" size={16} /> Edit profile</Link>
         </div>
       </div>
 
-      {!me.profile?.org_unit && (
-        <Link to="/me/edit#area" className="card nudge">
-          <span className="ic" style={{ background: grad('stay') }}><Icon name="pin" size={22} /></span>
-          <span style={{ flex: 1 }}><b>Add your area</b><span className="muted" style={{ display: 'block', fontSize: 14 }}>Choose your state and district so you see events and posts near you, and can apply for membership.</span></span>
-          <Icon name="arrow" />
-        </Link>
+      {e && (
+        <motion.div className="card me-conf" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+          <div style={{ flex: 1, minWidth: 240 }}>
+            <h2>{e.title}</h2>
+            <p className="muted">{fmtDate(e.starts_at)} – {fmtDate(e.ends_at)} · {e.venue}</p>
+          </div>
+          <Count iso={e.starts_at} />
+        </motion.div>
       )}
 
-      <div className="tiles" style={{ marginBottom: 34 }}>
-        {actions.map((a, i) => (
-          <motion.div key={a.to} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .1 + i * .06 }}>
-            <Link to={a.to} className="tile" style={{ height: '100%' }}>
-              <span className="top"><span className="ic" style={{ background: grad(a.kind) }}><Icon name={a.icon} size={24} /></span><Icon name="ne" /></span>
-              <span><b>{a.t}</b><span className="muted" style={{ fontSize: 14 }}>{a.s}</span></span>
-            </Link>
-          </motion.div>
-        ))}
+      <div className="me-tiles">
+        {e && (
+          <motion.button className="me-tile delegate" onClick={openDelegate} whileHover={{ y: -4 }} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .08 }}>
+            <span className="ic"><Icon name="ticket" size={26} /></span>
+            <b>Delegate</b>
+            <span>{registered ? 'Registered ✓ · open guide' : dele.data && !dele.data.open ? 'Registration closed' : 'Fill the delegate form'}</span>
+          </motion.button>
+        )}
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .14 }}>
+          <Link to="/conference/team" className="me-tile volunteer">
+            <span className="ic"><Icon name="heart" size={26} /></span>
+            <b>Volunteer</b>
+            <span>{team ? 'My team, ghats and departments' : 'Ghats, departments and people'}</span>
+          </Link>
+        </motion.div>
+      </div>
+
+      <div className="card me-thought">
+        <span className="q">“</span>
+        <div><small>Thought for the day</small><p>“{thought[0]}”</p><span className="muted">— {thought[1]}</span></div>
       </div>
 
       <MySeva />
 
-      <h2 style={{ fontSize: 28, fontWeight: 800, marginBottom: 16 }}>My passes</h2>
-      {passes.loading && !passes.data ? <Skeleton h={300} n={1} /> : passes.data?.length ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 24 }}>
-          {passes.data.map((p) => (
-            <div key={p.registration_id} style={{ display: 'grid', gap: 10 }}>
-              <PassCard title={p.event.title} venue={p.event.venue} starts={p.event.starts_at} name={p.name} kind={p.kind} token={p.token} status={p.status} />
-              <Link to={`/events/${p.event.id}`} className="btn block">Event details <Icon name="arrow" size={16} /></Link>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <Reveal>
-          <div className="card" style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
-            <span className="tile ic" style={{ width: 52, height: 52, borderRadius: 16, display: 'grid', placeItems: 'center', color: '#fff', background: grad('arrival') }}><Icon name={KIND.arrival.icon} /></span>
-            <div style={{ flex: 1 }}><b style={{ fontSize: 18 }}>No passes yet</b><p className="muted">Register for the conference and your QR pass appears here.</p></div>
-            {e?.delegate_registration_open && <Link to={`/conference/${e.id}/register`} className="btn primary">Register now</Link>}
-          </div>
-        </Reveal>
-      )}
+      <div className="me-links">
+        {e && <Link to={`/support/${e.id}`} className="card"><Icon name="support" /> <b>Help and emergency</b><Icon name="arrow" /></Link>}
+        <Link to="/community" className="card"><Icon name="chat" /> <b>Community</b><Icon name="arrow" /></Link>
+        <Link to="/events" className="card"><Icon name="calendar" /> <b>Events</b><Icon name="arrow" /></Link>
+      </div>
 
       <h2 style={{ fontSize: 28, fontWeight: 800, margin: '40px 0 16px' }}>My details</h2>
       <div className="review" style={{ maxWidth: 640 }}>
-        <div><span>Name</span><b>{nameOf(me) || '–'}</b></div>
-        <div><span>ID</span><b>{me.profile?.member_id ?? '–'}</b></div>
+        <div><span>Name</span><b>{name || '–'}{verified && <Tick />}</b></div>
+        <div><span>Member ID</span><b>{me.profile?.member_id ?? '–'}</b></div>
         <div><span>Mobile</span><b>{me.mobile}</b></div>
         <div><span>Email</span><b>{me.email ?? '–'}</b></div>
-        <div><span>Area</span><b>{me.profile?.org_unit?.label ?? me.prant ?? '–'}</b></div>
-        <div><span>Vibhags</span><b>{me.profile?.vibhags?.map((v) => v.name).join(', ') || '–'}</b></div>
+        <div><span>Area</span><b>{me.profile?.org_unit?.label || me.profile?.org_unit?.name || me.prant || '–'}</b></div>
         <div><span>College / organisation</span><b>{me.institution ?? '–'}</b></div>
-        <div><span>Membership</span><b>{me.is_member ? 'Approved member' : me.profile?.membership_status === 'submitted' ? 'Applied – with your district office' : <Link to="/me/edit" style={{ color: 'var(--deep)' }}>Not a member yet – apply</Link>}</b></div>
+        <div><span>Membership</span><b>{verified ? 'Verified member' : 'Member – an admin gives the blue tick after checking'}</b></div>
       </div>
       <Link to="/me/edit" className="btn primary" style={{ marginTop: 20, marginRight: 10 }}><Icon name="edit" size={18} /> Edit profile</Link>
       <button className="btn" style={{ marginTop: 20 }} onClick={signOut}><Icon name="logout" size={18} /> Sign out</button>
+
+      {closed && (
+        <div className="overlay center" onMouseDown={(ev) => { if (ev.target === ev.currentTarget) setClosed(false) }}>
+          <motion.div className="card dialog" initial={{ scale: .92, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} role="dialog" aria-label="Registration closed">
+            <span className="ic" style={{ background: 'linear-gradient(135deg, #FF6363, #C81E1E)' }}><Icon name="clock" size={26} /></span>
+            <h2>Delegate registration is closed</h2>
+            <p className="muted">Registration is not open right now. Please check again soon, or call the helpline.</p>
+            <button className="btn dark" onClick={() => setClosed(false)}>OK</button>
+          </motion.div>
+        </div>
+      )}
     </div>
   )
 }

@@ -3,9 +3,8 @@ import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { api } from '../api'
 import { useAuth } from '../auth'
-import PassCard from '../components/PassCard'
 import { ErrorBox, Icon, KIND, Orbs, Reveal, Skeleton, Tilt, fmtDate, fmtDateTime, fmtDay, fmtTime, grad } from '../components/ui'
-import type { Delegate, Hub, Pass } from '../types'
+import type { Delegate, Hub } from '../types'
 import { useFetch } from '../useFetch'
 
 interface EventCard {
@@ -112,7 +111,6 @@ export function EventPage() {
   const { id } = useParams()
   const { me } = useAuth()
   const ev = useFetch<EventDetail>(me ? `/events/${id}` : `/public/events/${id}`)
-  const passes = useFetch<Pass[]>(me ? '/me/passes' : null)
   const e = ev.data
   const reg = e?.my_registration && !['cancelled', 'rejected'].includes(e.my_registration.status) ? e.my_registration : null
   const delegate = useFetch<Delegate>(me && reg?.kind === 'delegate' ? `/events/${id}/delegate` : null)
@@ -120,11 +118,10 @@ export function EventPage() {
   const news = useFetch<{ id: number; title: string; body: string | null; at: string }[]>(me && (reg || e?.guide_enabled) ? `/events/${id}/announcements` : null)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<unknown>(null)
-  const pass = passes.data?.find((p) => p.event.id === Number(id) && p.status === 'registered')
 
   async function act(path: string) {
     setBusy(true); setErr(null)
-    try { await api.post(path); ev.reload(); passes.reload() } catch (x) { setErr(x) } finally { setBusy(false) }
+    try { await api.post(path); ev.reload() } catch (x) { setErr(x) } finally { setBusy(false) }
   }
 
   if (!e) return <div className="page wrap"><ErrorBox error={ev.error} />{!ev.error && <Skeleton h={320} n={2} />}</div>
@@ -213,10 +210,11 @@ export function EventPage() {
               <div className="review">
                 <div><span>Name</span><b>{d.full_name}</b></div>
                 {d.details.prant && <div><span>Prant</span><b>{d.details.prant}</b></div>}
+                {d.details.responsibility && <div><span>Responsibility</span><b>{d.details.responsibility}</b></div>}
                 {d.details.institution && <div><span>College</span><b>{d.details.institution}</b></div>}
                 {d.details.food && <div><span>Food</span><b>{FOOD[d.details.food] ?? d.details.food}</b></div>}
-                {d.travel && <div><span>Arriving</span><b style={{ textTransform: "none" }}>{d.travel.mode.charAt(0).toUpperCase() + d.travel.mode.slice(1)} {d.travel.reference ?? ''} · {d.travel.arrival_point} · {fmtDateTime(d.travel.arriving_at)}</b></div>}
-                {d.travel && <div><span>Pickup / stay</span><b>{d.travel.needs_pickup ? 'Pickup needed' : 'No pickup'} · {d.travel.needs_stay ? 'Needs a bed' : 'Own stay'}</b></div>}
+                {d.travel && <div><span>Arriving</span><b style={{ textTransform: "none" }}>{d.travel.mode.charAt(0).toUpperCase() + d.travel.mode.slice(1)} · {d.travel.arrival_point} · {fmtDateTime(d.travel.arriving_at)}</b></div>}
+                {d.travel?.departing_at && <div><span>Leaving</span><b>{fmtDateTime(d.travel.departing_at)}</b></div>}
                 {d.details.emergency_name && <div><span>Emergency contact</span><b>{d.details.emergency_name} · {d.details.emergency_phone}</b></div>}
               </div>
               {e.delegate_registration_open && <Link to={`/conference/${e.id}/register`} className="btn sm" style={{ justifySelf: 'start' }}>Edit my registration</Link>}
@@ -236,7 +234,7 @@ export function EventPage() {
             {!me ? (
               <>
                 <b style={{ fontSize: 18 }}>Want to attend?</b>
-                <p className="muted">Sign in to register and get your pass.</p>
+                <p className="muted">Sign in or create an account to register.</p>
                 {e.delegate_registration_open && <Link to={`/signup?next=/conference/${e.id}/register`} className="btn primary block">Register as delegate</Link>}
                 <Link to={`/login?next=/events/${e.id}`} className="btn dark block">Sign in</Link>
               </>
@@ -254,12 +252,11 @@ export function EventPage() {
                 {!e.delegate_registration_open && e.eligibility && <p className="muted">{e.eligibility}</p>}
                 {e.seats_left != null && <p className="muted">{e.seats_left} seat{e.seats_left === 1 ? '' : 's'} left</p>}
                 {e.eligible && e.registration_open && !e.delegate_registration_open && <button className="btn primary block" disabled={busy} onClick={() => act(`/events/${e.id}/register`)}>{busy ? 'Registering…' : 'Register'}</button>}
-                {!e.eligible && !me.is_member && !e.delegate_registration_open && <Link to="/me/edit" className="btn block">Apply for membership</Link>}
               </>
             )}
-            {e.guide_enabled && <Link to={`/guide/${e.id}`} className="btn block">Open the conference guide</Link>}
+            {e.guide_enabled && reg?.kind === 'delegate' && <Link to={`/guide/${e.id}`} className="btn block">Open the conference guide</Link>}
+            {reg?.kind === 'delegate' && delegate.data?.open && <Link to={`/conference/${e.id}/register?edit=1`} className="btn ghost block">Edit my delegate form</Link>}
           </div>
-          {pass && <PassCard title={e.title} venue={e.venue} starts={e.starts_at} name={pass.name} kind={pass.kind} token={pass.token} status={pass.status} />}
         </aside>
       </div>
     </div>

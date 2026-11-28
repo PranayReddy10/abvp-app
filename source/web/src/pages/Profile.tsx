@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'rea
 import { Link, Navigate } from 'react-router-dom'
 import { api, ApiError } from '../api'
 import { nameOf, useAuth } from '../auth'
-import { Avatar, ErrorBox, Icon, Orbs, Skeleton } from '../components/ui'
+import { Avatar, ErrorBox, Icon, Orbs, Skeleton, Tick } from '../components/ui'
 import type { OrgUnit, Vibhag } from '../types'
 import { useFetch } from '../useFetch'
 
@@ -19,7 +19,7 @@ function Section({ title, sub, children, id }: { title: string; sub?: string; ch
   )
 }
 
-/** Edit your details, area (state → district), Vibhags, photo and password; apply for membership. */
+/** Edit your details, area (state → district), Vibhags, photo and password. */
 export default function Profile() {
   const { me, loading, refresh } = useAuth()
   const states = useFetch<OrgUnit[]>('/org/units')
@@ -66,7 +66,6 @@ export default function Profile() {
   if (!me) return <div className="page wrap"><Skeleton /></div>
 
   const set = (p: Partial<typeof f>) => setF({ ...f, ...p })
-  const status = me.profile?.membership_status ?? 'draft'
   const approved = me.is_member
   const areaLocked = approved
   const chosenState = states.data?.find((s) => s.id === stateId)
@@ -144,7 +143,7 @@ export default function Profile() {
             <div className="field"><label htmlFor="bio">About you</label><textarea id="bio" className="input" style={{ minHeight: 90, paddingTop: 12 }} maxLength={500} value={f.bio} onChange={(e) => set({ bio: e.target.value })} /></div>
           </Section>
 
-          <Section id="area" title="Your area" sub={areaLocked ? 'Approved members change their area through their district office.' : 'Choose your state and district. Your district office reviews your membership and you see posts and events from your area.'}>
+          <Section id="area" title="Your area" sub={areaLocked ? 'Your area is set. To move to another area, your district office changes it.' : 'Choose your state and district so you see posts and events from your area.'}>
             <div className="form-grid">
               <div className="field"><label htmlFor="st">State (prant)</label>
                 <select id="st" className="input" disabled={areaLocked} value={stateId} onChange={(e) => { setStateId(e.target.value ? Number(e.target.value) : ''); setDistrictId('') }}>
@@ -179,9 +178,7 @@ export default function Profile() {
         </form>
 
         <PasswordCard hasPassword={!!me.has_password} onDone={refresh} />
-        <MembershipCard status={status} approved={approved} note={me.application?.decision_note ?? null} office={me.application?.reviewing_office ?? null}
-          missing={[!me.profile?.full_name && 'name', !me.profile?.date_of_birth && 'date of birth', !me.profile?.org_unit && 'district'].filter(Boolean) as string[]}
-          onDone={refresh} />
+        <MembershipCard memberId={me.profile?.member_id ?? null} verified={!!me.profile?.verified} />
       </div>
     </div>
   )
@@ -219,46 +216,14 @@ function PasswordCard({ hasPassword, onDone }: { hasPassword: boolean; onDone: (
   )
 }
 
-const STATUS: Record<string, [string, string]> = {
-  draft: ['Not applied yet', 'mute'],
-  submitted: ['With your district office', 'info'],
-  more_info: ['Returned for correction', 'warn'],
-  approved: ['Approved member', 'ok'],
-  rejected: ['Not approved', 'bad'],
-}
-
-function MembershipCard({ status, approved, note, office, missing, onDone }: { status: string; approved: boolean; note: string | null; office: string | null; missing: string[]; onDone: () => Promise<void> }) {
-  const [agree, setAgree] = useState(false)
-  const [busy, setBusy] = useState(false)
-  const [err, setErr] = useState<unknown>(null)
-  const [label, tone] = STATUS[status] ?? [status, 'mute']
-  const canApply = !approved && status !== 'submitted'
-  async function apply() {
-    setBusy(true); setErr(null)
-    try { await api.post('/membership/application', { confirm: true }); await onDone() } catch (x) { setErr(x) } finally { setBusy(false) }
-  }
+/** Everyone who signs up is a member. Admins give verified members the blue tick. */
+function MembershipCard({ memberId, verified }: { memberId: string | null; verified: boolean }) {
   return (
-    <Section title="ABVP membership" sub="Members get a member ID and QR pass, can register for member events and join Vibhag spaces.">
+    <Section title="ABVP membership" sub="Everyone who signs up is a member. After checking, an admin gives verified members the blue tick – it shows next to their name everywhere.">
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-        <span className={`status-pill ${tone}`}>{label}</span>
-        {office && status === 'submitted' && <span className="muted">Reviewed by {office}</span>}
+        <span className={`status-pill ${verified ? 'info' : 'ok'}`}>{verified ? <>Verified member <Tick size={16} /></> : 'Member'}</span>
+        {memberId && <span className="mono muted">{memberId}</span>}
       </div>
-      {status === 'more_info' && note && <div className="hint">Your office says: {note}</div>}
-      {status === 'rejected' && note && <div className="error">{note}</div>}
-      {canApply && (
-        missing.length > 0 ? (
-          <div className="hint">To apply, add your {missing.join(', ')} above and save.</div>
-        ) : (
-          <div style={{ display: 'grid', gap: 12 }}>
-            <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start', fontSize: 15 }}>
-              <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} style={{ marginTop: 4, width: 18, height: 18 }} />
-              <span>The details I gave are correct, and I want to become a member of Akhil Bharatiya Vidyarthi Parishad.</span>
-            </label>
-            <ErrorBox error={err} />
-            <div><button className="btn primary" disabled={!agree || busy} onClick={apply}>{busy ? 'Sending…' : status === 'more_info' ? 'Send again' : 'Apply for membership'} <Icon name="arrow" size={18} /></button></div>
-          </div>
-        )
-      )}
     </Section>
   )
 }

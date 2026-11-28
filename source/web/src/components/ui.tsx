@@ -63,7 +63,8 @@ export const KIND: Record<string, { icon: IconName; a: string; b: string; title:
   facility: { icon: 'parking', a: '#7C8BA3', b: '#3B4659', title: 'Campus', hindi: 'परिसर' },
   tourist: { icon: 'temple', a: '#F5B83D', b: '#C07F00', title: 'Tourist places', hindi: 'पर्यटन' },
   emergency: { icon: 'emergency', a: '#FF6363', b: '#C81E1E', title: 'Emergency', hindi: 'आपातकाल' },
-  support: { icon: 'support', a: '#3DD68C', b: '#138A4F', title: 'Support', hindi: 'सहायता' },
+  support: { icon: 'support', a: '#3DD68C', b: '#138A4F', title: 'Help', hindi: 'सहायता' },
+  gallery: { icon: 'image', a: '#F6A04D', b: '#C2550A', title: 'Gallery', hindi: 'चित्र दीर्घा' },
 }
 export const grad = (k: string) => `linear-gradient(135deg, ${KIND[k]?.a ?? '#F08A3C'}, ${KIND[k]?.b ?? '#E3620C'})`
 
@@ -118,7 +119,7 @@ export function Tilt({ children, className, style }: { children: ReactNode; clas
 
 export function ErrorBox({ error }: { error: unknown }) {
   if (!error) return null
-  const msg = error instanceof ApiError ? (error.fields ? Object.values(error.fields)[0]?.[0] ?? error.message : error.message) : 'Something went wrong. Try again.'
+  const msg = error instanceof ApiError ? (error.fields ? Object.values(error.fields)[0]?.[0] ?? error.message : error.message) : error instanceof Error && error.message ? error.message : 'Something went wrong. Try again.'
   return <motion.div className="error" role="alert" initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}>{msg}</motion.div>
 }
 
@@ -153,4 +154,14 @@ export function ago(iso: string) {
   if (m < 60) return `${m} min ago`
   if (m < 1440) return `${Math.round(m / 60)} h ago`
   return fmtDay(iso)
+}
+
+/** The blue tick for members an admin has verified. */
+export function Tick({ size = 18 }: { size?: number }) {
+  return (
+    <svg className="tick" width={size} height={size} viewBox="0 0 24 24" role="img" aria-label="Verified member" style={{ flex: 'none', verticalAlign: '-3px', marginLeft: 4 }}>
+      <path fill="#1D9BF0" d="M12 1.5l2.4 1.8 3-.2.9 2.9 2.5 1.7-.9 2.9.9 2.9-2.5 1.7-.9 2.9-3-.2L12 20.5l-2.4-1.8-3 .2-.9-2.9-2.5-1.7.9-2.9-.9-2.9 2.5-1.7.9-2.9 3 .2z" />
+      <path d="M8 12.2l2.7 2.7L16.3 9.3" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
 }

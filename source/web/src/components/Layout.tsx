@@ -45,10 +45,11 @@ function Nav() {
         <Brand />
         <nav className={`nav-links ${open ? 'open' : ''}`} aria-label="Main">
           {conf && <NavLink to={`/guide/${conf.event.id}`}>Conference guide</NavLink>}
-          {conf?.event.delegate_registration_open && <NavLink to={`/conference/${conf.event.id}/register`}>Register</NavLink>}
-          <NavLink to="/conference/team">Team</NavLink>
+          {conf && <NavLink to={`/conference/${conf.event.id}/register`}>Delegate</NavLink>}
+          <NavLink to="/conference/team">Volunteer</NavLink>
           <NavLink to="/events">Events</NavLink>
           <NavLink to="/community">Community</NavLink>
+          {conf && <NavLink to={`/support/${conf.event.id}`}>Help</NavLink>}
           {me && <NavLink to="/me">My space</NavLink>}
           {!me && <NavLink to="/login" className="only-sm">Sign in</NavLink>}
         </nav>
@@ -80,12 +81,14 @@ function Footer() {
         <div style={{ display: 'grid', gap: 10, maxWidth: 360 }}>
           <div className="brand" style={{ color: '#fff' }}><span className="mark"><img src="/abvp-emblem.png" alt="" width={38} height={38} /></span>ABVP Connect</div>
           <p className="hi" style={{ fontSize: 17 }}>एक सदस्य · एक पहचान · हर कार्यक्रम</p>
-          <p style={{ fontSize: 14 }}>The conference guide, delegate registration, passes and help desk – and the online home of ABVP members.</p>
+          <p style={{ fontSize: 14 }}>The conference guide, delegate registration, volunteers and help desk – and the online home of ABVP members.</p>
         </div>
         <div style={{ display: 'grid', gap: 8, fontSize: 15 }}>
           <b style={{ color: '#fff' }}>Conference</b>
           {conf && <Link to={`/guide/${conf.event.id}`}>Guide</Link>}
-          {conf?.event.delegate_registration_open && <Link to={`/conference/${conf.event.id}/register`}>Delegate registration</Link>}
+          {conf && <Link to={`/conference/${conf.event.id}/register`}>Delegate form</Link>}
+          <Link to="/conference/team">Volunteer</Link>
+          {conf && <Link to={`/support/${conf.event.id}`}>Help and emergency</Link>}
           {conf?.event.helpline && <a href={`tel:${conf.event.helpline}`}>Helpline {conf.event.helpline}</a>}
         </div>
         <div style={{ display: 'grid', gap: 8, fontSize: 15 }}>

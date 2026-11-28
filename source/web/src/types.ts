@@ -69,6 +69,7 @@ export interface GuideItem {
   travel_time: string | null
   directions_url: string | null
   photo_urls: string[]
+  videos?: { url: string | null; title: string | null; kind: 'file' | 'youtube' | 'link'; thumb_url: string | null }[]
   contacts: Contact[]
 }
 
@@ -106,9 +107,9 @@ export interface Delegate {
   open: boolean
   registration: null | {
     id: number; status: string; kind: string; full_name: string; pass_token: string | null
-    details: { gender?: string; prant?: string; institution?: string | null; food?: string; emergency_name?: string; emergency_phone?: string }
+    details: { first_name?: string; surname?: string; mobile?: string; email?: string | null; responsibility?: string; gender?: string; prant?: string; institution?: string | null; food?: string; emergency_name?: string; emergency_phone?: string }
     travel: null | { mode: string; reference: string | null; arrival_point: string; arriving_at: string; departing_at: string | null; needs_pickup: boolean; needs_stay: boolean; notes: string | null }
   }
-  prefill: { full_name: string | null; gender: string | null; prant: string | null; institution: string | null }
+  prefill: { full_name: string | null; first_name?: string | null; surname?: string | null; mobile?: string | null; email?: string | null; responsibility?: string | null; gender: string | null; prant: string | null; institution: string | null }
   options: { prants: string[]; arrival_points: string[]; modes: { key: string; label: string }[]; food: { key: string; label: string }[] }
 }

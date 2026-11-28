@@ -1,9 +1,9 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../auth'
 import { Avatar, ErrorBox, Icon, KIND, Orbs, Reveal, Skeleton, fmtDate, grad, telHref, useCountdown, waHref } from '../components/ui'
-import type { Contact, GuideItem, Hub } from '../types'
+import type { Contact, Delegate, GuideItem, Hub } from '../types'
 import { useFetch } from '../useFetch'
 
 function When({ starts, ends }: { starts: string; ends: string }) {
@@ -14,10 +14,16 @@ function When({ starts, ends }: { starts: string; ends: string }) {
 
 export function GuideHub() {
   const { id } = useParams()
+  const { me, loading } = useAuth()
   const { data: hub, error } = useFetch<Hub>(`/events/${id}/guide`)
+  const dele = useFetch<Delegate>(me ? `/events/${id}/delegate` : null)
   const navigate = useNavigate()
+  // As in the app: the guide opens after the delegate form is in.
+  if (!loading && !me) return <Navigate to={`/login?next=/guide/${id}`} replace />
   if (error) return <div className="page wrap"><ErrorBox error={error} /></div>
-  if (!hub) return <div className="page wrap"><Skeleton h={180} n={3} /></div>
+  if (dele.error) return <div className="page wrap"><ErrorBox error={dele.error} /></div>
+  if (!hub || !dele.data) return <div className="page wrap"><Skeleton h={180} n={3} /></div>
+  if (!dele.data.registration) return <Navigate to={`/conference/${id}/register`} replace />
   const e = hub.event
   const stay = hub.my_stays[0]
   const lead = stay?.contacts.find((c) => c.is_lead)
@@ -34,7 +40,10 @@ export function GuideHub() {
             <span style={{ opacity: .85, fontWeight: 600 }}>Conference guide · <span className="hi">अधिवेशन मार्गदर्शिका</span></span>
             <h1 style={{ fontSize: 'clamp(34px, 5vw, 58px)', fontWeight: 800 }}>{e.title}</h1>
             <p style={{ display: 'flex', gap: 8, opacity: .9 }}><Icon name="pin" /> {e.venue}</p>
-            {e.delegate_registration_open && <div><Link to={`/conference/${e.id}/register`} className="btn" style={{ background: '#fff', color: 'var(--deep)' }}>Register as delegate <Icon name="arrow" size={18} /></Link></div>}
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <span className="chip" style={{ background: 'rgba(255,255,255,.18)', color: '#fff' }}><Icon name="check" size={15} />&nbsp;Registered as delegate</span>
+              {dele.data.open && <Link to={`/conference/${e.id}/register?edit=1`} className="btn sm" style={{ background: '#fff', color: 'var(--deep)' }}><Icon name="edit" size={16} /> Edit my delegate form</Link>}
+            </div>
           </motion.div>
         </div>
       </section>
@@ -57,7 +66,7 @@ export function GuideHub() {
         </Reveal>
         <Reveal i={1}><h2 style={{ fontSize: 28, fontWeight: 800, margin: '36px 0 16px' }}>Everything you need</h2></Reveal>
         <div className="tiles">
-          {[...hub.sections, { kind: 'support', title: 'Support', hindi: 'सहायता', count: hub.open_tickets }].map((s, i) => (
+          {[...hub.sections, { kind: 'support', title: 'Help', hindi: 'सहायता', count: hub.open_tickets }].map((s, i) => (
             <motion.button key={s.kind} className="tile" onClick={() => navigate(s.kind === 'support' ? `/support/${id}` : `/guide/${id}/${s.kind}`)}
               initial={{ opacity: 0, scale: .9, y: 16 }} animate={{ opacity: 1, scale: 1, y: 0 }} transition={{ delay: .1 + i * .05, type: 'spring', stiffness: 260, damping: 22 }}
               style={s.kind === 'emergency' ? { background: '#FFF4F4' } : undefined}>
@@ -198,6 +207,7 @@ export function GuideSection() {
   const [tag, setTag] = useState<string | null>(null)
   const [here, setHere] = useState<{ lat: number; lng: number } | null>(null)
   const [locErr, setLocErr] = useState(false)
+  const [photo, setPhoto] = useState<string | null>(null)
   const k = KIND[kind] ?? KIND.stay
 
   const items = useMemo(() => data ?? [], [data])
@@ -225,6 +235,32 @@ export function GuideSection() {
           ))}
         </div>
       </>
+    )
+  } else if (kind === 'gallery') {
+    const albums = items.filter((a) => a.photo_urls.length || a.videos?.length)
+    body = albums.length === 0 ? <p className="muted">Photos and videos of the conference appear here.</p> : (
+      <div style={{ display: 'grid', gap: 36 }}>
+        {albums.map((a) => (
+          <section key={a.id}>
+            <h2 style={{ fontSize: 24, fontWeight: 800 }}>{a.title}</h2>
+            {a.subtitle && <p className="muted">{a.subtitle}</p>}
+            {!!a.videos?.length && (
+              <div className="gal-videos">
+                {a.videos.map((v, i) => (
+                  <a key={i} className="gal-video" href={v.url ?? '#'} target="_blank" rel="noreferrer" style={v.thumb_url ? { backgroundImage: `url(${v.thumb_url}), linear-gradient(135deg, #C9783A, #9A3A06)` } : undefined}>
+                    {v.kind === 'youtube' && <span className="yt">YouTube</span>}
+                    <span className="play">▶</span>
+                    {v.title && <b>{v.title}</b>}
+                  </a>
+                ))}
+              </div>
+            )}
+            <div className="gal-photos">
+              {a.photo_urls.map((u, i) => <motion.button key={u} className="gal-photo" onClick={() => setPhoto(u)} initial={{ opacity: 0, scale: .94 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: Math.min(i, 12) * .03 }}><img src={u} alt="" loading="lazy" /></motion.button>)}
+            </div>
+          </section>
+        ))}
+      </div>
     )
   } else if (kind === 'emergency') {
     const isNum = (i: GuideItem) => i.contacts.length > 0 && i.contacts.every((c) => (c.phone ?? '').replace(/\D/g, '').length < 6)
@@ -295,7 +331,7 @@ export function GuideSection() {
             <Link to={`/guide/${id}`} className="btn glass sm" style={{ marginBottom: 18 }}><Icon name="back" size={16} /> Guide</Link>
             <div className="hi" style={{ fontSize: 22, opacity: .85, fontWeight: 600 }}>{k.hindi}</div>
             <h1>{kind === 'stay' && prant ? prant : k.title}</h1>
-            {data && <p style={{ opacity: .85 }}>{kind === 'stay' && !prant ? `${prants.length} prants · ${items.length} places` : `${kind === 'stay' ? items.filter((i) => i.region === prant).length : items.length} places`}</p>}
+            {data && <p style={{ opacity: .85 }}>{kind === 'gallery' ? `${items.length} album${items.length === 1 ? '' : 's'}` : kind === 'stay' && !prant ? `${prants.length} prants · ${items.length} places` : `${kind === 'stay' ? items.filter((i) => i.region === prant).length : items.length} places`}</p>}
           </div>
           <motion.span initial={{ scale: .6, rotate: -15, opacity: 0 }} animate={{ scale: 1, rotate: 0, opacity: 1 }} transition={{ type: 'spring', stiffness: 200, damping: 14 }}
             style={{ width: 88, height: 88, borderRadius: 28, background: 'rgba(255,255,255,.2)', display: 'grid', placeItems: 'center' }}><Icon name={k.icon} size={44} /></motion.span>
@@ -303,6 +339,12 @@ export function GuideSection() {
       </div>
       <div className="wrap">{body}</div>
       <AnimatePresence>{open && <ItemSheet item={open} onClose={() => setOpen(null)} />}</AnimatePresence>
+      <AnimatePresence>{photo && (
+        <motion.div className="gal-light" onClick={() => setPhoto(null)} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+          <motion.img src={photo} alt="" initial={{ scale: .92 }} animate={{ scale: 1 }} />
+          <button className="icon-btn" aria-label="Close" style={{ position: 'absolute', top: 20, right: 20 }}><Icon name="close" /></button>
+        </motion.div>
+      )}</AnimatePresence>
     </div>
   )
 }
